@@ -15,6 +15,7 @@ import Accidents from './pages/Accidents';
 import AutresIncidents from './pages/AutresIncidents';
 import Formations from './pages/Formations';
 import Reclamations from './pages/Reclamations';
+import Anomalies from './pages/Anomalies';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -55,6 +56,9 @@ const AppRoutes = () => {
         } />
         <Route path="/instance/:instanceId/reclamations" element={
           <ProtectedRoute><Reclamations /></ProtectedRoute>
+        } />
+        <Route path="/instance/:instanceId/anomalies" element={
+          <ProtectedRoute><Anomalies /></ProtectedRoute>
         } />
 
         <Route path="/dashboard" element={
