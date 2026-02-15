@@ -11,6 +11,7 @@ import InstanceDetail from './pages/InstanceDetail';
 import Dashboard from './pages/Dashboard';
 import Dispositifs from './pages/Dispositifs';
 import Interpellations from './pages/Interpellations';
+import Accidents from './pages/Accidents';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -39,6 +40,9 @@ const AppRoutes = () => {
         } />
         <Route path="/instance/:instanceId/interpellations" element={
           <ProtectedRoute><Interpellations /></ProtectedRoute>
+        } />
+        <Route path="/instance/:instanceId/accidents" element={
+          <ProtectedRoute><Accidents /></ProtectedRoute>
         } />
 
         <Route path="/dashboard" element={
