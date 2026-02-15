@@ -213,8 +213,12 @@ const Reclamations = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-            <input type="text" value={form.statut} onChange={(e) => setForm({ ...form, statut: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" />
+            <select value={form.statut} onChange={(e) => setForm({ ...form, statut: e.target.value })}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+              <option value="Non traite">Non traite</option>
+              <option value="En cours">En cours</option>
+              <option value="Traite">Traite</option>
+            </select>
           </div>
 
           <div className="flex gap-3 pt-2">
