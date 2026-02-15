@@ -111,6 +111,55 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /api/instances/:id - Update instance (month/year)
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { month, year } = req.body;
+
+    if (!month || !year) {
+      return res.status(400).json({ message: 'Mois et annee requis' });
+    }
+
+    if (month < 1 || month > 12) {
+      return res.status(400).json({ message: 'Mois invalide (1-12)' });
+    }
+
+    const instance = await pool.query(`
+      SELECT i.*, s.region FROM instances i
+      JOIN supermarkets s ON i.supermarket_id = s.id
+      WHERE i.id = $1
+    `, [id]);
+
+    if (instance.rows.length === 0) {
+      return res.status(404).json({ message: 'Instance non trouvee' });
+    }
+
+    if (req.user.role === 'region' && instance.rows[0].region !== req.user.region) {
+      return res.status(403).json({ message: 'Acces refuse' });
+    }
+
+    // Check for duplicate (excluding current instance)
+    const duplicate = await pool.query(
+      'SELECT id FROM instances WHERE supermarket_id = $1 AND month = $2 AND year = $3 AND id != $4',
+      [instance.rows[0].supermarket_id, month, year, id]
+    );
+    if (duplicate.rows.length > 0) {
+      return res.status(400).json({ message: 'Une instance existe deja pour ce mois/annee' });
+    }
+
+    const result = await pool.query(
+      'UPDATE instances SET month = $1, year = $2 WHERE id = $3 RETURNING *',
+      [month, year, id]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Erreur modification instance:', err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 // DELETE /api/instances/:id - Delete instance
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {

@@ -43,6 +43,7 @@ export const deleteSupermarket = (id) => api.delete(`/supermarkets/${id}`);
 export const getInstances = (supermarketId) => api.get(`/instances/supermarket/${supermarketId}`);
 export const getInstance = (id) => api.get(`/instances/${id}`);
 export const createInstance = (data) => api.post('/instances', data);
+export const updateInstance = (id, data) => api.put(`/instances/${id}`, data);
 export const deleteInstance = (id) => api.delete(`/instances/${id}`);
 
 // Caracteristiques

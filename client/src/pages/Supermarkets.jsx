@@ -8,7 +8,7 @@ import { FiPlus, FiEdit2, FiTrash2, FiEye, FiX, FiMapPin, FiShoppingCart } from 
 const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION SUD', 'REGION ORIENT', 'REGION NORD'];
 
 const Supermarkets = () => {
-  const { user, canManage } = useAuth();
+  const { user, isRegion, canManage } = useAuth();
   const navigate = useNavigate();
   const [supermarkets, setSupermarkets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,19 +32,33 @@ const Supermarkets = () => {
     }
   };
 
+  const openAddForm = () => {
+    setEditingId(null);
+    // Region users: auto-set their region
+    if (isRegion()) {
+      setFormData({ name: '', region: user.region });
+    } else {
+      setFormData({ name: '', region: REGIONS[0] });
+    }
+    setShowForm(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const dataToSend = isRegion()
+        ? { name: formData.name, region: user.region }
+        : formData;
+
       if (editingId) {
-        await updateSupermarket(editingId, formData);
+        await updateSupermarket(editingId, dataToSend);
         toast.success('Supermarche modifie avec succes');
       } else {
-        await createSupermarket(formData);
+        await createSupermarket(dataToSend);
         toast.success('Supermarche ajoute avec succes');
       }
       setShowForm(false);
       setEditingId(null);
-      setFormData({ name: '', region: REGIONS[0] });
       loadSupermarkets();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Erreur');
@@ -104,12 +118,12 @@ const Supermarkets = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Supermarches</h1>
           <p className="text-gray-500 text-sm mt-1">
-            {user.role === 'region' ? user.region : 'Toutes les regions'} — {filteredSupermarkets.length} supermarche(s)
+            {isRegion() ? user.region : 'Toutes les regions'} — {filteredSupermarkets.length} supermarche(s)
           </p>
         </div>
 
         <div className="flex flex-wrap gap-3">
-          {/* Region filter (for admin/main) */}
+          {/* Region filter (for admin/main only) */}
           {canManage() && (
             <select
               value={filterRegion}
@@ -123,16 +137,14 @@ const Supermarkets = () => {
             </select>
           )}
 
-          {/* Add button */}
-          {canManage() && (
-            <button
-              onClick={() => { setShowForm(true); setEditingId(null); setFormData({ name: '', region: REGIONS[0] }); }}
-              className="flex items-center space-x-2 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            >
-              <FiPlus size={16} />
-              <span>Ajouter</span>
-            </button>
-          )}
+          {/* Add button - visible to ALL users */}
+          <button
+            onClick={openAddForm}
+            className="flex items-center space-x-2 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            <FiPlus size={16} />
+            <span>Ajouter</span>
+          </button>
         </div>
       </div>
 
@@ -162,18 +174,30 @@ const Supermarkets = () => {
                   autoFocus
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
-                <select
-                  value={formData.region}
-                  onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                >
-                  {REGIONS.map(r => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
-              </div>
+
+              {/* Region dropdown - only for admin/main, region users get auto-assigned */}
+              {isRegion() ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                  <div className="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-600">
+                    {user.region}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                  <select
+                    value={formData.region}
+                    onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  >
+                    {REGIONS.map(r => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="flex space-x-3 pt-2">
                 <button
                   type="submit"
@@ -199,14 +223,12 @@ const Supermarkets = () => {
         <div className="text-center py-16 bg-white rounded-xl shadow-sm">
           <FiShoppingCart size={48} className="mx-auto text-gray-300 mb-4" />
           <p className="text-gray-500 text-lg">Aucun supermarche trouve</p>
-          {canManage() && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="mt-4 text-green-700 hover:text-green-800 font-medium"
-            >
-              + Ajouter votre premier supermarche
-            </button>
-          )}
+          <button
+            onClick={openAddForm}
+            className="mt-4 text-green-700 hover:text-green-800 font-medium"
+          >
+            + Ajouter votre premier supermarche
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -234,23 +256,18 @@ const Supermarkets = () => {
                   <FiEye size={14} />
                   <span>Voir</span>
                 </button>
-
-                {canManage() && (
-                  <>
-                    <button
-                      onClick={() => handleEdit(supermarket)}
-                      className="flex items-center justify-center space-x-1 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                    >
-                      <FiEdit2 size={14} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(supermarket.id, supermarket.name)}
-                      className="flex items-center justify-center space-x-1 bg-red-50 hover:bg-red-100 text-red-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                    >
-                      <FiTrash2 size={14} />
-                    </button>
-                  </>
-                )}
+                <button
+                  onClick={() => handleEdit(supermarket)}
+                  className="flex items-center justify-center space-x-1 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <FiEdit2 size={14} />
+                </button>
+                <button
+                  onClick={() => handleDelete(supermarket.id, supermarket.name)}
+                  className="flex items-center justify-center space-x-1 bg-red-50 hover:bg-red-100 text-red-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <FiTrash2 size={14} />
+                </button>
               </div>
             </div>
           ))}
