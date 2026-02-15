@@ -14,6 +14,7 @@ import Interpellations from './pages/Interpellations';
 import Accidents from './pages/Accidents';
 import AutresIncidents from './pages/AutresIncidents';
 import Formations from './pages/Formations';
+import Reclamations from './pages/Reclamations';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -51,6 +52,9 @@ const AppRoutes = () => {
         } />
         <Route path="/instance/:instanceId/formations" element={
           <ProtectedRoute><Formations /></ProtectedRoute>
+        } />
+        <Route path="/instance/:instanceId/reclamations" element={
+          <ProtectedRoute><Reclamations /></ProtectedRoute>
         } />
 
         <Route path="/dashboard" element={
