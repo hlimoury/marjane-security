@@ -7,7 +7,7 @@ import { FiArrowLeft, FiShield, FiAlertTriangle, FiAlertCircle, FiFileText, FiBo
 const MONTHS = ['', 'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
 
 // Characteristics that have dedicated form pages (navigate instead of modal)
-const DEDICATED_PAGES = ['dispositifs', 'interpellations', 'accidents', 'autres_incidents'];
+const DEDICATED_PAGES = ['dispositifs', 'interpellations', 'accidents', 'autres_incidents', 'formations'];
 
 const CARACTERISTIQUES = [
   { key: 'dispositifs', label: 'Dispositifs', icon: FiShield, color: 'blue', description: 'Equipements et dispositifs de securite' },
