@@ -6,6 +6,9 @@ import { FiArrowLeft, FiShield, FiAlertTriangle, FiAlertCircle, FiFileText, FiBo
 
 const MONTHS = ['', 'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
 
+// Characteristics that have dedicated form pages (navigate instead of modal)
+const DEDICATED_PAGES = ['dispositifs'];
+
 const CARACTERISTIQUES = [
   { key: 'dispositifs', label: 'Dispositifs', icon: FiShield, color: 'blue', description: 'Equipements et dispositifs de securite' },
   { key: 'interpellations', label: 'Interpellations', icon: FiAlertTriangle, color: 'amber', description: 'Interpellations effectuees' },
@@ -54,7 +57,15 @@ const InstanceDetail = () => {
     }
   };
 
-  const handleOpenCarac = async (caracKey) => {
+  const handleClickCarac = (caracKey) => {
+    if (DEDICATED_PAGES.includes(caracKey)) {
+      navigate(`/instance/${id}/${caracKey}`);
+    } else {
+      handleOpenCaracModal(caracKey);
+    }
+  };
+
+  const handleOpenCaracModal = async (caracKey) => {
     setSelectedCarac(caracKey);
     setCaracLoading(true);
     try {
@@ -74,7 +85,7 @@ const InstanceDetail = () => {
       await saveCaracteristique(selectedCarac, id, parsedData);
       toast.success('Donnees sauvegardees avec succes');
       setSelectedCarac(null);
-      loadInstance(); // Refresh status
+      loadInstance();
     } catch (err) {
       if (err instanceof SyntaxError) {
         toast.error('Format JSON invalide');
@@ -129,10 +140,9 @@ const InstanceDetail = () => {
           return (
             <button
               key={carac.key}
-              onClick={() => handleOpenCarac(carac.key)}
+              onClick={() => handleClickCarac(carac.key)}
               className={`relative ${colors.bg} ${colors.hover} border ${colors.border} rounded-xl p-5 text-left transition-all hover:shadow-md group`}
             >
-              {/* Filled indicator */}
               {filled && (
                 <div className="absolute top-3 right-3">
                   <div className="bg-green-500 rounded-full p-0.5">
@@ -147,10 +157,9 @@ const InstanceDetail = () => {
               <h3 className={`font-semibold ${colors.text} text-sm`}>{carac.label}</h3>
               <p className="text-gray-400 text-xs mt-1">{carac.description}</p>
 
-              {filled && (
+              {filled ? (
                 <span className="text-green-600 text-xs font-medium mt-2 block">Rempli</span>
-              )}
-              {!filled && (
+              ) : (
                 <span className="text-gray-400 text-xs mt-2 block">Non rempli</span>
               )}
             </button>
@@ -158,7 +167,7 @@ const InstanceDetail = () => {
         })}
       </div>
 
-      {/* Caracteristique Modal (placeholder - JSON editor for now) */}
+      {/* Fallback JSON modal for characteristics without dedicated pages */}
       {selectedCarac && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg max-h-[80vh] flex flex-col">
@@ -166,10 +175,7 @@ const InstanceDetail = () => {
               <h2 className="text-lg font-bold text-gray-800">
                 {CARACTERISTIQUES.find(c => c.key === selectedCarac)?.label}
               </h2>
-              <button
-                onClick={() => setSelectedCarac(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
+              <button onClick={() => setSelectedCarac(null)} className="text-gray-400 hover:text-gray-600">
                 <FiX size={20} />
               </button>
             </div>
@@ -181,7 +187,7 @@ const InstanceDetail = () => {
             ) : (
               <>
                 <p className="text-gray-500 text-sm mb-3">
-                  Les formulaires detailles seront ajoutes prochainement. Pour l'instant, vous pouvez saisir les donnees en format JSON.
+                  Le formulaire detaille sera ajoute prochainement. Pour l'instant, vous pouvez saisir les donnees en format JSON.
                 </p>
                 <textarea
                   value={editData}
