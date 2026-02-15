@@ -10,6 +10,7 @@ import SupermarketDetail from './pages/SupermarketDetail';
 import InstanceDetail from './pages/InstanceDetail';
 import Dashboard from './pages/Dashboard';
 import Dispositifs from './pages/Dispositifs';
+import Interpellations from './pages/Interpellations';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -35,6 +36,9 @@ const AppRoutes = () => {
         {/* Caracteristiques pages */}
         <Route path="/instance/:instanceId/dispositifs" element={
           <ProtectedRoute><Dispositifs /></ProtectedRoute>
+        } />
+        <Route path="/instance/:instanceId/interpellations" element={
+          <ProtectedRoute><Interpellations /></ProtectedRoute>
         } />
 
         <Route path="/dashboard" element={
