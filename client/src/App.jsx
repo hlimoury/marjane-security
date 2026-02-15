@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Dispositifs from './pages/Dispositifs';
 import Interpellations from './pages/Interpellations';
 import Accidents from './pages/Accidents';
+import AutresIncidents from './pages/AutresIncidents';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -43,6 +44,9 @@ const AppRoutes = () => {
         } />
         <Route path="/instance/:instanceId/accidents" element={
           <ProtectedRoute><Accidents /></ProtectedRoute>
+        } />
+        <Route path="/instance/:instanceId/autres_incidents" element={
+          <ProtectedRoute><AutresIncidents /></ProtectedRoute>
         } />
 
         <Route path="/dashboard" element={
