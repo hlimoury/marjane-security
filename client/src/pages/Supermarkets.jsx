@@ -7,6 +7,8 @@ import { FiPlus, FiEdit2, FiTrash2, FiEye, FiX, FiMapPin, FiShoppingCart } from 
 
 const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION SUD', 'REGION ORIENT', 'REGION NORD'];
 
+const ITEMS_PER_PAGE = 10;
+
 const Supermarkets = () => {
   const { user, isRegion, canManage } = useAuth();
   const navigate = useNavigate();
@@ -16,6 +18,7 @@ const Supermarkets = () => {
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ name: '', region: REGIONS[0] });
   const [filterRegion, setFilterRegion] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     loadSupermarkets();
@@ -92,6 +95,17 @@ const Supermarkets = () => {
     ? supermarkets.filter(s => s.region === filterRegion)
     : supermarkets;
 
+  const totalPages = Math.ceil(filteredSupermarkets.length / ITEMS_PER_PAGE);
+  const paginatedSupermarkets = filteredSupermarkets.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handleFilterChange = (value) => {
+    setFilterRegion(value);
+    setCurrentPage(1);
+  };
+
   const regionColor = (region) => {
     const colors = {
       'REGION CENTRE 1': 'bg-blue-100 text-blue-800',
@@ -127,7 +141,7 @@ const Supermarkets = () => {
           {canManage() && (
             <select
               value={filterRegion}
-              onChange={(e) => setFilterRegion(e.target.value)}
+              onChange={(e) => handleFilterChange(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
             >
               <option value="">Toutes les regions</option>
@@ -218,7 +232,7 @@ const Supermarkets = () => {
         </div>
       )}
 
-      {/* Supermarkets Grid */}
+      {/* Supermarkets Table */}
       {filteredSupermarkets.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl shadow-sm">
           <FiShoppingCart size={48} className="mx-auto text-gray-300 mb-4" />
@@ -231,47 +245,74 @@ const Supermarkets = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredSupermarkets.map((supermarket) => (
-            <div
-              key={supermarket.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow p-5"
-            >
-              <div className="flex justify-between items-start mb-3">
-                <h3 className="font-semibold text-gray-800 text-lg">{supermarket.name}</h3>
-              </div>
-
-              <div className="flex items-center space-x-2 mb-4">
-                <FiMapPin size={14} className="text-gray-400" />
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${regionColor(supermarket.region)}`}>
-                  {supermarket.region}
-                </span>
-              </div>
-
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => navigate(`/supermarket/${supermarket.id}`)}
-                  className="flex-1 flex items-center justify-center space-x-1 bg-green-50 hover:bg-green-100 text-green-700 py-2 rounded-lg text-sm font-medium transition-colors"
-                >
-                  <FiEye size={14} />
-                  <span>Voir</span>
-                </button>
-                <button
-                  onClick={() => handleEdit(supermarket)}
-                  className="flex items-center justify-center space-x-1 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                >
-                  <FiEdit2 size={14} />
-                </button>
-                <button
-                  onClick={() => handleDelete(supermarket.id, supermarket.name)}
-                  className="flex items-center justify-center space-x-1 bg-red-50 hover:bg-red-100 text-red-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                >
-                  <FiTrash2 size={14} />
-                </button>
-              </div>
+        <>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left py-3 px-5 font-semibold text-gray-600">Nom</th>
+                    <th className="text-left py-3 px-5 font-semibold text-gray-600">Region</th>
+                    <th className="text-left py-3 px-5 font-semibold text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedSupermarkets.map((supermarket) => (
+                    <tr key={supermarket.id} className="border-b border-gray-50 hover:bg-gray-50">
+                      <td className="py-3 px-5 text-gray-800 font-medium">{supermarket.name}</td>
+                      <td className="py-3 px-5">
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${regionColor(supermarket.region)}`}>
+                          {supermarket.region}
+                        </span>
+                      </td>
+                      <td className="py-3 px-5">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => navigate(`/supermarket/${supermarket.id}`)}
+                            className="bg-cyan-500 hover:bg-cyan-600 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors"
+                          >
+                            Voir
+                          </button>
+                          <button
+                            onClick={() => handleEdit(supermarket)}
+                            className="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors"
+                          >
+                            Modifier
+                          </button>
+                          <button
+                            onClick={() => handleDelete(supermarket.id, supermarket.name)}
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors"
+                          >
+                            Supprimer
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ))}
-        </div>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex flex-wrap gap-2 mt-5">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`min-w-[36px] h-9 px-3 rounded text-sm font-medium transition-colors ${
+                    page === currentPage
+                      ? 'bg-cyan-500 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
