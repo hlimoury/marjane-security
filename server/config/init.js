@@ -93,6 +93,14 @@ const initDatabase = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS supermarket_dispositifs (
+        id SERIAL PRIMARY KEY,
+        supermarket_id INTEGER UNIQUE REFERENCES supermarkets(id) ON DELETE CASCADE,
+        data JSONB DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
     console.log('Tables creees avec succes');

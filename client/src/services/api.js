@@ -50,6 +50,10 @@ export const deleteInstance = (id) => api.delete(`/instances/${id}`);
 export const getCaracteristique = (type, instanceId) => api.get(`/caracteristiques/${type}/${instanceId}`);
 export const saveCaracteristique = (type, instanceId, data) => api.post(`/caracteristiques/${type}/${instanceId}`, { data });
 
+// Supermarket-level Dispositifs
+export const getSupermarketDispositifs = (supermarketId) => api.get(`/supermarket-dispositifs/${supermarketId}`);
+export const saveSupermarketDispositifs = (supermarketId, data) => api.post(`/supermarket-dispositifs/${supermarketId}`, { data });
+
 // Dashboard
 export const getDashboardStats = () => api.get('/dashboard/stats');
 

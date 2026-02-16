@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getCaracteristique, saveCaracteristique, getInstance } from '../services/api';
+import { getSupermarketDispositifs, saveSupermarketDispositifs, getInstance } from '../services/api';
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiEdit2, FiRefreshCw, FiSave, FiX } from 'react-icons/fi';
 
@@ -37,11 +37,11 @@ const Dispositifs = () => {
 
   const loadData = async () => {
     try {
-      const [instRes, caracRes] = await Promise.all([
-        getInstance(instanceId),
-        getCaracteristique('dispositifs', instanceId)
-      ]);
+      const instRes = await getInstance(instanceId);
       setInstance(instRes.data);
+
+      const supermarketId = instRes.data.supermarket_id;
+      const caracRes = await getSupermarketDispositifs(supermarketId);
 
       if (caracRes.data.exists && caracRes.data.data) {
         setData({ ...DEFAULT_DATA, ...caracRes.data.data });
@@ -57,7 +57,7 @@ const Dispositifs = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await saveCaracteristique('dispositifs', instanceId, data);
+      await saveSupermarketDispositifs(instance.supermarket_id, data);
       toast.success('Dispositifs sauvegardes avec succes');
       setEditing(false);
     } catch (err) {
@@ -101,9 +101,14 @@ const Dispositifs = () => {
         <h1 className="text-2xl font-bold text-gray-800">Dispositifs de Securite et Surete</h1>
         {instance && (
           <p className="text-gray-500 text-sm mt-1">
-            {instance.supermarket_name} — {MONTHS[instance.month]} {instance.year}
+            {instance.supermarket_name} — Commun a toutes les instances
           </p>
         )}
+      </div>
+
+      {/* Info banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6 text-sm text-blue-700">
+        Ces donnees sont partagees entre toutes les instances de ce supermarche.
       </div>
 
       {/* Form Card */}
