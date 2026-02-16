@@ -40,7 +40,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
       </div>
     );
   }
@@ -55,8 +55,8 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <div className="flex items-center space-x-3">
-            <div className="bg-green-100 rounded-lg p-3">
-              <FiShoppingCart size={20} className="text-green-700" />
+            <div className="bg-blue-100 rounded-lg p-3">
+              <FiShoppingCart size={20} className="text-blue-700" />
             </div>
             <div>
               <p className="text-gray-500 text-sm">Total Supermarches</p>
@@ -133,7 +133,7 @@ const Dashboard = () => {
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div
-                className="bg-green-600 h-3 rounded-full transition-all"
+                className="bg-blue-600 h-3 rounded-full transition-all"
                 style={{ width: `${stats.completion.percentage}%` }}
               ></div>
             </div>

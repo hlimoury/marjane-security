@@ -80,7 +80,7 @@ const Dispositifs = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
       </div>
     );
   }
@@ -145,7 +145,7 @@ const Dispositifs = () => {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 <FiSave size={16} />
                 <span>{saving ? 'Sauvegarde...' : 'Sauvegarder'}</span>

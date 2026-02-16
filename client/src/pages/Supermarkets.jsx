@@ -37,7 +37,6 @@ const Supermarkets = () => {
 
   const openAddForm = () => {
     setEditingId(null);
-    // Region users: auto-set their region
     if (isRegion()) {
       setFormData({ name: '', region: user.region });
     } else {
@@ -120,7 +119,7 @@ const Supermarkets = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
       </div>
     );
   }
@@ -137,12 +136,11 @@ const Supermarkets = () => {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          {/* Region filter (for admin/main only) */}
           {canManage() && (
             <select
               value={filterRegion}
               onChange={(e) => handleFilterChange(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option value="">Toutes les regions</option>
               {REGIONS.map(r => (
@@ -151,10 +149,9 @@ const Supermarkets = () => {
             </select>
           )}
 
-          {/* Add button - visible to ALL users */}
           <button
             onClick={openAddForm}
-            className="flex items-center space-x-2 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center space-x-2 bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             <FiPlus size={16} />
             <span>Ajouter</span>
@@ -182,14 +179,13 @@ const Supermarkets = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   placeholder="Nom du supermarche"
                   required
                   autoFocus
                 />
               </div>
 
-              {/* Region dropdown - only for admin/main, region users get auto-assigned */}
               {isRegion() ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
@@ -203,7 +199,7 @@ const Supermarkets = () => {
                   <select
                     value={formData.region}
                     onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   >
                     {REGIONS.map(r => (
                       <option key={r} value={r}>{r}</option>
@@ -215,7 +211,7 @@ const Supermarkets = () => {
               <div className="flex space-x-3 pt-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-lg font-medium transition-colors"
+                  className="flex-1 bg-blue-700 hover:bg-blue-800 text-white py-2.5 rounded-lg font-medium transition-colors"
                 >
                   {editingId ? 'Modifier' : 'Ajouter'}
                 </button>
@@ -232,66 +228,60 @@ const Supermarkets = () => {
         </div>
       )}
 
-      {/* Supermarkets Table */}
+      {/* Supermarkets Grid */}
       {filteredSupermarkets.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl shadow-sm">
           <FiShoppingCart size={48} className="mx-auto text-gray-300 mb-4" />
           <p className="text-gray-500 text-lg">Aucun supermarche trouve</p>
           <button
             onClick={openAddForm}
-            className="mt-4 text-green-700 hover:text-green-800 font-medium"
+            className="mt-4 text-blue-700 hover:text-blue-800 font-medium"
           >
             + Ajouter votre premier supermarche
           </button>
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="text-left py-3 px-5 font-semibold text-gray-600">Nom</th>
-                    <th className="text-left py-3 px-5 font-semibold text-gray-600">Region</th>
-                    <th className="text-left py-3 px-5 font-semibold text-gray-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedSupermarkets.map((supermarket) => (
-                    <tr key={supermarket.id} className="border-b border-gray-50 hover:bg-gray-50">
-                      <td className="py-3 px-5 text-gray-800 font-medium">{supermarket.name}</td>
-                      <td className="py-3 px-5">
-                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${regionColor(supermarket.region)}`}>
-                          {supermarket.region}
-                        </span>
-                      </td>
-                      <td className="py-3 px-5">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => navigate(`/supermarket/${supermarket.id}`)}
-                            className="bg-cyan-500 hover:bg-cyan-600 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors"
-                          >
-                            Voir
-                          </button>
-                          <button
-                            onClick={() => handleEdit(supermarket)}
-                            className="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors"
-                          >
-                            Modifier
-                          </button>
-                          <button
-                            onClick={() => handleDelete(supermarket.id, supermarket.name)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors"
-                          >
-                            Supprimer
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {paginatedSupermarkets.map((supermarket) => (
+              <div
+                key={supermarket.id}
+                className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow p-5"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="font-semibold text-gray-800 text-lg">{supermarket.name}</h3>
+                </div>
+
+                <div className="flex items-center space-x-2 mb-4">
+                  <FiMapPin size={14} className="text-gray-400" />
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${regionColor(supermarket.region)}`}>
+                    {supermarket.region}
+                  </span>
+                </div>
+
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => navigate(`/supermarket/${supermarket.id}`)}
+                    className="flex-1 flex items-center justify-center space-x-1 bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <FiEye size={14} />
+                    <span>Voir</span>
+                  </button>
+                  <button
+                    onClick={() => handleEdit(supermarket)}
+                    className="flex items-center justify-center space-x-1 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <FiEdit2 size={14} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(supermarket.id, supermarket.name)}
+                    className="flex items-center justify-center space-x-1 bg-red-50 hover:bg-red-100 text-red-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <FiTrash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Pagination */}
@@ -303,7 +293,7 @@ const Supermarkets = () => {
                   onClick={() => setCurrentPage(page)}
                   className={`min-w-[36px] h-9 px-3 rounded text-sm font-medium transition-colors ${
                     page === currentPage
-                      ? 'bg-cyan-500 text-white'
+                      ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
