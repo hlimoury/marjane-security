@@ -128,12 +128,24 @@ const initDatabase = async () => {
       { username: 'sud', password: 'sud123', role: 'region', region: 'REGION SUD' },
       { username: 'orient', password: 'orient123', role: 'region', region: 'REGION ORIENT' },
       { username: 'nord', password: 'nord123', role: 'region', region: 'REGION NORD' },
-      { username: 'citycentre1', password: 'citycentre1123', role: 'city', region: 'REGION CENTRE 1' },
-      { username: 'citycentre02', password: 'citycentre02123', role: 'city', region: 'REGION CENTRE 02' },
-      { username: 'citysud', password: 'citysud123', role: 'city', region: 'REGION SUD' },
-      { username: 'cityorient', password: 'cityorient123', role: 'city', region: 'REGION ORIENT' },
-      { username: 'citynord', password: 'citynord123', role: 'city', region: 'REGION NORD' },
+      { username: 'anocentre1', password: 'anocentre1123', role: 'city', region: 'REGION CENTRE 1' },
+      { username: 'anocentre02', password: 'anocentre02123', role: 'city', region: 'REGION CENTRE 02' },
+      { username: 'anosud', password: 'anosud123', role: 'city', region: 'REGION SUD' },
+      { username: 'anoorient', password: 'anoorient123', role: 'city', region: 'REGION ORIENT' },
+      { username: 'anonord', password: 'anonord123', role: 'city', region: 'REGION NORD' },
     ];
+
+    // Rename old city* accounts to ano*
+    const renames = [
+      ['citycentre1', 'anocentre1'],
+      ['citycentre02', 'anocentre02'],
+      ['citysud', 'anosud'],
+      ['cityorient', 'anoorient'],
+      ['citynord', 'anonord'],
+    ];
+    for (const [oldName, newName] of renames) {
+      await pool.query('UPDATE users SET username = $1 WHERE username = $2', [newName, oldName]);
+    }
 
     for (const user of defaultUsers) {
       const existing = await pool.query('SELECT id FROM users WHERE username = $1', [user.username]);
