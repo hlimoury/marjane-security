@@ -111,6 +111,12 @@ const initDatabase = async () => {
       );
     `);
 
+    // Allow 'city' role in users table (safe to run on existing DB)
+    await pool.query(`
+      ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+      ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'main', 'region', 'city'));
+    `);
+
     console.log('Tables creees avec succes');
 
     // Seed default users
@@ -122,6 +128,11 @@ const initDatabase = async () => {
       { username: 'sud', password: 'sud123', role: 'region', region: 'REGION SUD' },
       { username: 'orient', password: 'orient123', role: 'region', region: 'REGION ORIENT' },
       { username: 'nord', password: 'nord123', role: 'region', region: 'REGION NORD' },
+      { username: 'citycentre1', password: 'citycentre1123', role: 'city', region: 'REGION CENTRE 1' },
+      { username: 'citycentre02', password: 'citycentre02123', role: 'city', region: 'REGION CENTRE 02' },
+      { username: 'citysud', password: 'citysud123', role: 'city', region: 'REGION SUD' },
+      { username: 'cityorient', password: 'cityorient123', role: 'city', region: 'REGION ORIENT' },
+      { username: 'citynord', password: 'citynord123', role: 'city', region: 'REGION NORD' },
     ];
 
     for (const user of defaultUsers) {

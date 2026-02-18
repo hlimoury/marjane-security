@@ -7,7 +7,7 @@ const router = express.Router();
 const checkSupermarketAccess = async (supermarketId, user) => {
   const result = await pool.query('SELECT * FROM supermarkets WHERE id = $1', [supermarketId]);
   if (result.rows.length === 0) return { error: 'Supermarche non trouve', status: 404 };
-  if (user.role === 'region' && result.rows[0].region !== user.region) {
+  if ((user.role === 'region' || user.role === 'city') && result.rows[0].region !== user.region) {
     return { error: 'Acces refuse', status: 403 };
   }
   return { supermarket: result.rows[0] };
@@ -15,6 +15,9 @@ const checkSupermarketAccess = async (supermarketId, user) => {
 
 // GET /api/supermarket-scoring/:supermarketId
 router.get('/:supermarketId', authMiddleware, async (req, res) => {
+  if (req.user.role === 'city') {
+    return res.status(403).json({ message: 'Acces refuse' });
+  }
   try {
     const { supermarketId } = req.params;
 
@@ -39,6 +42,9 @@ router.get('/:supermarketId', authMiddleware, async (req, res) => {
 
 // POST /api/supermarket-scoring/:supermarketId
 router.post('/:supermarketId', authMiddleware, async (req, res) => {
+  if (req.user.role === 'city') {
+    return res.status(403).json({ message: 'Acces refuse' });
+  }
   try {
     const { supermarketId } = req.params;
     const { data } = req.body;

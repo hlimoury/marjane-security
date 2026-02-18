@@ -10,7 +10,7 @@ const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION SUD', 'REGION OR
 const ITEMS_PER_PAGE = 10;
 
 const Supermarkets = () => {
-  const { user, isRegion, canManage } = useAuth();
+  const { user, isRegion, isCity, canManage } = useAuth();
   const navigate = useNavigate();
   const [supermarkets, setSupermarkets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -168,13 +168,15 @@ const Supermarkets = () => {
             </select>
           )}
 
-          <button
-            onClick={openAddForm}
-            className="flex items-center space-x-2 bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            <FiPlus size={16} />
-            <span>Ajouter</span>
-          </button>
+          {!isCity() && (
+            <button
+              onClick={openAddForm}
+              className="flex items-center space-x-2 bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              <FiPlus size={16} />
+              <span>Ajouter</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -252,12 +254,14 @@ const Supermarkets = () => {
         <div className="text-center py-16 bg-white rounded-xl shadow-sm">
           <FiShoppingCart size={48} className="mx-auto text-gray-300 mb-4" />
           <p className="text-gray-500 text-lg">Aucun supermarche trouve</p>
-          <button
-            onClick={openAddForm}
-            className="mt-4 text-blue-700 hover:text-blue-800 font-medium"
-          >
-            + Ajouter votre premier supermarche
-          </button>
+          {!isCity() && (
+            <button
+              onClick={openAddForm}
+              className="mt-4 text-blue-700 hover:text-blue-800 font-medium"
+            >
+              + Ajouter votre premier supermarche
+            </button>
+          )}
         </div>
       ) : (
         <>
@@ -286,18 +290,22 @@ const Supermarkets = () => {
                     <FiEye size={14} />
                     <span>Voir</span>
                   </button>
-                  <button
-                    onClick={() => handleEdit(supermarket)}
-                    className="flex items-center justify-center space-x-1 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    <FiEdit2 size={14} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(supermarket.id, supermarket.name)}
-                    className="flex items-center justify-center space-x-1 bg-red-50 hover:bg-red-100 text-red-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    <FiTrash2 size={14} />
-                  </button>
+                  {!isCity() && (
+                    <>
+                      <button
+                        onClick={() => handleEdit(supermarket)}
+                        className="flex items-center justify-center space-x-1 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        <FiEdit2 size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(supermarket.id, supermarket.name)}
+                        className="flex items-center justify-center space-x-1 bg-red-50 hover:bg-red-100 text-red-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        <FiTrash2 size={14} />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}

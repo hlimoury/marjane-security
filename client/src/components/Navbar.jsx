@@ -19,6 +19,7 @@ const Navbar = () => {
   const roleLabel = () => {
     if (user.role === 'admin') return 'Administrateur';
     if (user.role === 'main') return 'MAIN';
+    if (user.role === 'city') return `City — ${user.region}`;
     return user.region;
   };
 

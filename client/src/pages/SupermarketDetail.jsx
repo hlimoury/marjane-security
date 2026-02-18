@@ -23,7 +23,7 @@ const MONTHS = [
 const SupermarketDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { canManage } = useAuth();
+  const { isCity } = useAuth();
   const [supermarket, setSupermarket] = useState(null);
   const [instances, setInstances] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -142,13 +142,15 @@ const SupermarketDetail = () => {
             <p className="text-gray-500 text-sm mt-1">{supermarket.region}</p>
           </div>
 
-          <button
-            onClick={openAddForm}
-            className="flex items-center space-x-2 bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            <FiPlus size={16} />
-            <span>Ajouter une instance</span>
-          </button>
+          {!isCity() && (
+            <button
+              onClick={openAddForm}
+              className="flex items-center space-x-2 bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              <FiPlus size={16} />
+              <span>Ajouter une instance</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -215,12 +217,14 @@ const SupermarketDetail = () => {
         <div className="text-center py-16 bg-white rounded-xl shadow-sm">
           <FiCalendar size={48} className="mx-auto text-gray-300 mb-4" />
           <p className="text-gray-500 text-lg">Aucune instance pour ce supermarche</p>
-          <button
-            onClick={openAddForm}
-            className="mt-4 text-blue-700 hover:text-blue-800 font-medium"
-          >
-            + Ajouter la premiere instance
-          </button>
+          {!isCity() && (
+            <button
+              onClick={openAddForm}
+              className="mt-4 text-blue-700 hover:text-blue-800 font-medium"
+            >
+              + Ajouter la premiere instance
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
@@ -251,20 +255,24 @@ const SupermarketDetail = () => {
                   <span>Voir</span>
                   <FiChevronRight size={14} />
                 </button>
-                <button
-                  onClick={() => openEditForm(instance)}
-                  className="bg-yellow-50 hover:bg-yellow-100 text-yellow-600 p-2 rounded-lg transition-colors"
-                  title="Modifier"
-                >
-                  <FiEdit2 size={16} />
-                </button>
-                <button
-                  onClick={() => handleDeleteInstance(instance.id, instance.month, instance.year)}
-                  className="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-lg transition-colors"
-                  title="Supprimer"
-                >
-                  <FiTrash2 size={16} />
-                </button>
+                {!isCity() && (
+                  <>
+                    <button
+                      onClick={() => openEditForm(instance)}
+                      className="bg-yellow-50 hover:bg-yellow-100 text-yellow-600 p-2 rounded-lg transition-colors"
+                      title="Modifier"
+                    >
+                      <FiEdit2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteInstance(instance.id, instance.month, instance.year)}
+                      className="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-lg transition-colors"
+                      title="Supprimer"
+                    >
+                      <FiTrash2 size={16} />
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           ))}

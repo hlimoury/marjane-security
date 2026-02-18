@@ -9,7 +9,7 @@ router.get('/', authMiddleware, async (req, res) => {
   try {
     let result;
 
-    if (req.user.role === 'region') {
+    if (req.user.role === 'region' || req.user.role === 'city') {
       result = await pool.query(
         'SELECT * FROM supermarkets WHERE region = $1 ORDER BY name',
         [req.user.region]
@@ -37,7 +37,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
     const supermarket = result.rows[0];
 
-    if (req.user.role === 'region' && supermarket.region !== req.user.region) {
+    if ((req.user.role === 'region' || req.user.role === 'city') && supermarket.region !== req.user.region) {
       return res.status(403).json({ message: 'Acces refuse' });
     }
 
@@ -48,9 +48,13 @@ router.get('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// POST /api/supermarkets - Create supermarket (all authenticated users)
+// POST /api/supermarkets - Create supermarket
 router.post('/', authMiddleware, async (req, res) => {
   try {
+    if (req.user.role === 'city') {
+      return res.status(403).json({ message: 'Acces refuse' });
+    }
+
     const { name } = req.body;
     let { region } = req.body;
 
@@ -87,6 +91,10 @@ router.post('/', authMiddleware, async (req, res) => {
 // PUT /api/supermarkets/:id - Update supermarket
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
+    if (req.user.role === 'city') {
+      return res.status(403).json({ message: 'Acces refuse' });
+    }
+
     const { id } = req.params;
     const { name } = req.body;
     let { region } = req.body;
@@ -133,6 +141,10 @@ router.put('/:id', authMiddleware, async (req, res) => {
 // DELETE /api/supermarkets/:id - Delete supermarket
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
+    if (req.user.role === 'city') {
+      return res.status(403).json({ message: 'Acces refuse' });
+    }
+
     const { id } = req.params;
 
     // Check supermarket exists and region access

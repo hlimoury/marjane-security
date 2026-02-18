@@ -24,7 +24,7 @@ const checkInstanceAccess = async (instanceId, user) => {
   `, [instanceId]);
 
   if (result.rows.length === 0) return { error: 'Instance non trouvee', status: 404 };
-  if (user.role === 'region' && result.rows[0].region !== user.region) {
+  if ((user.role === 'region' || user.role === 'city') && result.rows[0].region !== user.region) {
     return { error: 'Acces refuse', status: 403 };
   }
   return { instance: result.rows[0] };
@@ -34,6 +34,10 @@ const checkInstanceAccess = async (instanceId, user) => {
 router.get('/:type/:instanceId', authMiddleware, validateTable, async (req, res) => {
   try {
     const { type, instanceId } = req.params;
+
+    if (req.user.role === 'city' && type !== 'anomalies') {
+      return res.status(403).json({ message: 'Acces refuse' });
+    }
 
     const access = await checkInstanceAccess(instanceId, req.user);
     if (access.error) return res.status(access.status).json({ message: access.error });
@@ -56,6 +60,10 @@ router.post('/:type/:instanceId', authMiddleware, validateTable, async (req, res
   try {
     const { type, instanceId } = req.params;
     const { data } = req.body;
+
+    if (req.user.role === 'city' && type !== 'anomalies') {
+      return res.status(403).json({ message: 'Acces refuse' });
+    }
 
     const access = await checkInstanceAccess(instanceId, req.user);
     if (access.error) return res.status(access.status).json({ message: access.error });

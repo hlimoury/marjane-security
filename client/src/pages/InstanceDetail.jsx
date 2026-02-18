@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { getInstance, getCaracteristique, saveCaracteristique } from '../services/api';
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiShield, FiAlertTriangle, FiAlertCircle, FiFileText, FiBook, FiMessageSquare, FiSearch, FiStar, FiCheck, FiX } from 'react-icons/fi';
@@ -34,6 +35,7 @@ const colorClasses = {
 const InstanceDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isCity } = useAuth();
   const [instance, setInstance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedCarac, setSelectedCarac] = useState(null);
@@ -132,7 +134,7 @@ const InstanceDetail = () => {
       {/* Caracteristiques Grid */}
       <h2 className="text-lg font-semibold text-gray-800 mb-4">Caracteristiques</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {CARACTERISTIQUES.map((carac) => {
+        {(isCity() ? CARACTERISTIQUES.filter(c => c.key === 'anomalies') : CARACTERISTIQUES).map((carac) => {
           const colors = colorClasses[carac.color];
           const Icon = carac.icon;
           const filled = caracStatus[carac.key];
