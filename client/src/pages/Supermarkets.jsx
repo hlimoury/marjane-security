@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getSupermarkets, createSupermarket, updateSupermarket, deleteSupermarket } from '../services/api';
 import { toast } from 'react-toastify';
-import { FiPlus, FiEdit2, FiTrash2, FiEye, FiX, FiMapPin, FiShoppingCart } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiEye, FiX, FiMapPin, FiShoppingCart, FiSearch } from 'react-icons/fi';
 
 const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION SUD', 'REGION ORIENT', 'REGION NORD'];
 
@@ -18,6 +18,7 @@ const Supermarkets = () => {
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ name: '', region: REGIONS[0] });
   const [filterRegion, setFilterRegion] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -90,9 +91,11 @@ const Supermarkets = () => {
     setFormData({ name: '', region: REGIONS[0] });
   };
 
-  const filteredSupermarkets = filterRegion
-    ? supermarkets.filter(s => s.region === filterRegion)
-    : supermarkets;
+  const filteredSupermarkets = supermarkets.filter(s => {
+    const matchesRegion = !filterRegion || s.region === filterRegion;
+    const matchesSearch = !searchQuery || s.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesRegion && matchesSearch;
+  });
 
   const totalPages = Math.ceil(filteredSupermarkets.length / ITEMS_PER_PAGE);
   const paginatedSupermarkets = filteredSupermarkets.slice(
@@ -102,6 +105,11 @@ const Supermarkets = () => {
 
   const handleFilterChange = (value) => {
     setFilterRegion(value);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
     setCurrentPage(1);
   };
 
@@ -135,7 +143,18 @@ const Supermarkets = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 items-center">
+          <div className="relative">
+            <FiSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder="Rechercher un supermarche..."
+              className="pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-56"
+            />
+          </div>
+
           {canManage() && (
             <select
               value={filterRegion}
