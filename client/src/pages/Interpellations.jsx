@@ -13,7 +13,7 @@ const EMPTY_FORM = {
   nombre: '',
   poursuites: '',
   valeur_kdh: '',
-  rayon: '',
+  rayons: [],
   date: '',
 };
 
@@ -25,6 +25,7 @@ const Interpellations = () => {
   const [instance, setInstance] = useState(null);
   const [entries, setEntries] = useState([]);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [rayonToAdd, setRayonToAdd] = useState('');
   const [editingIndex, setEditingIndex] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -74,10 +75,12 @@ const Interpellations = () => {
     }
 
     const newEntry = {
-      ...form,
+      type: form.type,
       nombre: Number(form.nombre),
       poursuites: Number(form.poursuites) || 0,
       valeur_kdh: Number(form.valeur_kdh) || 0,
+      rayons: form.rayons,
+      date: form.date,
     };
 
     if (editingIndex !== null) {
@@ -90,18 +93,21 @@ const Interpellations = () => {
     }
 
     setForm(EMPTY_FORM);
+    setRayonToAdd('');
   };
 
   const handleEdit = (index) => {
     const entry = entries[index];
+    const existingRayons = entry.rayons || (entry.rayon ? [entry.rayon] : []);
     setForm({
       type: entry.type,
       nombre: entry.nombre.toString(),
       poursuites: entry.poursuites.toString(),
       valeur_kdh: entry.valeur_kdh.toString(),
-      rayon: entry.rayon,
+      rayons: existingRayons,
       date: entry.date,
     });
+    setRayonToAdd('');
     setEditingIndex(index);
   };
 
@@ -113,6 +119,7 @@ const Interpellations = () => {
 
   const handleCancel = () => {
     setForm(EMPTY_FORM);
+    setRayonToAdd('');
     setEditingIndex(null);
   };
 
@@ -205,17 +212,49 @@ const Interpellations = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Rayon concerne</label>
-              <select
-                value={form.rayon}
-                onChange={(e) => setForm({ ...form, rayon: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"
-              >
-                <option value="">-- Selectionnez un rayon --</option>
-                {RAYONS.map(r => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Rayon(s) concerne(s)</label>
+              {form.rayons.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {form.rayons.map((r, i) => (
+                    <span key={i} className="inline-flex items-center bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-1 rounded-full">
+                      {r}
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, rayons: form.rayons.filter((_, idx) => idx !== i) })}
+                        className="ml-1.5 text-amber-600 hover:text-amber-900"
+                      >
+                        <FiX size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <select
+                  value={rayonToAdd}
+                  onChange={(e) => setRayonToAdd(e.target.value)}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"
+                >
+                  <option value="">-- Selectionnez un rayon --</option>
+                  {RAYONS.filter(r => !form.rayons.includes(r)).map(r => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (rayonToAdd && !form.rayons.includes(rayonToAdd)) {
+                      setForm({ ...form, rayons: [...form.rayons, rayonToAdd] });
+                      setRayonToAdd('');
+                    }
+                  }}
+                  disabled={!rayonToAdd}
+                  className="bg-amber-100 hover:bg-amber-200 disabled:bg-gray-100 disabled:text-gray-400 text-amber-700 px-3 py-2.5 rounded-lg transition-colors"
+                  title="Ajouter ce rayon"
+                >
+                  <FiPlus size={18} />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -274,7 +313,7 @@ const Interpellations = () => {
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Nombre</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Poursuites</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Valeur KDH</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600">Rayon</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-600">Rayon(s)</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Date</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Actions</th>
                 </tr>
@@ -286,7 +325,11 @@ const Interpellations = () => {
                     <td className="py-3 px-4 text-gray-800">{entry.nombre}</td>
                     <td className="py-3 px-4 text-gray-800">{entry.poursuites}</td>
                     <td className="py-3 px-4 text-gray-800">{entry.valeur_kdh}</td>
-                    <td className="py-3 px-4 text-gray-800">{entry.rayon}</td>
+                    <td className="py-3 px-4 text-gray-800">
+                      {(entry.rayons || (entry.rayon ? [entry.rayon] : [])).map((r, i) => (
+                        <span key={i} className="inline-block bg-amber-50 text-amber-700 text-xs font-medium px-2 py-0.5 rounded-full mr-1 mb-1">{r}</span>
+                      ))}
+                    </td>
                     <td className="py-3 px-4 text-gray-800">{entry.date}</td>
                     <td className="py-3 px-4">
                       <div className="flex gap-2">
