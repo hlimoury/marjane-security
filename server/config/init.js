@@ -135,17 +135,8 @@ const initDatabase = async () => {
       { username: 'anonord', password: 'anonord123', role: 'city', region: 'REGION NORD' },
     ];
 
-    // Rename old city* accounts to ano*
-    const renames = [
-      ['citycentre1', 'anocentre1'],
-      ['citycentre02', 'anocentre02'],
-      ['citysud', 'anosud'],
-      ['cityorient', 'anoorient'],
-      ['citynord', 'anonord'],
-    ];
-    for (const [oldName, newName] of renames) {
-      await pool.query('UPDATE users SET username = $1 WHERE username = $2', [newName, oldName]);
-    }
+    // Clean up old city* accounts
+    await pool.query("DELETE FROM users WHERE username IN ('citycentre1','citycentre02','citysud','cityorient','citynord')");
 
     for (const user of defaultUsers) {
       const existing = await pool.query('SELECT id FROM users WHERE username = $1', [user.username]);
@@ -156,6 +147,9 @@ const initDatabase = async () => {
           [user.username, hash, user.role, user.region]
         );
         console.log(`Utilisateur cree: ${user.username}`);
+      } else if (user.role === 'city') {
+        const hash = await bcrypt.hash(user.password, 10);
+        await pool.query('UPDATE users SET password_hash = $1 WHERE username = $2', [hash, user.username]);
       }
     }
 
