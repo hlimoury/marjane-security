@@ -9,6 +9,7 @@ const instanceRoutes = require('./routes/instances');
 const caracteristiqueRoutes = require('./routes/caracteristiques');
 const dashboardRoutes = require('./routes/dashboard');
 const supermarketDispositifsRoutes = require('./routes/supermarket-dispositifs');
+const supermarketScoringRoutes = require('./routes/supermarket-scoring');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -24,6 +25,7 @@ app.use('/api/instances', instanceRoutes);
 app.use('/api/caracteristiques', caracteristiqueRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/supermarket-dispositifs', supermarketDispositifsRoutes);
+app.use('/api/supermarket-scoring', supermarketScoringRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

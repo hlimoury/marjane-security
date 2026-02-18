@@ -54,6 +54,10 @@ export const saveCaracteristique = (type, instanceId, data) => api.post(`/caract
 export const getSupermarketDispositifs = (supermarketId) => api.get(`/supermarket-dispositifs/${supermarketId}`);
 export const saveSupermarketDispositifs = (supermarketId, data) => api.post(`/supermarket-dispositifs/${supermarketId}`, { data });
 
+// Supermarket-level Scoring
+export const getSupermarketScoring = (supermarketId) => api.get(`/supermarket-scoring/${supermarketId}`);
+export const saveSupermarketScoring = (supermarketId, data) => api.post(`/supermarket-scoring/${supermarketId}`, { data });
+
 // Dashboard
 export const getDashboardStats = () => api.get('/dashboard/stats');
 

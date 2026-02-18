@@ -53,7 +53,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
     }
 
     // Check which characteristics have data
-    const tables = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies', 'scoring'];
+    const tables = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies'];
     const status = {};
 
     for (const table of tables) {
@@ -61,9 +61,12 @@ router.get('/:id', authMiddleware, async (req, res) => {
       status[table] = check.rows.length > 0;
     }
 
-    // Dispositifs is stored at supermarket level
+    // Dispositifs and Scoring are stored at supermarket level
     const dispCheck = await pool.query('SELECT id FROM supermarket_dispositifs WHERE supermarket_id = $1', [instance.supermarket_id]);
     status.dispositifs = dispCheck.rows.length > 0;
+
+    const scorCheck = await pool.query('SELECT id FROM supermarket_scoring WHERE supermarket_id = $1', [instance.supermarket_id]);
+    status.scoring = scorCheck.rows.length > 0;
 
     res.json({ ...instance, caracteristiques_status: status });
   } catch (err) {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getCaracteristique, saveCaracteristique, getInstance } from '../services/api';
+import { getSupermarketScoring, saveSupermarketScoring, getInstance } from '../services/api';
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 
@@ -52,11 +52,12 @@ const Scoring = () => {
 
   const loadData = async () => {
     try {
-      const [instRes, caracRes] = await Promise.all([
-        getInstance(instanceId),
-        getCaracteristique('scoring', instanceId)
-      ]);
+      const instRes = await getInstance(instanceId);
       setInstance(instRes.data);
+
+      const supermarketId = instRes.data.supermarket_id;
+      const caracRes = await getSupermarketScoring(supermarketId);
+
       if (caracRes.data.exists && caracRes.data.data) {
         setData({
           securite_incendie: caracRes.data.data.securite_incendie || [],
@@ -75,7 +76,7 @@ const Scoring = () => {
   const saveAll = async (newData) => {
     setSaving(true);
     try {
-      await saveCaracteristique('scoring', instanceId, newData);
+      await saveSupermarketScoring(instance.supermarket_id, newData);
       setData(newData);
       toast.success('Sauvegarde avec succes');
     } catch (err) {
@@ -187,7 +188,7 @@ const Scoring = () => {
         <h1 className="text-2xl font-bold text-gray-800">Scoring</h1>
         {instance && (
           <p className="text-gray-500 text-sm mt-1">
-            {instance.supermarket_name} — {MONTHS[instance.month]} {instance.year}
+            {instance.supermarket_name} — Commun a toutes les instances
           </p>
         )}
       </div>
