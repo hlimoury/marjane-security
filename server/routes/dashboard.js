@@ -4,52 +4,101 @@ const { authMiddleware, adminOnly } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET /api/dashboard/stats - Get dashboard statistics (admin only)
 router.get('/stats', authMiddleware, adminOnly, async (req, res) => {
   try {
-    // Total supermarkets
-    const totalSupermarkets = await pool.query('SELECT COUNT(*) as count FROM supermarkets');
-
-    // Supermarkets per region
-    const perRegion = await pool.query(
-      'SELECT region, COUNT(*) as count FROM supermarkets GROUP BY region ORDER BY region'
-    );
-
-    // Total instances
-    const totalInstances = await pool.query('SELECT COUNT(*) as count FROM instances');
-
-    // Recent instances
-    const recentInstances = await pool.query(`
-      SELECT i.*, s.name as supermarket_name, s.region
+    // 1) All instance-level data with category entry counts in one query
+    const instanceData = await pool.query(`
+      SELECT
+        i.id as instance_id, i.month, i.year, i.supermarket_id, i.created_at,
+        s.name as supermarket_name, s.region,
+        COALESCE(jsonb_array_length(interp.data->'entries'), 0) as interpellations_count,
+        COALESCE(jsonb_array_length(acc.data->'entries'), 0) as accidents_count,
+        COALESCE(jsonb_array_length(ai.data->'entries'), 0) as autres_incidents_count,
+        COALESCE(jsonb_array_length(form.data->'entries'), 0) as formations_count,
+        COALESCE(jsonb_array_length(rec.data->'entries'), 0) as reclamations_count,
+        COALESCE(jsonb_array_length(ano.data->'entries'), 0) as anomalies_count,
+        CASE WHEN interp.id IS NOT NULL THEN 1 ELSE 0 END as has_interpellations,
+        CASE WHEN acc.id IS NOT NULL THEN 1 ELSE 0 END as has_accidents,
+        CASE WHEN ai.id IS NOT NULL THEN 1 ELSE 0 END as has_autres_incidents,
+        CASE WHEN form.id IS NOT NULL THEN 1 ELSE 0 END as has_formations,
+        CASE WHEN rec.id IS NOT NULL THEN 1 ELSE 0 END as has_reclamations,
+        CASE WHEN ano.id IS NOT NULL THEN 1 ELSE 0 END as has_anomalies
       FROM instances i
       JOIN supermarkets s ON i.supermarket_id = s.id
-      ORDER BY i.created_at DESC
-      LIMIT 10
+      LEFT JOIN interpellations interp ON i.id = interp.instance_id
+      LEFT JOIN accidents acc ON i.id = acc.instance_id
+      LEFT JOIN autres_incidents ai ON i.id = ai.instance_id
+      LEFT JOIN formations form ON i.id = form.instance_id
+      LEFT JOIN reclamations rec ON i.id = rec.instance_id
+      LEFT JOIN anomalies ano ON i.id = ano.instance_id
+      ORDER BY i.year DESC, i.month DESC
     `);
 
-    // Characteristics completion per instance (count how many of 8 are filled)
-    const tables = ['dispositifs', 'interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies', 'scoring'];
-    let totalFilled = 0;
-    let totalPossible = 0;
+    // 2) Supermarket-level data (dispositifs & scoring)
+    const supermarketData = await pool.query(`
+      SELECT
+        s.id, s.name, s.region,
+        CASE WHEN sd.id IS NOT NULL THEN 1 ELSE 0 END as has_dispositifs,
+        CASE WHEN ss.id IS NOT NULL THEN 1 ELSE 0 END as has_scoring
+      FROM supermarkets s
+      LEFT JOIN supermarket_dispositifs sd ON s.id = sd.supermarket_id
+      LEFT JOIN supermarket_scoring ss ON s.id = ss.supermarket_id
+      ORDER BY s.region, s.name
+    `);
 
-    const instanceCount = await pool.query('SELECT COUNT(*) as count FROM instances');
-    totalPossible = parseInt(instanceCount.rows[0].count) * 8;
+    // 3) Interpellation details for rayon breakdown
+    const interpDetails = await pool.query(`
+      SELECT interp.data
+      FROM interpellations interp
+      JOIN instances i ON interp.instance_id = i.id
+    `);
 
-    for (const table of tables) {
-      const count = await pool.query(`SELECT COUNT(*) as count FROM ${table}`);
-      totalFilled += parseInt(count.rows[0].count);
-    }
+    // Build rayon stats from interpellation entries
+    const rayonStats = {};
+    interpDetails.rows.forEach(row => {
+      const entries = row.data?.entries || [];
+      entries.forEach(entry => {
+        const rayons = entry.rayons || (entry.rayon ? [entry.rayon] : []);
+        rayons.forEach(r => {
+          rayonStats[r] = (rayonStats[r] || 0) + 1;
+        });
+      });
+    });
+
+    // 4) Accident details for type breakdown
+    const accidentDetails = await pool.query(`
+      SELECT acc.data
+      FROM accidents acc
+    `);
+    const accidentTypeStats = {};
+    accidentDetails.rows.forEach(row => {
+      const entries = row.data?.entries || [];
+      entries.forEach(entry => {
+        const t = entry.type || 'Autre';
+        accidentTypeStats[t] = (accidentTypeStats[t] || 0) + 1;
+      });
+    });
+
+    // 5) Anomalies details for category breakdown
+    const anomalyDetails = await pool.query(`
+      SELECT ano.data
+      FROM anomalies ano
+    `);
+    const anomalyCategoryStats = {};
+    anomalyDetails.rows.forEach(row => {
+      const entries = row.data?.entries || [];
+      entries.forEach(entry => {
+        const cat = entry.category || 'Autre';
+        anomalyCategoryStats[cat] = (anomalyCategoryStats[cat] || 0) + 1;
+      });
+    });
 
     res.json({
-      total_supermarkets: parseInt(totalSupermarkets.rows[0].count),
-      supermarkets_per_region: perRegion.rows,
-      total_instances: parseInt(totalInstances.rows[0].count),
-      recent_instances: recentInstances.rows,
-      completion: {
-        filled: totalFilled,
-        total: totalPossible,
-        percentage: totalPossible > 0 ? Math.round((totalFilled / totalPossible) * 100) : 0
-      }
+      instances: instanceData.rows,
+      supermarkets: supermarketData.rows,
+      rayon_stats: rayonStats,
+      accident_type_stats: accidentTypeStats,
+      anomaly_category_stats: anomalyCategoryStats,
     });
   } catch (err) {
     console.error('Erreur dashboard:', err);
