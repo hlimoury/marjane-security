@@ -52,20 +52,29 @@ router.get('/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ message: 'Acces refuse' });
     }
 
-    // Check which characteristics have data
+    // Check which characteristics have actual data (entries array not empty)
     const tables = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies'];
     const status = {};
 
     for (const table of tables) {
-      const check = await pool.query(`SELECT id FROM ${table} WHERE instance_id = $1`, [id]);
+      const check = await pool.query(
+        `SELECT id FROM ${table} WHERE instance_id = $1 AND jsonb_array_length(COALESCE(data->'entries', '[]'::jsonb)) > 0`,
+        [id]
+      );
       status[table] = check.rows.length > 0;
     }
 
-    // Dispositifs and Scoring are stored at supermarket level
-    const dispCheck = await pool.query('SELECT id FROM supermarket_dispositifs WHERE supermarket_id = $1', [instance.supermarket_id]);
+    // Dispositifs and Scoring are stored at supermarket level — check data is not empty
+    const dispCheck = await pool.query(
+      "SELECT id FROM supermarket_dispositifs WHERE supermarket_id = $1 AND data IS NOT NULL AND data != '{}'::jsonb",
+      [instance.supermarket_id]
+    );
     status.dispositifs = dispCheck.rows.length > 0;
 
-    const scorCheck = await pool.query('SELECT id FROM supermarket_scoring WHERE supermarket_id = $1', [instance.supermarket_id]);
+    const scorCheck = await pool.query(
+      "SELECT id FROM supermarket_scoring WHERE supermarket_id = $1 AND data IS NOT NULL AND data != '{}'::jsonb",
+      [instance.supermarket_id]
+    );
     status.scoring = scorCheck.rows.length > 0;
 
     res.json({ ...instance, caracteristiques_status: status });

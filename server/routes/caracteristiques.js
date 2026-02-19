@@ -68,18 +68,24 @@ router.post('/:type/:instanceId', authMiddleware, validateTable, async (req, res
     const access = await checkInstanceAccess(instanceId, req.user);
     if (access.error) return res.status(access.status).json({ message: access.error });
 
+    // If entries array is empty, delete the row entirely so status shows "Non rempli"
+    const isEmpty = Array.isArray(data.entries) && data.entries.length === 0;
+
+    if (isEmpty) {
+      await pool.query(`DELETE FROM ${type} WHERE instance_id = $1`, [instanceId]);
+      return res.json({ instance_id: parseInt(instanceId), data: { entries: [] }, deleted: true });
+    }
+
     // Check if record exists
     const existing = await pool.query(`SELECT id FROM ${type} WHERE instance_id = $1`, [instanceId]);
 
     let result;
     if (existing.rows.length > 0) {
-      // Update
       result = await pool.query(
         `UPDATE ${type} SET data = $1, updated_at = CURRENT_TIMESTAMP WHERE instance_id = $2 RETURNING *`,
         [JSON.stringify(data), instanceId]
       );
     } else {
-      // Insert
       result = await pool.query(
         `INSERT INTO ${type} (instance_id, data) VALUES ($1, $2) RETURNING *`,
         [instanceId, JSON.stringify(data)]

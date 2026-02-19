@@ -119,6 +119,14 @@ const initDatabase = async () => {
 
     console.log('Tables creees avec succes');
 
+    // Clean up old-format anomalie entries (old format used 'categorie' field, new uses 'axe')
+    const oldAnomalies = await pool.query(
+      "DELETE FROM anomalies WHERE data->'entries' IS NOT NULL AND EXISTS (SELECT 1 FROM jsonb_array_elements(data->'entries') elem WHERE elem->>'categorie' IS NOT NULL) RETURNING id"
+    );
+    if (oldAnomalies.rows.length > 0) {
+      console.log(`Supprime ${oldAnomalies.rows.length} anomalie(s) ancien format`);
+    }
+
     // Seed default users
     const defaultUsers = [
       { username: 'admin', password: 'admin123', role: 'admin', region: null },
