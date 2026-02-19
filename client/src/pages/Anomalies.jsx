@@ -4,47 +4,84 @@ import { getCaracteristique, saveCaracteristique, getInstance } from '../service
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 
-const CATEGORIES = [
+const AXES = [
   {
-    label: '1. Securite incendie & evacuation',
-    subs: ['Issue de secours bloquee', 'Extincteur masque', 'RIA masque'],
+    key: 'axe1',
+    label: 'AXE 1 — Hygiene & Nuisibles',
+    subs: [
+      'Sol sale',
+      'Cagettes / supports sales',
+      'Dechets visibles en surface de vente',
+      'Moucherons',
+      'Insectes rampants',
+      'Rongeurs',
+    ],
   },
   {
-    label: '2. Securite des personnes / risques d\'accident',
-    subs: ['Sol dangereux', 'Allee encombree', 'Balisage manquant'],
+    key: 'axe2',
+    label: 'AXE 2 — Disponibilite & Qualite Produit',
+    subs: [
+      'Produit abime',
+      'Produit perime',
+      'Rupture rayon Marche (Fruits & Legumes)',
+      'Rupture rayon Epicerie',
+      'Rupture rayon Boucherie',
+      'Rupture rayon Fromage',
+      'Rupture multiple rayons',
+    ],
   },
   {
-    label: '3. Hygiene & securite alimentaire',
-    subs: ['Rupture de la chaine du froid'],
+    key: 'axe3',
+    label: 'AXE 3 — Securite & Organisation',
+    subs: [
+      'Allee bloquee',
+      'Palette dangereuse',
+      'Issue de secours obstruee',
+      'Moyens d\'incendie bloques',
+      'Sol glissant',
+      'Reserve non rangee',
+      'Frigo encombre',
+      'Porte frigo ouverte',
+    ],
   },
   {
-    label: '4. Exploitation commerciale / continuite de service',
-    subs: ['Absence au stand boucherie', 'Absence au stand fromagerie', 'Absence au poste poissonnerie', 'Absence au poste de pesee FLEG'],
+    key: 'axe4',
+    label: 'AXE 4 — Experience Client & Climat Interne',
+    subs: [
+      'Attente critique stand fromage',
+      'Attente critique stand boucherie',
+      'Attente critique Balance FLEG',
+      'File d\'attente critique caisses',
+      'Nombre de caisses ouvertes insuffisant',
+      'Conflit visible entre salaries',
+      'Comportement non professionnel',
+    ],
   },
-  {
-    label: '5. Image magasin & attractivite commerciale',
-    subs: ['Rupture visuelle majeure'],
-  },
-  {
-    label: '6. Discipline & comportement du personnel',
-    subs: ['Tenue non conforme', 'Regroupement abusif', 'Utilisation du telephone personnel', 'Comportement indigne du salarie'],
-  },
-  {
-    label: '7. Gestion de la relation client',
-    subs: ['File d\'attente critique', 'Conflit visible'],
-  },
-  {
-    label: '8. Sante, securite & conformite EPI',
-    subs: ['EPI non porte'],
-  },
+];
+
+const CRITICITE_OPTIONS = [
+  { value: 'Critique', label: 'Critique', desc: 'Risque immediat client / image enseigne / securite', color: 'red' },
+  { value: 'Majeur', label: 'Majeur', desc: '', color: 'orange' },
+  { value: 'Modere', label: 'Modere', desc: '', color: 'yellow' },
+];
+
+const CORRECTION_OPTIONS = [
+  'Correction immediate (moins de 15 min)',
+  'Correction rapide (15 a 30 min)',
+  'Correction tardive (+ 30 min)',
+  'Non corrige dans la journee',
 ];
 
 const EMPTY_FORM = {
   date: '',
-  heure: '',
-  categorie: '',
-  sous_categorie: '',
-  produits: '',
+  axe: '',
+  sous_categories: [],
+  criticite: '',
+  heure_detection: '',
+  heure_information: '',
+  heure_prise_en_charge: '',
+  heure_conformite: '',
+  correction: '',
 };
 
 const MONTHS = ['', 'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
@@ -59,9 +96,7 @@ const Anomalies = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, [instanceId]);
+  useEffect(() => { loadData(); }, [instanceId]);
 
   const loadData = async () => {
     try {
@@ -96,8 +131,12 @@ const Anomalies = () => {
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    if (!form.date || !form.categorie || !form.sous_categorie) {
-      toast.error('Veuillez remplir la date, la categorie et la sous-categorie');
+    if (!form.date || !form.axe || form.sous_categories.length === 0) {
+      toast.error('Veuillez remplir la date, l\'axe et au moins une sous-categorie');
+      return;
+    }
+    if (!form.criticite) {
+      toast.error('Veuillez selectionner le niveau de criticite');
       return;
     }
 
@@ -114,20 +153,36 @@ const Anomalies = () => {
     setForm(EMPTY_FORM);
   };
 
-  const handleCategorieChange = (value) => {
-    setForm({ ...form, categorie: value, sous_categorie: '' });
+  const handleAxeChange = (value) => {
+    setForm({ ...form, axe: value, sous_categories: [] });
   };
 
-  const selectedCategory = CATEGORIES.find(c => c.label === form.categorie);
+  const toggleSousCategorie = (sub) => {
+    setForm(prev => {
+      const exists = prev.sous_categories.includes(sub);
+      return {
+        ...prev,
+        sous_categories: exists
+          ? prev.sous_categories.filter(s => s !== sub)
+          : [...prev.sous_categories, sub],
+      };
+    });
+  };
+
+  const selectedAxe = AXES.find(a => a.key === form.axe);
 
   const handleEdit = (index) => {
     const entry = entries[index];
     setForm({
       date: entry.date || '',
-      heure: entry.heure || '',
-      categorie: entry.categorie || '',
-      sous_categorie: entry.sous_categorie || '',
-      produits: entry.produits || '',
+      axe: entry.axe || '',
+      sous_categories: entry.sous_categories || [],
+      criticite: entry.criticite || '',
+      heure_detection: entry.heure_detection || '',
+      heure_information: entry.heure_information || '',
+      heure_prise_en_charge: entry.heure_prise_en_charge || '',
+      heure_conformite: entry.heure_conformite || '',
+      correction: entry.correction || '',
     });
     setEditingIndex(index);
   };
@@ -141,6 +196,15 @@ const Anomalies = () => {
   const handleCancel = () => {
     setForm(EMPTY_FORM);
     setEditingIndex(null);
+  };
+
+  const getAxeLabel = (key) => AXES.find(a => a.key === key)?.label || key;
+
+  const getCriticiteColor = (val) => {
+    if (val === 'Critique') return 'bg-red-100 text-red-700';
+    if (val === 'Majeur') return 'bg-orange-100 text-orange-700';
+    if (val === 'Modere') return 'bg-yellow-100 text-yellow-700';
+    return 'bg-gray-100 text-gray-700';
   };
 
   if (loading) {
@@ -170,79 +234,149 @@ const Anomalies = () => {
         )}
       </div>
 
-      {/* Add/Edit Form */}
+      {/* Form */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">
           {editingIndex !== null ? 'Modifier l\'anomalie' : 'Ajouter une Anomalie'}
         </h2>
 
-        <form onSubmit={handleAdd} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date de detection</label>
-              <input
-                type="date"
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 outline-none"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Heure de detection</label>
-              <input
-                type="time"
-                value={form.heure}
-                onChange={(e) => setForm({ ...form, heure: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Anomalie detectee</label>
-              <select
-                value={form.categorie}
-                onChange={(e) => handleCategorieChange(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 outline-none"
-                required
-              >
-                <option value="">Choisir...</option>
-                {CATEGORIES.map(c => (
-                  <option key={c.label} value={c.label}>{c.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {selectedCategory && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Sous-categorie</label>
-              <select
-                value={form.sous_categorie}
-                onChange={(e) => setForm({ ...form, sous_categorie: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 outline-none"
-                required
-              >
-                <option value="">-- Selectionnez --</option>
-                {selectedCategory.subs.map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
+        <form onSubmit={handleAdd} className="space-y-5">
+          {/* Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Produits (texte libre)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date de detection</label>
             <input
-              type="text"
-              value={form.produits}
-              onChange={(e) => setForm({ ...form, produits: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 outline-none"
-              placeholder="Ex: Tomates, Peche plate, ..."
+              type="date"
+              value={form.date}
+              onChange={(e) => setForm({ ...form, date: e.target.value })}
+              className="w-full sm:w-64 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 outline-none"
+              required
             />
           </div>
 
+          {/* 1. Anomalie detectee — AXE selection */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">1. Categorie d'anomalie constatee</h3>
+            <select
+              value={form.axe}
+              onChange={(e) => handleAxeChange(e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 outline-none"
+              required
+            >
+              <option value="">-- Selectionnez un axe --</option>
+              {AXES.map(a => (
+                <option key={a.key} value={a.key}>{a.label}</option>
+              ))}
+            </select>
+
+            {selectedAxe && (
+              <div className="mt-3 pl-1 space-y-2">
+                <p className="text-xs text-gray-500 font-medium mb-1">Cochez les anomalies constatees :</p>
+                {selectedAxe.subs.map(sub => (
+                  <label key={sub} className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={form.sous_categories.includes(sub)}
+                      onChange={() => toggleSousCategorie(sub)}
+                      className="w-4 h-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                    />
+                    <span className="text-sm text-gray-700 group-hover:text-gray-900">{sub}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 5. Niveau de criticite */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">2. Niveau de criticite</h3>
+            <div className="space-y-2">
+              {CRITICITE_OPTIONS.map(opt => (
+                <label key={opt.value} className="flex items-start gap-2 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="criticite"
+                    value={opt.value}
+                    checked={form.criticite === opt.value}
+                    onChange={(e) => setForm({ ...form, criticite: e.target.value })}
+                    className="mt-0.5 w-4 h-4 border-gray-300 text-pink-600 focus:ring-pink-500"
+                  />
+                  <div>
+                    <span className={`text-sm font-medium ${
+                      opt.color === 'red' ? 'text-red-700' : opt.color === 'orange' ? 'text-orange-700' : 'text-yellow-700'
+                    }`}>
+                      {opt.label}
+                    </span>
+                    {opt.desc && (
+                      <span className="text-xs text-gray-400 ml-1">({opt.desc})</span>
+                    )}
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* 6. Reaction du magasin */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">3. Reaction du magasin</h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Heure de detection de l'anomalie</label>
+                <input
+                  type="time"
+                  value={form.heure_detection}
+                  onChange={(e) => setForm({ ...form, heure_detection: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Heure d'information du magasin</label>
+                <input
+                  type="time"
+                  value={form.heure_information}
+                  onChange={(e) => setForm({ ...form, heure_information: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Heure de prise en charge effective</label>
+                <input
+                  type="time"
+                  value={form.heure_prise_en_charge}
+                  onChange={(e) => setForm({ ...form, heure_prise_en_charge: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Heure de mise en conformite constatee</label>
+                <input
+                  type="time"
+                  value={form.heure_conformite}
+                  onChange={(e) => setForm({ ...form, heure_conformite: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 outline-none text-sm"
+                />
+              </div>
+            </div>
+
+            <p className="text-xs font-medium text-gray-600 mb-2">Type de correction :</p>
+            <div className="space-y-2">
+              {CORRECTION_OPTIONS.map(opt => (
+                <label key={opt} className="flex items-center gap-2 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="correction"
+                    value={opt}
+                    checked={form.correction === opt}
+                    onChange={(e) => setForm({ ...form, correction: e.target.value })}
+                    className="w-4 h-4 border-gray-300 text-pink-600 focus:ring-pink-500"
+                  />
+                  <span className="text-sm text-gray-700 group-hover:text-gray-900">{opt}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Submit */}
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
@@ -275,46 +409,63 @@ const Anomalies = () => {
         {entries.length === 0 ? (
           <div className="text-center py-10 text-gray-400">Aucune anomalie enregistree.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600">Date</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600">Heure</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600">Categorie</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600">Sous-categorie</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600">Produits</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((entry, index) => (
-                  <tr key={index} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="py-3 px-4 text-gray-800">{entry.date}</td>
-                    <td className="py-3 px-4 text-gray-800">{entry.heure || '-'}</td>
-                    <td className="py-3 px-4 text-gray-800">{entry.categorie}</td>
-                    <td className="py-3 px-4 text-gray-800">{entry.sous_categorie}</td>
-                    <td className="py-3 px-4 text-gray-800">{entry.produits || '-'}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(index)}
-                          className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                        >
-                          Modifier
-                        </button>
-                        <button
-                          onClick={() => handleDelete(index)}
-                          className="bg-red-50 hover:bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                        >
-                          Supprimer
-                        </button>
+          <div className="divide-y divide-gray-100">
+            {entries.map((entry, index) => (
+              <div key={index} className="p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  {/* Left: details */}
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-gray-800">{entry.date}</span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getCriticiteColor(entry.criticite)}`}>
+                        {entry.criticite || '-'}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-gray-600 font-medium">{getAxeLabel(entry.axe)}</p>
+
+                    {entry.sous_categories && entry.sous_categories.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {entry.sous_categories.map((sub, i) => (
+                          <span key={i} className="inline-block bg-pink-50 text-pink-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                            {sub}
+                          </span>
+                        ))}
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    )}
+
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                      {entry.heure_detection && <span>Detection: {entry.heure_detection}</span>}
+                      {entry.heure_information && <span>Information: {entry.heure_information}</span>}
+                      {entry.heure_prise_en_charge && <span>Prise en charge: {entry.heure_prise_en_charge}</span>}
+                      {entry.heure_conformite && <span>Conformite: {entry.heure_conformite}</span>}
+                    </div>
+
+                    {entry.correction && (
+                      <p className="text-xs text-gray-500">
+                        <span className="font-medium">Correction:</span> {entry.correction}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Right: actions */}
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      onClick={() => handleEdit(index)}
+                      className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    >
+                      Modifier
+                    </button>
+                    <button
+                      onClick={() => handleDelete(index)}
+                      className="bg-red-50 hover:bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
