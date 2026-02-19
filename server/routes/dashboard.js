@@ -106,4 +106,45 @@ router.get('/stats', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
+// GET /api/dashboard/category/:type - Get all entries for a category with full context
+router.get('/category/:type', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { type } = req.params;
+    const validTypes = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies'];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({ message: 'Type invalide' });
+    }
+
+    const result = await pool.query(`
+      SELECT t.data, i.id as instance_id, i.month, i.year, i.supermarket_id,
+             s.name as supermarket_name, s.region
+      FROM ${type} t
+      JOIN instances i ON t.instance_id = i.id
+      JOIN supermarkets s ON i.supermarket_id = s.id
+      ORDER BY i.year DESC, i.month DESC, s.name
+    `);
+
+    const entries = [];
+    result.rows.forEach(row => {
+      const rowEntries = row.data?.entries || [];
+      rowEntries.forEach(entry => {
+        entries.push({
+          ...entry,
+          instance_id: row.instance_id,
+          supermarket_id: row.supermarket_id,
+          supermarket_name: row.supermarket_name,
+          region: row.region,
+          month: row.month,
+          year: row.year,
+        });
+      });
+    });
+
+    res.json(entries);
+  } catch (err) {
+    console.error('Erreur dashboard category:', err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 module.exports = router;

@@ -60,5 +60,6 @@ export const saveSupermarketScoring = (supermarketId, data) => api.post(`/superm
 
 // Dashboard
 export const getDashboardStats = () => api.get('/dashboard/stats');
+export const getDashboardCategory = (type) => api.get(`/dashboard/category/${type}`);
 
 export default api;

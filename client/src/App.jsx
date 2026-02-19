@@ -18,6 +18,7 @@ import Formations from './pages/Formations';
 import Reclamations from './pages/Reclamations';
 import Anomalies from './pages/Anomalies';
 import Scoring from './pages/Scoring';
+import DashboardAnomalies from './pages/DashboardAnomalies';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -69,6 +70,9 @@ const AppRoutes = () => {
 
         <Route path="/dashboard" element={
           <ProtectedRoute adminOnly><Dashboard /></ProtectedRoute>
+        } />
+        <Route path="/dashboard/:category" element={
+          <ProtectedRoute adminOnly><DashboardAnomalies /></ProtectedRoute>
         } />
 
         <Route path="*" element={<Navigate to={user ? "/supermarkets" : "/login"} replace />} />

@@ -298,9 +298,24 @@ const Dashboard = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
         <KpiCard icon={FiShoppingCart} label="Supermarches" value={filtered.totalSupermarkets} bgCls="bg-blue-100" textCls="text-blue-700" />
         <KpiCard icon={FiCalendar} label="Instances" value={filtered.totalInstances} bgCls="bg-indigo-100" textCls="text-indigo-700" />
-        {CATEGORIES.map(c => (
-          <KpiCard key={c.key} icon={c.icon} label={c.label} value={filtered.categoryTotals[c.key]} bgCls={c.bgCls} textCls={c.textCls} />
-        ))}
+        {CATEGORIES.map(c => {
+          const params = new URLSearchParams();
+          if (filterRegion) params.set('region', filterRegion);
+          if (filterYear) params.set('year', filterYear);
+          if (filterMonth) params.set('month', filterMonth);
+          const qs = params.toString();
+          return (
+            <KpiCard
+              key={c.key}
+              icon={c.icon}
+              label={c.label}
+              value={filtered.categoryTotals[c.key]}
+              bgCls={c.bgCls}
+              textCls={c.textCls}
+              onClick={() => navigate(`/dashboard/${c.key}${qs ? '?' + qs : ''}`)}
+            />
+          );
+        })}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-gray-500 text-xs font-medium">Completion</p>
@@ -567,8 +582,11 @@ const Dashboard = () => {
   );
 };
 
-const KpiCard = ({ icon: Icon, label, value, bgCls, textCls }) => (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+const KpiCard = ({ icon: Icon, label, value, bgCls, textCls, onClick }) => (
+  <div
+    className={`bg-white rounded-xl shadow-sm border border-gray-100 p-4 ${onClick ? 'cursor-pointer hover:shadow-md hover:border-gray-200 transition-all' : ''}`}
+    onClick={onClick}
+  >
     <div className="flex items-center gap-3">
       <div className={`${bgCls} rounded-lg p-2.5 shrink-0`}>
         <Icon size={18} className={textCls} />
@@ -578,6 +596,7 @@ const KpiCard = ({ icon: Icon, label, value, bgCls, textCls }) => (
         <p className="text-xl font-bold text-gray-800">{value}</p>
       </div>
     </div>
+    {onClick && <p className="text-xs text-blue-500 mt-2 font-medium">Voir le detail →</p>}
   </div>
 );
 
