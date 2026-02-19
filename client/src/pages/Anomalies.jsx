@@ -15,6 +15,8 @@ const AXES = [
       'Moucherons',
       'Insectes rampants',
       'Rongeurs',
+      'Tenue des salaries non conforme',
+      'Check-out caisse sale',
     ],
   },
   {
@@ -28,6 +30,7 @@ const AXES = [
       'Rupture rayon Boucherie',
       'Rupture rayon Fromage',
       'Rupture multiple rayons',
+      'Rupture rayon Poissonnerie',
     ],
   },
   {
@@ -42,6 +45,8 @@ const AXES = [
       'Reserve non rangee',
       'Frigo encombre',
       'Porte frigo ouverte',
+      'Non port des EPI',
+      'Absence de l\'ADS en poste',
     ],
   },
   {
@@ -50,11 +55,13 @@ const AXES = [
     subs: [
       'Attente critique stand fromage',
       'Attente critique stand boucherie',
+      'Attente critique stand Poissonnerie',
       'Attente critique Balance FLEG',
       'File d\'attente critique caisses',
       'Nombre de caisses ouvertes insuffisant',
       'Conflit visible entre salaries',
-      'Comportement non professionnel',
+      'Comportement non professionnel (personnel)',
+      'Comportement non professionnel ADS',
     ],
   },
 ];
