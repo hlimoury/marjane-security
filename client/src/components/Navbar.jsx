@@ -31,7 +31,7 @@ const Navbar = () => {
           <div className="flex items-center space-x-8">
             <Link to="/supermarkets" className="flex items-center space-x-2">
               <span className="text-yellow-400 font-bold text-xl">MARJANE</span>
-              <span className="text-blue-200 text-sm">Securite</span>
+              <span className="text-blue-200 text-sm">Sécurité</span>
             </Link>
 
             <div className="hidden md:flex items-center space-x-4">
@@ -44,7 +44,7 @@ const Navbar = () => {
                 }`}
               >
                 <FiShoppingCart size={16} />
-                <span>Supermarches</span>
+                <span>Supermarchés</span>
               </Link>
 
               {isAdmin() && (
@@ -72,10 +72,10 @@ const Navbar = () => {
             <button
               onClick={handleLogout}
               className="flex items-center space-x-1 bg-blue-900 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm transition-colors"
-              title="Deconnexion"
+              title="Déconnexion"
             >
               <FiLogOut size={16} />
-              <span className="hidden sm:inline">Deconnexion</span>
+              <span className="hidden sm:inline">Déconnexion</span>
             </button>
           </div>
         </div>
@@ -91,7 +91,7 @@ const Navbar = () => {
               : 'text-blue-100 hover:bg-blue-700'
           }`}
         >
-          Supermarches
+          Supermarchés
         </Link>
         {isAdmin() && (
           <Link

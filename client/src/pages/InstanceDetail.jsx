@@ -5,20 +5,20 @@ import { getInstance, getCaracteristique, saveCaracteristique } from '../service
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiShield, FiAlertTriangle, FiAlertCircle, FiFileText, FiBook, FiMessageSquare, FiSearch, FiStar, FiCheck, FiX } from 'react-icons/fi';
 
-const MONTHS = ['', 'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
+const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
 // Characteristics that have dedicated form pages (navigate instead of modal)
 const DEDICATED_PAGES = ['dispositifs', 'interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies', 'scoring'];
 
 const CARACTERISTIQUES = [
-  { key: 'dispositifs', label: 'Dispositifs', icon: FiShield, color: 'blue', description: 'Equipements et dispositifs de securite' },
-  { key: 'interpellations', label: 'Interpellations', icon: FiAlertTriangle, color: 'amber', description: 'Interpellations effectuees' },
+  { key: 'dispositifs', label: 'Dispositifs', icon: FiShield, color: 'blue', description: 'Équipements et dispositifs de sécurité' },
+  { key: 'interpellations', label: 'Interpellations', icon: FiAlertTriangle, color: 'amber', description: 'Interpellations effectuées' },
   { key: 'accidents', label: 'Accidents', icon: FiAlertCircle, color: 'red', description: 'Accidents survenus' },
   { key: 'autres_incidents', label: 'Autres Incidents', icon: FiFileText, color: 'orange', description: 'Incidents divers' },
-  { key: 'formations', label: 'Formation', icon: FiBook, color: 'green', description: 'Formations en securite' },
-  { key: 'reclamations', label: 'Reclamations', icon: FiMessageSquare, color: 'purple', description: 'Reclamations recues' },
-  { key: 'anomalies', label: 'Anomalies', icon: FiSearch, color: 'pink', description: 'Anomalies detectees' },
-  { key: 'scoring', label: 'Scoring', icon: FiStar, color: 'yellow', description: 'Scores et evaluations' },
+  { key: 'formations', label: 'Formation', icon: FiBook, color: 'green', description: 'Formations en sécurité' },
+  { key: 'reclamations', label: 'Réclamations', icon: FiMessageSquare, color: 'purple', description: 'Réclamations reçues' },
+  { key: 'anomalies', label: 'Anomalies', icon: FiSearch, color: 'pink', description: 'Anomalies détectées' },
+  { key: 'scoring', label: 'Scoring', icon: FiStar, color: 'yellow', description: 'Scores et évaluations' },
 ];
 
 const colorClasses = {
@@ -75,7 +75,7 @@ const InstanceDetail = () => {
       setCaracData(res.data);
       setEditData(JSON.stringify(res.data.data || {}, null, 2));
     } catch (err) {
-      toast.error('Erreur lors du chargement des donnees');
+      toast.error('Erreur lors du chargement des données');
     } finally {
       setCaracLoading(false);
     }
@@ -85,7 +85,7 @@ const InstanceDetail = () => {
     try {
       const parsedData = JSON.parse(editData);
       await saveCaracteristique(selectedCarac, id, parsedData);
-      toast.success('Donnees sauvegardees avec succes');
+      toast.success('Données sauvegardées avec succès');
       setSelectedCarac(null);
       loadInstance();
     } catch (err) {
@@ -118,7 +118,7 @@ const InstanceDetail = () => {
           className="flex items-center space-x-1 text-gray-500 hover:text-gray-700 text-sm mb-3 transition-colors"
         >
           <FiArrowLeft size={16} />
-          <span>Retour a {instance.supermarket_name}</span>
+          <span>Retour à {instance.supermarket_name}</span>
         </button>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
@@ -132,7 +132,7 @@ const InstanceDetail = () => {
       </div>
 
       {/* Caracteristiques Grid */}
-      <h2 className="text-lg font-semibold text-gray-800 mb-4">Caracteristiques</h2>
+      <h2 className="text-lg font-semibold text-gray-800 mb-4">Caractéristiques</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {(isCity() ? CARACTERISTIQUES.filter(c => c.key === 'anomalies') : CARACTERISTIQUES).map((carac) => {
           const colors = colorClasses[carac.color];
@@ -189,7 +189,7 @@ const InstanceDetail = () => {
             ) : (
               <>
                 <p className="text-gray-500 text-sm mb-3">
-                  Le formulaire detaille sera ajoute prochainement. Pour l'instant, vous pouvez saisir les donnees en format JSON.
+                  Le formulaire détaillé sera ajouté prochainement. Pour l'instant, vous pouvez saisir les données en format JSON.
                 </p>
                 <textarea
                   value={editData}

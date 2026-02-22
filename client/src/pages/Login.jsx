@@ -38,7 +38,7 @@ const Login = () => {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-blue-800">MARJANE</h1>
           <div className="h-1 w-20 bg-yellow-400 mx-auto mt-2 rounded"></div>
-          <p className="text-gray-500 mt-3 text-sm">Plateforme de Gestion de Securite</p>
+          <p className="text-gray-500 mt-3 text-sm">Plateforme de Gestion de Sécurité</p>
         </div>
 
         {/* Form */}

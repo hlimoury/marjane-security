@@ -5,33 +5,33 @@ import { toast } from 'react-toastify';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 
 const TYPES = [
-  'Depart de feu',
+  'Départ de feu',
   'Agression envers le personnel',
-  'Passage des autorites',
-  'Sinistre declare par un client',
-  'Acte de securisation',
+  'Passage des autorités',
+  'Sinistre déclaré par un client',
+  'Acte de sécurisation',
   'Autre',
 ];
 
 const SOUS_TYPES_FEU = [
-  'Defauts electriques',
-  'Equipements de froid',
-  'Equipement de cuisson',
+  'Défauts électriques',
+  'Équipements de froid',
+  'Équipement de cuisson',
   'Actes de malveillance',
-  'Accumulation de dechets',
+  'Accumulation de déchets',
   'Travaux par point chaud',
   'Autres',
 ];
 
 const EMPTY_FORM = {
   nombre: '',
-  type: 'Depart de feu',
+  type: 'Départ de feu',
   sous_type: '',
   date: '',
   detail: '',
 };
 
-const MONTHS = ['', 'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
+const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
 const AutresIncidents = () => {
   const { instanceId } = useParams();
@@ -70,7 +70,7 @@ const AutresIncidents = () => {
     try {
       await saveCaracteristique('autres_incidents', instanceId, { entries: newEntries });
       setEntries(newEntries);
-      toast.success('Sauvegarde avec succes');
+      toast.success('Sauvegardé avec succès');
     } catch (err) {
       toast.error('Erreur lors de la sauvegarde');
     } finally {
@@ -88,7 +88,7 @@ const AutresIncidents = () => {
     const newEntry = {
       ...form,
       nombre: Number(form.nombre),
-      sous_type: form.type === 'Depart de feu' ? form.sous_type : '',
+      sous_type: form.type === 'Départ de feu' ? form.sous_type : '',
     };
 
     if (editingIndex !== null) {
@@ -103,7 +103,7 @@ const AutresIncidents = () => {
   };
 
   const handleTypeChange = (newType) => {
-    setForm({ ...form, type: newType, sous_type: newType === 'Depart de feu' ? form.sous_type : '' });
+    setForm({ ...form, type: newType, sous_type: newType === 'Départ de feu' ? form.sous_type : '' });
   };
 
   const handleEdit = (index) => {
@@ -189,15 +189,15 @@ const AutresIncidents = () => {
           </div>
 
           {/* Conditional sub-type for "Depart de feu" */}
-          {form.type === 'Depart de feu' && (
+          {form.type === 'Départ de feu' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type de depart de feu</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Type de départ de feu</label>
               <select
                 value={form.sous_type}
                 onChange={(e) => setForm({ ...form, sous_type: e.target.value })}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
               >
-                <option value="">-- Selectionnez le sous-type --</option>
+                <option value="">-- Sélectionnez le sous-type --</option>
                 {SOUS_TYPES_FEU.map(s => (
                   <option key={s} value={s}>{s}</option>
                 ))}
@@ -217,13 +217,13 @@ const AutresIncidents = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Detail</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Détail</label>
             <input
               type="text"
               value={form.detail}
               onChange={(e) => setForm({ ...form, detail: e.target.value })}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
-              placeholder="Detail de l'incident"
+              placeholder="Détail de l'incident"
             />
           </div>
 
@@ -257,7 +257,7 @@ const AutresIncidents = () => {
         </div>
 
         {entries.length === 0 ? (
-          <div className="text-center py-10 text-gray-400">Aucun incident ajoute</div>
+          <div className="text-center py-10 text-gray-400">Aucun incident ajouté</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -267,7 +267,7 @@ const AutresIncidents = () => {
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Type</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Sous-type</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Date</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600">Detail</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-600">Détail</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Actions</th>
                 </tr>
               </thead>

@@ -7,17 +7,17 @@ import { FiArrowLeft, FiPlus, FiTrash2, FiEdit2, FiCalendar, FiChevronRight, FiX
 
 const MONTHS = [
   { value: 1, label: 'Janvier' },
-  { value: 2, label: 'Fevrier' },
+  { value: 2, label: 'Février' },
   { value: 3, label: 'Mars' },
   { value: 4, label: 'Avril' },
   { value: 5, label: 'Mai' },
   { value: 6, label: 'Juin' },
   { value: 7, label: 'Juillet' },
-  { value: 8, label: 'Aout' },
+  { value: 8, label: 'Août' },
   { value: 9, label: 'Septembre' },
   { value: 10, label: 'Octobre' },
   { value: 11, label: 'Novembre' },
-  { value: 12, label: 'Decembre' },
+  { value: 12, label: 'Décembre' },
 ];
 
 const SupermarketDetail = () => {
@@ -74,14 +74,14 @@ const SupermarketDetail = () => {
           month: parseInt(formData.month),
           year: parseInt(formData.year)
         });
-        toast.success('Instance modifiee avec succes');
+        toast.success('Instance modifiée avec succès');
       } else {
         await createInstance({
           supermarket_id: parseInt(id),
           month: parseInt(formData.month),
           year: parseInt(formData.year)
         });
-        toast.success('Instance ajoutee avec succes');
+        toast.success('Instance ajoutée avec succès');
       }
       setShowForm(false);
       setEditingInstanceId(null);
@@ -96,7 +96,7 @@ const SupermarketDetail = () => {
     if (!window.confirm(`Supprimer l'instance ${monthName} ${year} ?`)) return;
     try {
       await deleteInstance(instanceId);
-      toast.success('Instance supprimee');
+      toast.success('Instance supprimée');
       loadData();
     } catch (err) {
       toast.error('Erreur lors de la suppression');
@@ -133,7 +133,7 @@ const SupermarketDetail = () => {
           className="flex items-center space-x-1 text-gray-500 hover:text-gray-700 text-sm mb-3 transition-colors"
         >
           <FiArrowLeft size={16} />
-          <span>Retour aux supermarches</span>
+          <span>Retour aux supermarchés</span>
         </button>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -181,7 +181,7 @@ const SupermarketDetail = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Annee</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Année</label>
                 <select
                   value={formData.year}
                   onChange={(e) => setFormData({ ...formData, year: e.target.value })}
@@ -216,13 +216,13 @@ const SupermarketDetail = () => {
       {instances.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl shadow-sm">
           <FiCalendar size={48} className="mx-auto text-gray-300 mb-4" />
-          <p className="text-gray-500 text-lg">Aucune instance pour ce supermarche</p>
+          <p className="text-gray-500 text-lg">Aucune instance pour ce supermarché</p>
           {!isCity() && (
             <button
               onClick={openAddForm}
               className="mt-4 text-blue-700 hover:text-blue-800 font-medium"
             >
-              + Ajouter la premiere instance
+              + Ajouter la première instance
             </button>
           )}
         </div>
@@ -242,7 +242,7 @@ const SupermarketDetail = () => {
                     {getMonthName(instance.month)} {instance.year}
                   </h3>
                   <p className="text-gray-400 text-xs">
-                    Cree le {new Date(instance.created_at).toLocaleDateString('fr-FR')}
+                    Créé le {new Date(instance.created_at).toLocaleDateString('fr-FR')}
                   </p>
                 </div>
               </div>

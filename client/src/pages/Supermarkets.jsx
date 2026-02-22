@@ -30,7 +30,7 @@ const Supermarkets = () => {
       const res = await getSupermarkets();
       setSupermarkets(res.data);
     } catch (err) {
-      toast.error('Erreur lors du chargement des supermarches');
+      toast.error('Erreur lors du chargement des supermarchés');
     } finally {
       setLoading(false);
     }
@@ -55,10 +55,10 @@ const Supermarkets = () => {
 
       if (editingId) {
         await updateSupermarket(editingId, dataToSend);
-        toast.success('Supermarche modifie avec succes');
+        toast.success('Supermarché modifié avec succès');
       } else {
         await createSupermarket(dataToSend);
-        toast.success('Supermarche ajoute avec succes');
+        toast.success('Supermarché ajouté avec succès');
       }
       setShowForm(false);
       setEditingId(null);
@@ -75,10 +75,10 @@ const Supermarkets = () => {
   };
 
   const handleDelete = async (id, name) => {
-    if (!window.confirm(`Supprimer le supermarche "${name}" ? Cette action est irreversible.`)) return;
+    if (!window.confirm(`Supprimer le supermarché "${name}" ? Cette action est irréversible.`)) return;
     try {
       await deleteSupermarket(id);
-      toast.success('Supermarche supprime');
+      toast.success('Supermarché supprimé');
       loadSupermarkets();
     } catch (err) {
       toast.error('Erreur lors de la suppression');
@@ -137,9 +137,9 @@ const Supermarkets = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Supermarches</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Supermarchés</h1>
           <p className="text-gray-500 text-sm mt-1">
-            {isRegion() ? user.region : 'Toutes les regions'} — {filteredSupermarkets.length} supermarche(s)
+            {isRegion() ? user.region : 'Toutes les régions'} — {filteredSupermarkets.length} supermarché(s)
           </p>
         </div>
 
@@ -150,7 +150,7 @@ const Supermarkets = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Rechercher un supermarche..."
+              placeholder="Rechercher un supermarché..."
               className="pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-56"
             />
           </div>
@@ -161,7 +161,7 @@ const Supermarkets = () => {
               onChange={(e) => handleFilterChange(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
             >
-              <option value="">Toutes les regions</option>
+              <option value="">Toutes les régions</option>
               {REGIONS.map(r => (
                 <option key={r} value={r}>{r}</option>
               ))}
@@ -186,7 +186,7 @@ const Supermarkets = () => {
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold text-gray-800">
-                {editingId ? 'Modifier le supermarche' : 'Ajouter un supermarche'}
+                {editingId ? 'Modifier le supermarché' : 'Ajouter un supermarché'}
               </h2>
               <button onClick={cancelForm} className="text-gray-400 hover:text-gray-600">
                 <FiX size={20} />
@@ -201,7 +201,7 @@ const Supermarkets = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  placeholder="Nom du supermarche"
+                  placeholder="Nom du supermarché"
                   required
                   autoFocus
                 />
@@ -209,14 +209,14 @@ const Supermarkets = () => {
 
               {isRegion() ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Région</label>
                   <div className="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-600">
                     {user.region}
                   </div>
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Région</label>
                   <select
                     value={formData.region}
                     onChange={(e) => setFormData({ ...formData, region: e.target.value })}
@@ -253,13 +253,13 @@ const Supermarkets = () => {
       {filteredSupermarkets.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl shadow-sm">
           <FiShoppingCart size={48} className="mx-auto text-gray-300 mb-4" />
-          <p className="text-gray-500 text-lg">Aucun supermarche trouve</p>
+          <p className="text-gray-500 text-lg">Aucun supermarché trouvé</p>
           {!isCity() && (
             <button
               onClick={openAddForm}
               className="mt-4 text-blue-700 hover:text-blue-800 font-medium"
             >
-              + Ajouter votre premier supermarche
+              + Ajouter votre premier supermarché
             </button>
           )}
         </div>

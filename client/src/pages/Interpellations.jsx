@@ -17,7 +17,7 @@ const EMPTY_FORM = {
   date: '',
 };
 
-const MONTHS = ['', 'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
+const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
 const Interpellations = () => {
   const { instanceId } = useParams();
@@ -58,7 +58,7 @@ const Interpellations = () => {
     try {
       await saveCaracteristique('interpellations', instanceId, { entries: newEntries });
       setEntries(newEntries);
-      toast.success('Sauvegarde avec succes');
+      toast.success('Sauvegardé avec succès');
     } catch (err) {
       toast.error('Erreur lors de la sauvegarde');
     } finally {
@@ -200,7 +200,7 @@ const Interpellations = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Valeur marchandise recuperee (KDH)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Valeur marchandise récupérée (KDH)</label>
               <input
                 type="number"
                 step="0.001"
@@ -212,7 +212,7 @@ const Interpellations = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Rayon(s) concerne(s)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Rayon(s) concerné(s)</label>
               {form.rayons.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-2">
                   {form.rayons.map((r, i) => (
@@ -235,7 +235,7 @@ const Interpellations = () => {
                   onChange={(e) => setRayonToAdd(e.target.value)}
                   className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"
                 >
-                  <option value="">-- Selectionnez un rayon --</option>
+                  <option value="">-- Sélectionnez un rayon --</option>
                   {RAYONS.filter(r => !form.rayons.includes(r)).map(r => (
                     <option key={r} value={r}>{r}</option>
                   ))}
@@ -302,7 +302,7 @@ const Interpellations = () => {
 
         {entries.length === 0 ? (
           <div className="text-center py-10 text-gray-400">
-            Aucune interpellation ajoutee
+            Aucune interpellation ajoutée
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -337,7 +337,7 @@ const Interpellations = () => {
                           onClick={() => handleEdit(index)}
                           className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                         >
-                          Editer
+                          Éditer
                         </button>
                         <button
                           onClick={() => handleDelete(index)}

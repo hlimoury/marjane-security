@@ -7,22 +7,22 @@ import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 const SECTIONS = [
   {
     key: 'securite_incendie',
-    label: 'Securite Incendie',
-    indicateurs: ['Risque Incendie', 'Extincteurs+RIA', 'Desenfumage+Evacuation'],
+    label: 'Sécurité Incendie',
+    indicateurs: ['Risque Incendie', 'Extincteurs+RIA', 'Désenfumage+Évacuation'],
   },
   {
     key: 'securite_sante_travail',
-    label: 'Securite et Sante au Travail',
-    indicateurs: ['Organisation Securite', 'Risque Electrique', 'RM+Reserve+Frigos+Labos', 'Mise en Rayon+Caisse', 'Locaux Sociaux'],
+    label: 'Sécurité et Santé au Travail',
+    indicateurs: ['Organisation Sécurité', 'Risque Électrique', 'RM+Réserve+Frigos+Labos', 'Mise en Rayon+Caisse', 'Locaux Sociaux'],
   },
   {
     key: 'surete',
-    label: 'Surete',
-    indicateurs: ['Videosurveillance+Intrusion', 'Flux des biens et des personnes', 'Registres Securite', 'Surete et Securite Station Service', 'Securite des Fonds'],
+    label: 'Sûreté',
+    indicateurs: ['Vidéosurveillance+Intrusion', 'Flux des biens et des personnes', 'Registres Sécurité', 'Sûreté et Sécurité Station Service', 'Sécurité des Fonds'],
   },
 ];
 
-const MONTHS = ['', 'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
+const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
 const Scoring = () => {
   const { instanceId } = useParams();
@@ -78,7 +78,7 @@ const Scoring = () => {
     try {
       await saveSupermarketScoring(instance.supermarket_id, newData);
       setData(newData);
-      toast.success('Sauvegarde avec succes');
+      toast.success('Sauvegardé avec succès');
     } catch (err) {
       toast.error('Erreur lors de la sauvegarde');
     } finally {
@@ -188,7 +188,7 @@ const Scoring = () => {
         <h1 className="text-2xl font-bold text-gray-800">Scoring</h1>
         {instance && (
           <p className="text-gray-500 text-sm mt-1">
-            {instance.supermarket_name} — Commun a toutes les instances
+            {instance.supermarket_name} — Commun à toutes les instances
           </p>
         )}
       </div>
@@ -206,7 +206,7 @@ const Scoring = () => {
                 onChange={(e) => setForms({ ...forms, [section.key]: { ...forms[section.key], sous_indicateur: e.target.value } })}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none text-sm"
               >
-                <option value="">Selectionnez un indicateur</option>
+                <option value="">Sélectionnez un indicateur</option>
                 {section.indicateurs.map(ind => (
                   <option key={ind} value={ind}>{ind}</option>
                 ))}
@@ -258,7 +258,7 @@ const Scoring = () => {
 
           {/* Table */}
           {data[section.key].length === 0 ? (
-            <div className="text-center py-6 text-gray-400 text-sm">Aucun indicateur ajoute</div>
+            <div className="text-center py-6 text-gray-400 text-sm">Aucun indicateur ajouté</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -267,7 +267,7 @@ const Scoring = () => {
                     <th className="text-left py-3 px-4 font-semibold text-gray-600">Sous-indicateur</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-600">Niveau</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-600">Objectif</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Ecart</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Écart</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-600">Actions</th>
                   </tr>
                 </thead>
@@ -286,13 +286,13 @@ const Scoring = () => {
                             onClick={() => handleEdit(section.key, index)}
                             className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                           >
-                            Edit
+                            Éditer
                           </button>
                           <button
                             onClick={() => handleDelete(section.key, index)}
                             className="bg-red-50 hover:bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                           >
-                            Delete
+                            Supprimer
                           </button>
                         </div>
                       </td>
@@ -307,17 +307,17 @@ const Scoring = () => {
 
       {/* Global Summary */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-1">Niveau de Securite Global</h2>
+        <h2 className="text-xl font-semibold text-gray-800 mb-1">Niveau de Sécurité Global</h2>
         <p className="text-gray-500 text-sm mb-4">(Voici la moyenne des pourcentages de chaque section)</p>
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-semibold text-gray-600">Theme</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-600">Thème</th>
                 <th className="text-left py-3 px-4 font-semibold text-gray-600">Niveau (%)</th>
                 <th className="text-left py-3 px-4 font-semibold text-gray-600">Objectifs (%)</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-600">Ecart (%)</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-600">Écart (%)</th>
               </tr>
             </thead>
             <tbody>
@@ -337,7 +337,7 @@ const Scoring = () => {
               })}
               {/* Global row */}
               <tr className="bg-gray-50 font-bold">
-                <td className="py-3 px-4 text-gray-900">Niveau de Securite Global</td>
+                <td className="py-3 px-4 text-gray-900">Niveau de Sécurité Global</td>
                 <td className="py-3 px-4 text-gray-900">{globalAvg('niveau').toFixed(2)}%</td>
                 <td className="py-3 px-4 text-gray-900">{globalAvg('objectif').toFixed(2)}%</td>
                 <td className={`py-3 px-4 font-bold ${ecartColor(globalAvg('niveau'), globalAvg('objectif'))}`}>

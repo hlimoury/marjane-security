@@ -4,11 +4,11 @@ import { getCaracteristique, saveCaracteristique, getInstance } from '../service
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 
-const TYPES = ['Incendie', 'SST', 'Integration'];
+const TYPES = ['Incendie', 'SST', 'Intégration'];
 
 const EMPTY_FORM = { nombre: '', type: 'Incendie' };
 
-const MONTHS = ['', 'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
+const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
 const Formations = () => {
   const { instanceId } = useParams();
@@ -45,7 +45,7 @@ const Formations = () => {
     try {
       await saveCaracteristique('formations', instanceId, { entries: newEntries });
       setEntries(newEntries);
-      toast.success('Sauvegarde avec succes');
+      toast.success('Sauvegardé avec succès');
     } catch (err) {
       toast.error('Erreur lors de la sauvegarde');
     } finally {
@@ -140,7 +140,7 @@ const Formations = () => {
           <h2 className="text-lg font-semibold text-gray-800">Liste des Formations ({entries.length})</h2>
         </div>
         {entries.length === 0 ? (
-          <div className="text-center py-10 text-gray-400">Aucune formation ajoutee</div>
+          <div className="text-center py-10 text-gray-400">Aucune formation ajoutée</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

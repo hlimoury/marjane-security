@@ -9,7 +9,7 @@ import {
   FiChevronUp, FiEye
 } from 'react-icons/fi';
 
-const MONTHS = ['', 'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
+const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION SUD', 'REGION ORIENT', 'REGION NORD'];
 
 const REGION_COLORS = {
@@ -25,7 +25,7 @@ const CATEGORIES = [
   { key: 'accidents', label: 'Accidents', icon: FiAlertCircle, color: 'red', barCls: 'bg-red-500', bgCls: 'bg-red-100', textCls: 'text-red-700' },
   { key: 'autres_incidents', label: 'Autres Incidents', icon: FiFileText, color: 'orange', barCls: 'bg-orange-500', bgCls: 'bg-orange-100', textCls: 'text-orange-700' },
   { key: 'formations', label: 'Formations', icon: FiBook, color: 'green', barCls: 'bg-green-500', bgCls: 'bg-green-100', textCls: 'text-green-700' },
-  { key: 'reclamations', label: 'Reclamations', icon: FiMessageSquare, color: 'purple', barCls: 'bg-purple-500', bgCls: 'bg-purple-100', textCls: 'text-purple-700' },
+  { key: 'reclamations', label: 'Réclamations', icon: FiMessageSquare, color: 'purple', barCls: 'bg-purple-500', bgCls: 'bg-purple-100', textCls: 'text-purple-700' },
   { key: 'anomalies', label: 'Anomalies', icon: FiSearch, color: 'pink', barCls: 'bg-pink-500', bgCls: 'bg-pink-100', textCls: 'text-pink-700' },
 ];
 
@@ -239,7 +239,7 @@ const Dashboard = () => {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Dashboard Administrateur</h1>
-        <p className="text-gray-500 text-sm mt-1">Vue d'ensemble de la securite — Marjane</p>
+        <p className="text-gray-500 text-sm mt-1">Vue d'ensemble de la sécurité — Marjane</p>
       </div>
 
       {/* Filters Bar */}
@@ -255,7 +255,7 @@ const Dashboard = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setSmPage(1); }}
-              placeholder="Rechercher un supermarche..."
+              placeholder="Rechercher un supermarché..."
               className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
@@ -264,7 +264,7 @@ const Dashboard = () => {
             onChange={(e) => { setFilterRegion(e.target.value); setSmPage(1); }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
           >
-            <option value="">Toutes les regions</option>
+            <option value="">Toutes les régions</option>
             {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
           <select
@@ -272,7 +272,7 @@ const Dashboard = () => {
             onChange={(e) => { setFilterYear(e.target.value); setSmPage(1); }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
           >
-            <option value="">Toutes les annees</option>
+            <option value="">Toutes les années</option>
             {(filtered.years || []).map(y => <option key={y} value={y}>{y}</option>)}
           </select>
           <select
@@ -289,14 +289,14 @@ const Dashboard = () => {
             onClick={() => { setFilterRegion(''); setFilterYear(''); setFilterMonth(''); setSearchQuery(''); setSmPage(1); }}
             className="mt-3 text-xs text-blue-600 hover:text-blue-800 font-medium"
           >
-            Reinitialiser les filtres
+            Réinitialiser les filtres
           </button>
         )}
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
-        <KpiCard icon={FiShoppingCart} label="Supermarches" value={filtered.totalSupermarkets} bgCls="bg-blue-100" textCls="text-blue-700" />
+        <KpiCard icon={FiShoppingCart} label="Supermarchés" value={filtered.totalSupermarkets} bgCls="bg-blue-100" textCls="text-blue-700" />
         <KpiCard icon={FiCalendar} label="Instances" value={filtered.totalInstances} bgCls="bg-indigo-100" textCls="text-indigo-700" />
         {CATEGORIES.map(c => {
           const params = new URLSearchParams();
@@ -329,19 +329,19 @@ const Dashboard = () => {
               style={{ width: `${filtered.completionPct}%` }}
             />
           </div>
-          <p className="text-gray-400 text-xs">{filtered.filledCount} / {filtered.totalPossible} remplies</p>
+          <p className="text-gray-400 text-xs">{filtered.filledCount} / {filtered.totalPossible} complétion</p>
         </div>
       </div>
 
       {/* Region Breakdown */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <SectionHeader title="Repartition par Region" sectionKey="region" icon={FiMapPin} />
+        <SectionHeader title="Répartition par Région" sectionKey="region" icon={FiMapPin} />
         {expandedSection.region && (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-left py-2 px-3 font-semibold text-gray-600">Region</th>
+                  <th className="text-left py-2 px-3 font-semibold text-gray-600">Région</th>
                   <th className="text-center py-2 px-2 font-semibold text-gray-600">Superm.</th>
                   <th className="text-center py-2 px-2 font-semibold text-gray-600">Instances</th>
                   {CATEGORIES.map(c => (
@@ -397,7 +397,7 @@ const Dashboard = () => {
       {/* Category Breakdown Visual */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <SectionHeader title="Totaux par Categorie" sectionKey="category" icon={FiTrendingUp} />
+          <SectionHeader title="Totaux par Catégorie" sectionKey="category" icon={FiTrendingUp} />
           {expandedSection.category && (
             <div className="mt-4 space-y-3">
               {CATEGORIES.map(c => {
@@ -429,7 +429,7 @@ const Dashboard = () => {
           {expandedSection.rayons && (
             <div className="mt-4">
               {Object.keys(filtered.rayonStats).length === 0 ? (
-                <p className="text-gray-400 text-sm">Aucune donnee</p>
+                <p className="text-gray-400 text-sm">Aucune donnée</p>
               ) : (
                 <div className="space-y-3">
                   {Object.entries(filtered.rayonStats)
@@ -455,7 +455,7 @@ const Dashboard = () => {
 
       {/* Monthly Breakdown */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <SectionHeader title="Donnees Mensuelles" sectionKey="monthly" icon={FiCalendar} />
+        <SectionHeader title="Données Mensuelles" sectionKey="monthly" icon={FiCalendar} />
         {expandedSection.monthly && (
           <div className="mt-4 overflow-x-auto">
             {filtered.monthly.length === 0 ? (
@@ -464,7 +464,7 @@ const Dashboard = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-left py-2 px-3 font-semibold text-gray-600">Periode</th>
+                    <th className="text-left py-2 px-3 font-semibold text-gray-600">Période</th>
                     <th className="text-center py-2 px-2 font-semibold text-gray-600">Instances</th>
                     {CATEGORIES.map(c => (
                       <th key={c.key} className="text-center py-2 px-2 font-semibold text-gray-600" title={c.label}>
@@ -499,11 +499,11 @@ const Dashboard = () => {
 
       {/* Supermarket Detail Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <SectionHeader title={`Detail par Supermarche (${sortedSupermarkets.length})`} sectionKey="supermarkets" icon={FiShoppingCart} />
+        <SectionHeader title={`Détail par Supermarché (${sortedSupermarkets.length})`} sectionKey="supermarkets" icon={FiShoppingCart} />
         {expandedSection.supermarkets && (
           <div className="mt-4">
             {sortedSupermarkets.length === 0 ? (
-              <p className="text-gray-400 text-sm">Aucun supermarche</p>
+              <p className="text-gray-400 text-sm">Aucun supermarché</p>
             ) : (
               <>
                 <div className="overflow-x-auto">
@@ -511,10 +511,10 @@ const Dashboard = () => {
                     <thead>
                       <tr className="border-b border-gray-200">
                         <SortTh label="Nom" col="name" sort={supermarketSort} onClick={handleSmSort} />
-                        <SortTh label="Region" col="region" sort={supermarketSort} onClick={handleSmSort} />
+                        <SortTh label="Région" col="region" sort={supermarketSort} onClick={handleSmSort} />
                         <SortTh label="Instances" col="instance_count" sort={supermarketSort} onClick={handleSmSort} />
-                        <SortTh label="Entrees" col="total_entries" sort={supermarketSort} onClick={handleSmSort} />
-                        <th className="text-center py-2 px-2 font-semibold text-gray-600">Completion</th>
+                        <SortTh label="Entrées" col="total_entries" sort={supermarketSort} onClick={handleSmSort} />
+                        <th className="text-center py-2 px-2 font-semibold text-gray-600">Complétion</th>
                         <th className="text-center py-2 px-2 font-semibold text-gray-600">Actions</th>
                       </tr>
                     </thead>
@@ -596,7 +596,7 @@ const KpiCard = ({ icon: Icon, label, value, bgCls, textCls, onClick }) => (
         <p className="text-xl font-bold text-gray-800">{value}</p>
       </div>
     </div>
-    {onClick && <p className="text-xs text-blue-500 mt-2 font-medium">Voir le detail →</p>}
+    {onClick && <p className="text-xs text-blue-500 mt-2 font-medium">Voir le détail →</p>}
   </div>
 );
 

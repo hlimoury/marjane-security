@@ -9,7 +9,7 @@ const CAUSES = [
   'Manutention manuelle',
   'Hachoirs',
   'Trancheuse',
-  'Scie Electrique boucherie',
+  'Scie Électrique boucherie',
   'Outils tranchants',
   'Chutes d\'objets',
   'Agressions et violences',
@@ -24,7 +24,7 @@ const EMPTY_FORM = {
   date: '',
 };
 
-const MONTHS = ['', 'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
+const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
 const Accidents = () => {
   const { instanceId } = useParams();
@@ -63,7 +63,7 @@ const Accidents = () => {
     try {
       await saveCaracteristique('accidents', instanceId, { entries: newEntries });
       setEntries(newEntries);
-      toast.success('Sauvegarde avec succes');
+      toast.success('Sauvegardé avec succès');
     } catch (err) {
       toast.error('Erreur lors de la sauvegarde');
     } finally {
@@ -165,7 +165,7 @@ const Accidents = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de jours d'arret de travail</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de jours d'arrêt de travail</label>
               <input
                 type="number"
                 min="0"
@@ -184,7 +184,7 @@ const Accidents = () => {
               onChange={(e) => setForm({ ...form, accident_declare: e.target.checked })}
               className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
             />
-            <label htmlFor="accident_declare" className="text-sm font-medium text-gray-700">Accident declare ?</label>
+            <label htmlFor="accident_declare" className="text-sm font-medium text-gray-700">Accident déclaré ?</label>
           </div>
 
           <div>
@@ -195,7 +195,7 @@ const Accidents = () => {
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
               required
             >
-              <option value="">-- Selectionnez la cause --</option>
+              <option value="">-- Sélectionnez la cause --</option>
               {CAUSES.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -243,15 +243,15 @@ const Accidents = () => {
         </div>
 
         {entries.length === 0 ? (
-          <div className="text-center py-10 text-gray-400">Aucun accident ajoute</div>
+          <div className="text-center py-10 text-gray-400">Aucun accident ajouté</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Nombre d'accidents</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600">Jours d'arret</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600">Accident declare</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-600">Jours d'arrêt</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-600">Accident déclaré</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Cause</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Date</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Actions</th>

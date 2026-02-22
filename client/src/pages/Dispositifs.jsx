@@ -10,17 +10,17 @@ const FIELDS = [
   { key: 'portes_coupe_feu', label: 'Portes coupe-feu', type: 'number' },
   { key: 'issues_de_secours', label: 'Issues de secours', type: 'number' },
   { key: 'skydomes', label: 'Skydomes', type: 'number' },
-  { key: 'cameras', label: 'Cameras', type: 'number' },
+  { key: 'cameras', label: 'Caméras', type: 'number' },
   { key: 'nvr_dvr', label: 'NVR/DVR', type: 'number' },
   { key: 'ads', label: 'ADS', type: 'decimal' },
-  { key: 'superviseurs_securite', label: 'Superviseur(s) de Securite', type: 'number' },
-  { key: 'renfort_securite', label: 'Renfort Securite', type: 'number' },
-  { key: 'periode_renfort', label: 'Periode du Renfort', type: 'number', suffix: 'jours' },
+  { key: 'superviseurs_securite', label: 'Superviseur(s) de Sécurité', type: 'number' },
+  { key: 'renfort_securite', label: 'Renfort Sécurité', type: 'number' },
+  { key: 'periode_renfort', label: 'Période du Renfort', type: 'number', suffix: 'jours' },
 ];
 
 const DEFAULT_DATA = FIELDS.reduce((acc, f) => ({ ...acc, [f.key]: 0 }), {});
 
-const MONTHS = ['', 'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
+const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
 const Dispositifs = () => {
   const { instanceId } = useParams();
@@ -58,7 +58,7 @@ const Dispositifs = () => {
     setSaving(true);
     try {
       await saveSupermarketDispositifs(instance.supermarket_id, data);
-      toast.success('Dispositifs sauvegardes avec succes');
+      toast.success('Dispositifs sauvegardés avec succès');
       setEditing(false);
     } catch (err) {
       toast.error('Erreur lors de la sauvegarde');
@@ -68,7 +68,7 @@ const Dispositifs = () => {
   };
 
   const handleReset = () => {
-    if (!window.confirm('Reinitialiser toutes les valeurs a 0 ?')) return;
+    if (!window.confirm('Réinitialiser toutes les valeurs à 0 ?')) return;
     setData(DEFAULT_DATA);
     setEditing(true);
   };
@@ -98,17 +98,17 @@ const Dispositifs = () => {
 
       {/* Title */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Dispositifs de Securite et Surete</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Dispositifs de Sécurité et Sûreté</h1>
         {instance && (
           <p className="text-gray-500 text-sm mt-1">
-            {instance.supermarket_name} — Commun a toutes les instances
+            {instance.supermarket_name} — Commun à toutes les instances
           </p>
         )}
       </div>
 
       {/* Info banner */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6 text-sm text-blue-700">
-        Ces donnees sont partagees entre toutes les instances de ce supermarche.
+        Ces données sont partagées entre toutes les instances de ce supermarché.
       </div>
 
       {/* Form Card */}
@@ -170,14 +170,14 @@ const Dispositifs = () => {
                 className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 <FiEdit2 size={16} />
-                <span>Editer</span>
+                <span>Éditer</span>
               </button>
               <button
                 onClick={handleReset}
                 className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 <FiRefreshCw size={16} />
-                <span>Reinitialiser</span>
+                <span>Réinitialiser</span>
               </button>
             </>
           )}

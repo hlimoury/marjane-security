@@ -4,14 +4,14 @@ import { getDashboardCategory } from '../services/api';
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiSearch, FiFilter, FiChevronDown, FiChevronUp, FiEye } from 'react-icons/fi';
 
-const MONTHS = ['', 'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
+const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION SUD', 'REGION ORIENT', 'REGION NORD'];
 
 const AXES_MAP = {
-  axe1: 'AXE 1 — Hygiene & Nuisibles',
-  axe2: 'AXE 2 — Disponibilite & Qualite Produit',
-  axe3: 'AXE 3 — Securite & Organisation',
-  axe4: 'AXE 4 — Experience Client & Climat Interne',
+  axe1: 'AXE 1 — Hygiène & Nuisibles',
+  axe2: 'AXE 2 — Disponibilité & Qualité Produit',
+  axe3: 'AXE 3 — Sécurité & Organisation',
+  axe4: 'AXE 4 — Expérience Client & Climat Interne',
 };
 
 const REGION_COLORS = {
@@ -25,7 +25,7 @@ const REGION_COLORS = {
 const CRITICITE_COLORS = {
   'Critique': 'bg-red-100 text-red-700',
   'Majeur': 'bg-orange-100 text-orange-700',
-  'Modere': 'bg-yellow-100 text-yellow-700',
+  'Modéré': 'bg-yellow-100 text-yellow-700',
 };
 
 const CATEGORY_LABELS = {
@@ -34,7 +34,7 @@ const CATEGORY_LABELS = {
   accidents: 'Accidents',
   autres_incidents: 'Autres Incidents',
   formations: 'Formations',
-  reclamations: 'Reclamations',
+  reclamations: 'Réclamations',
 };
 
 const ITEMS_PER_PAGE = 20;
@@ -180,8 +180,8 @@ const DashboardAnomalies = () => {
       </button>
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">{CATEGORY_LABELS[catType] || catType} — Detail complet</h1>
-        <p className="text-gray-500 text-sm mt-1">{filtered.length} entree(s) trouvee(s)</p>
+        <h1 className="text-2xl font-bold text-gray-800">{CATEGORY_LABELS[catType] || catType} — Détail complet</h1>
+        <p className="text-gray-500 text-sm mt-1">{filtered.length} entrée(s) trouvée(s)</p>
       </div>
 
       {/* Summary cards — anomalies only */}
@@ -196,7 +196,7 @@ const DashboardAnomalies = () => {
             ))}
           </div>
           <div className="grid grid-cols-3 gap-3 mb-6">
-            {['Critique', 'Majeur', 'Modere'].map(c => (
+            {['Critique', 'Majeur', 'Modéré'].map(c => (
               <div key={c} className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 flex items-center gap-3">
                 <span className={`text-xs font-medium px-2 py-1 rounded-full ${CRITICITE_COLORS[c]}`}>{c}</span>
                 <span className="text-lg font-bold text-gray-800">{stats.critCounts[c] || 0}</span>
@@ -219,18 +219,18 @@ const DashboardAnomalies = () => {
               type="text"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Supermarche, sous-categorie..."
+              placeholder="Supermarché, sous-catégorie..."
               className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none"
             />
           </div>
           <select value={filterRegion} onChange={(e) => { setFilterRegion(e.target.value); setPage(1); }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none">
-            <option value="">Toutes les regions</option>
+            <option value="">Toutes les régions</option>
             {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
           <select value={filterYear} onChange={(e) => { setFilterYear(e.target.value); setPage(1); }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none">
-            <option value="">Toutes les annees</option>
+            <option value="">Toutes les années</option>
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
           <select value={filterMonth} onChange={(e) => { setFilterMonth(e.target.value); setPage(1); }}
@@ -248,24 +248,24 @@ const DashboardAnomalies = () => {
             </select>
             <select value={filterCriticite} onChange={(e) => { setFilterCriticite(e.target.value); setPage(1); }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none">
-              <option value="">Toutes criticites</option>
+              <option value="">Toutes criticités</option>
               <option value="Critique">Critique</option>
               <option value="Majeur">Majeur</option>
-              <option value="Modere">Modere</option>
+              <option value="Modéré">Modéré</option>
             </select>
             <select value={filterCorrection} onChange={(e) => { setFilterCorrection(e.target.value); setPage(1); }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none">
               <option value="">Tous types correction</option>
-              <option value="Correction immediate (moins de 15 min)">Correction immediate</option>
-              <option value="Correction rapide (15 a 30 min)">Correction rapide</option>
+              <option value="Correction immédiate (moins de 15 min)">Correction immédiate</option>
+              <option value="Correction rapide (15 à 30 min)">Correction rapide</option>
               <option value="Correction tardive (+ 30 min)">Correction tardive</option>
-              <option value="Non corrige dans la journee">Non corrige</option>
+              <option value="Non corrigé dans la journée">Non corrigé</option>
             </select>
           </div>
         )}
         {hasFilters && (
           <button onClick={resetFilters} className="mt-3 text-xs text-pink-600 hover:text-pink-800 font-medium">
-            Reinitialiser les filtres
+            Réinitialiser les filtres
           </button>
         )}
       </div>
@@ -273,7 +273,7 @@ const DashboardAnomalies = () => {
       {/* Entries list */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {filtered.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">Aucune entree trouvee</div>
+          <div className="text-center py-16 text-gray-400">Aucune entrée trouvée</div>
         ) : (
           <>
             {/* Desktop table */}
@@ -282,19 +282,19 @@ const DashboardAnomalies = () => {
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
                     <SortHeader label="Date" col="date" />
-                    <SortHeader label="Supermarche" col="supermarket_name" />
-                    <SortHeader label="Region" col="region" />
-                    <th className="py-2 px-3 font-semibold text-gray-600 text-left">Periode</th>
+                    <SortHeader label="Supermarché" col="supermarket_name" />
+                    <SortHeader label="Région" col="region" />
+                    <th className="py-2 px-3 font-semibold text-gray-600 text-left">Période</th>
                     {isAnomalies ? (
                       <>
                         <SortHeader label="Axe" col="axe" />
-                        <th className="py-2 px-3 font-semibold text-gray-600 text-left">Sous-categories</th>
-                        <SortHeader label="Criticite" col="criticite" />
+                        <th className="py-2 px-3 font-semibold text-gray-600 text-left">Sous-catégories</th>
+                        <SortHeader label="Criticité" col="criticite" />
                         <th className="py-2 px-3 font-semibold text-gray-600 text-left">Heures</th>
                         <th className="py-2 px-3 font-semibold text-gray-600 text-left">Correction</th>
                       </>
                     ) : (
-                      <th className="py-2 px-3 font-semibold text-gray-600 text-left">Details</th>
+                      <th className="py-2 px-3 font-semibold text-gray-600 text-left">Détails</th>
                     )}
                     <th className="py-2 px-2 font-semibold text-gray-600 text-center">Voir</th>
                   </tr>
@@ -328,7 +328,7 @@ const DashboardAnomalies = () => {
                             )}
                           </td>
                           <td className="py-3 px-3 text-xs text-gray-500 space-y-0.5">
-                            {e.heure_detection && <div>Det: {e.heure_detection}</div>}
+                            {e.heure_detection && <div>Dét: {e.heure_detection}</div>}
                             {e.heure_information && <div>Info: {e.heure_information}</div>}
                             {e.heure_prise_en_charge && <div>PeC: {e.heure_prise_en_charge}</div>}
                             {e.heure_conformite && <div>Conf: {e.heure_conformite}</div>}
