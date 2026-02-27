@@ -10,6 +10,68 @@ import {
 const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION SUD', 'REGION ORIENT', 'REGION NORD'];
 
+const AXES = [
+  {
+    key: 'axe1',
+    label: 'AXE 1 — Hygiène & Nuisibles',
+    subs: [
+      'Sol sale',
+      'Cagettes / supports sales',
+      'Déchets visibles en surface de vente',
+      'Moucherons',
+      'Insectes rampants',
+      'Rongeurs',
+      'Tenue des salariés non conforme',
+      'Check-out caisse sale',
+    ],
+  },
+  {
+    key: 'axe2',
+    label: 'AXE 2 — Disponibilité & Qualité Produit',
+    subs: [
+      'Produit abîmé',
+      'Produit périmé',
+      'Rupture rayon Marché (Fruits & Légumes)',
+      'Rupture rayon Épicerie',
+      'Rupture rayon Boucherie',
+      'Rupture rayon Fromage',
+      'Rupture multiple rayons',
+      'Rupture rayon Poissonnerie',
+    ],
+  },
+  {
+    key: 'axe3',
+    label: 'AXE 3 — Sécurité & Organisation',
+    subs: [
+      'Allée bloquée',
+      'Palette dangereuse',
+      'Issue de secours obstruée',
+      'Moyens d\'incendie bloqués',
+      'Sol glissant',
+      'Réserve non rangée',
+      'Frigo encombré',
+      'Porte frigo ouverte',
+      'Non port des EPI',
+      'Absence de l\'ADS en poste',
+    ],
+  },
+  {
+    key: 'axe4',
+    label: 'AXE 4 — Expérience Client & Climat Interne',
+    subs: [
+      'Attente critique stand fromage',
+      'Attente critique stand boucherie',
+      'Attente critique stand Poissonnerie',
+      'Attente critique Balance FLEG',
+      'File d\'attente critique caisses',
+      'Nombre de caisses ouvertes insuffisant',
+      'Conflit visible entre salariés',
+      'Comportement non professionnel (personnel)',
+      'Comportement non professionnel ADS',
+    ],
+  },
+];
+
 const CATEGORY_CONFIG = {
   anomalies: {
     label: 'Anomalies',
@@ -87,8 +149,10 @@ const DashboardCategoryDetail = () => {
   const [filterRegion, setFilterRegion] = useState(searchParams.get('region') || '');
   const [filterYear, setFilterYear] = useState(searchParams.get('year') || '');
   const [filterMonth, setFilterMonth] = useState(searchParams.get('month') || '');
+  const [filterAxe, setFilterAxe] = useState('');
 
   const [years, setYears] = useState([]);
+  const isAnomalies = category === 'anomalies';
 
   useEffect(() => {
     loadData();
@@ -126,23 +190,36 @@ const DashboardCategoryDetail = () => {
 
   const filteredSubCategories = useMemo(() => {
     if (!data?.subCategories) return [];
-    if (!search) return data.subCategories;
-    const q = search.toLowerCase();
-    return data.subCategories.filter(s => s.name.toLowerCase().includes(q));
-  }, [data, search]);
+    let list = data.subCategories;
+
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(s => s.name.toLowerCase().includes(q));
+    }
+
+    if (isAnomalies && filterAxe) {
+      const selectedAxe = AXES.find(a => a.key === filterAxe);
+      if (selectedAxe) {
+        list = list.filter(s => selectedAxe.subs.includes(s.name));
+      }
+    }
+
+    return list;
+  }, [data, search, filterAxe, isAnomalies]);
 
   const maxCount = useMemo(() => {
     if (!filteredSubCategories.length) return 1;
     return Math.max(...filteredSubCategories.map(s => s.count), 1);
   }, [filteredSubCategories]);
 
-  const hasFilters = filterRegion || filterYear || filterMonth || search;
+  const hasFilters = filterRegion || filterYear || filterMonth || search || filterAxe;
 
   const resetFilters = () => {
     setFilterRegion('');
     setFilterYear('');
     setFilterMonth('');
     setSearch('');
+    setFilterAxe('');
   };
 
   const handleSubCategoryClick = (subCategory) => {
@@ -238,6 +315,18 @@ const DashboardCategoryDetail = () => {
             {MONTHS.slice(1).map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
           </select>
         </div>
+        {isAnomalies && (
+          <div className="mt-3">
+            <select
+              value={filterAxe}
+              onChange={(e) => setFilterAxe(e.target.value)}
+              className={`w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none`}
+            >
+              <option value="">Tous les axes</option>
+              {AXES.map(a => <option key={a.key} value={a.key}>{a.label}</option>)}
+            </select>
+          </div>
+        )}
         {hasFilters && (
           <button
             onClick={resetFilters}
