@@ -61,5 +61,21 @@ export const saveSupermarketScoring = (supermarketId, data) => api.post(`/superm
 // Dashboard
 export const getDashboardStats = () => api.get('/dashboard/stats');
 export const getDashboardCategory = (type) => api.get(`/dashboard/category/${type}`);
+export const getDashboardSubCategories = (type, params = {}) => {
+  const searchParams = new URLSearchParams();
+  if (params.region) searchParams.set('region', params.region);
+  if (params.year) searchParams.set('year', params.year);
+  if (params.month) searchParams.set('month', params.month);
+  const qs = searchParams.toString();
+  return api.get(`/dashboard/category/${type}/subcategories${qs ? '?' + qs : ''}`);
+};
+export const getDashboardSubCategoryDetail = (type, subcat, params = {}) => {
+  const searchParams = new URLSearchParams();
+  if (params.region) searchParams.set('region', params.region);
+  if (params.year) searchParams.set('year', params.year);
+  if (params.month) searchParams.set('month', params.month);
+  const qs = searchParams.toString();
+  return api.get(`/dashboard/category/${type}/subcategory/${encodeURIComponent(subcat)}${qs ? '?' + qs : ''}`);
+};
 
 export default api;

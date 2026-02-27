@@ -1,0 +1,305 @@
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { getDashboardSubCategories } from '../services/api';
+import { toast } from 'react-toastify';
+import {
+  FiArrowLeft, FiFilter, FiChevronRight, FiSearch,
+  FiAlertTriangle, FiAlertCircle, FiFileText, FiBook, FiMessageSquare
+} from 'react-icons/fi';
+
+const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION SUD', 'REGION ORIENT', 'REGION NORD'];
+
+const CATEGORY_CONFIG = {
+  anomalies: {
+    label: 'Anomalies',
+    subLabel: 'Sous-catégories d\'anomalies',
+    icon: FiSearch,
+    color: 'pink',
+    bgCls: 'bg-pink-100',
+    textCls: 'text-pink-700',
+    barCls: 'bg-pink-500',
+    ringCls: 'ring-pink-500',
+  },
+  interpellations: {
+    label: 'Interpellations',
+    subLabel: 'Rayons concernés',
+    icon: FiAlertTriangle,
+    color: 'amber',
+    bgCls: 'bg-amber-100',
+    textCls: 'text-amber-700',
+    barCls: 'bg-amber-500',
+    ringCls: 'ring-amber-500',
+  },
+  accidents: {
+    label: 'Accidents',
+    subLabel: 'Causes d\'accidents',
+    icon: FiAlertCircle,
+    color: 'red',
+    bgCls: 'bg-red-100',
+    textCls: 'text-red-700',
+    barCls: 'bg-red-500',
+    ringCls: 'ring-red-500',
+  },
+  autres_incidents: {
+    label: 'Autres Incidents',
+    subLabel: 'Types d\'incidents',
+    icon: FiFileText,
+    color: 'orange',
+    bgCls: 'bg-orange-100',
+    textCls: 'text-orange-700',
+    barCls: 'bg-orange-500',
+    ringCls: 'ring-orange-500',
+  },
+  formations: {
+    label: 'Formations',
+    subLabel: 'Types de formations',
+    icon: FiBook,
+    color: 'green',
+    bgCls: 'bg-green-100',
+    textCls: 'text-green-700',
+    barCls: 'bg-green-500',
+    ringCls: 'ring-green-500',
+  },
+  reclamations: {
+    label: 'Réclamations',
+    subLabel: 'Motifs de réclamation',
+    icon: FiMessageSquare,
+    color: 'purple',
+    bgCls: 'bg-purple-100',
+    textCls: 'text-purple-700',
+    barCls: 'bg-purple-500',
+    ringCls: 'ring-purple-500',
+  },
+};
+
+const DashboardCategoryDetail = () => {
+  const navigate = useNavigate();
+  const { category } = useParams();
+  const [searchParams] = useSearchParams();
+  const config = CATEGORY_CONFIG[category] || CATEGORY_CONFIG.anomalies;
+  const Icon = config.icon;
+
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+
+  const [filterRegion, setFilterRegion] = useState(searchParams.get('region') || '');
+  const [filterYear, setFilterYear] = useState(searchParams.get('year') || '');
+  const [filterMonth, setFilterMonth] = useState(searchParams.get('month') || '');
+
+  const [years, setYears] = useState([]);
+
+  useEffect(() => {
+    loadData();
+  }, [category, filterRegion, filterYear, filterMonth]);
+
+  useEffect(() => {
+    loadYears();
+  }, []);
+
+  const loadYears = async () => {
+    try {
+      const res = await getDashboardSubCategories(category, {});
+      const currentYear = new Date().getFullYear();
+      setYears([currentYear, currentYear - 1, currentYear - 2]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const res = await getDashboardSubCategories(category, {
+        region: filterRegion,
+        year: filterYear,
+        month: filterMonth,
+      });
+      setData(res.data);
+    } catch (err) {
+      toast.error('Erreur lors du chargement');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredSubCategories = useMemo(() => {
+    if (!data?.subCategories) return [];
+    if (!search) return data.subCategories;
+    const q = search.toLowerCase();
+    return data.subCategories.filter(s => s.name.toLowerCase().includes(q));
+  }, [data, search]);
+
+  const maxCount = useMemo(() => {
+    if (!filteredSubCategories.length) return 1;
+    return Math.max(...filteredSubCategories.map(s => s.count), 1);
+  }, [filteredSubCategories]);
+
+  const hasFilters = filterRegion || filterYear || filterMonth || search;
+
+  const resetFilters = () => {
+    setFilterRegion('');
+    setFilterYear('');
+    setFilterMonth('');
+    setSearch('');
+  };
+
+  const handleSubCategoryClick = (subCategory) => {
+    const params = new URLSearchParams();
+    if (filterRegion) params.set('region', filterRegion);
+    if (filterYear) params.set('year', filterYear);
+    if (filterMonth) params.set('month', filterMonth);
+    const qs = params.toString();
+    navigate(`/dashboard/${category}/subcategory/${encodeURIComponent(subCategory)}${qs ? '?' + qs : ''}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-6">
+      {/* Back button */}
+      <button
+        onClick={() => navigate('/dashboard')}
+        className="flex items-center space-x-1 text-gray-500 hover:text-gray-700 text-sm mb-4 transition-colors"
+      >
+        <FiArrowLeft size={16} />
+        <span>Retour au Dashboard</span>
+      </button>
+
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <div className={`${config.bgCls} rounded-lg p-2.5`}>
+            <Icon size={24} className={config.textCls} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">{config.label}</h1>
+            <p className="text-gray-500 text-sm">{config.subLabel}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 mt-3">
+          <div className={`${config.bgCls} ${config.textCls} px-4 py-2 rounded-lg`}>
+            <span className="text-2xl font-bold">{data?.total || 0}</span>
+            <span className="text-sm ml-2">entrées au total</span>
+          </div>
+          <div className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg">
+            <span className="text-2xl font-bold">{filteredSubCategories.length}</span>
+            <span className="text-sm ml-2">sous-catégories</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <FiFilter size={16} className="text-gray-500" />
+          <span className="text-sm font-medium text-gray-600">Filtres</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="relative">
+            <FiSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher..."
+              className={`w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:${config.ringCls} outline-none`}
+            />
+          </div>
+          <select
+            value={filterRegion}
+            onChange={(e) => setFilterRegion(e.target.value)}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:${config.ringCls} outline-none`}
+          >
+            <option value="">Toutes les régions</option>
+            {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+          <select
+            value={filterYear}
+            onChange={(e) => setFilterYear(e.target.value)}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:${config.ringCls} outline-none`}
+          >
+            <option value="">Toutes les années</option>
+            {years.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <select
+            value={filterMonth}
+            onChange={(e) => setFilterMonth(e.target.value)}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:${config.ringCls} outline-none`}
+          >
+            <option value="">Tous les mois</option>
+            {MONTHS.slice(1).map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
+          </select>
+        </div>
+        {hasFilters && (
+          <button
+            onClick={resetFilters}
+            className={`mt-3 text-xs ${config.textCls} hover:opacity-80 font-medium`}
+          >
+            Réinitialiser les filtres
+          </button>
+        )}
+      </div>
+
+      {/* Sub-categories list */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800">
+            {config.subLabel} ({filteredSubCategories.length})
+          </h2>
+        </div>
+
+        {filteredSubCategories.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">
+            Aucune sous-catégorie trouvée
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {filteredSubCategories.map((sub, index) => {
+              const pct = (sub.count / maxCount) * 100;
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleSubCategoryClick(sub.name)}
+                  className="w-full p-4 hover:bg-gray-50 transition-colors text-left group"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="font-medium text-gray-800 group-hover:text-blue-600 transition-colors">
+                          {sub.name}
+                        </span>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.bgCls} ${config.textCls}`}>
+                          {sub.count} entrée{sub.count > 1 ? 's' : ''}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {sub.supermarketCount} supermarché{sub.supermarketCount > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full ${config.barCls} transition-all`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                    <FiChevronRight size={20} className="text-gray-400 group-hover:text-blue-600 transition-colors shrink-0" />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default DashboardCategoryDetail;
