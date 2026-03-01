@@ -115,7 +115,7 @@ const Supermarkets = () => {
 
   const regionColor = (region) => {
     const colors = {
-      'REGION CENTRE 1': 'bg-blue-100 text-blue-800',
+      'REGION CENTRE 1': 'bg-orange-100 text-orange-800',
       'REGION CENTRE 02': 'bg-indigo-100 text-indigo-800',
       'REGION SUD': 'bg-orange-100 text-orange-800',
       'REGION ORIENT': 'bg-purple-100 text-purple-800',
@@ -127,7 +127,7 @@ const Supermarkets = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -151,7 +151,7 @@ const Supermarkets = () => {
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Rechercher un supermarché..."
-              className="pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-56"
+              className="pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none w-56"
             />
           </div>
 
@@ -159,7 +159,7 @@ const Supermarkets = () => {
             <select
               value={filterRegion}
               onChange={(e) => handleFilterChange(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
             >
               <option value="">Toutes les régions</option>
               {REGIONS.map(r => (
@@ -171,7 +171,7 @@ const Supermarkets = () => {
           {!isCity() && (
             <button
               onClick={openAddForm}
-              className="flex items-center space-x-2 bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center space-x-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             >
               <FiPlus size={16} />
               <span>Ajouter</span>
@@ -200,7 +200,7 @@ const Supermarkets = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                   placeholder="Nom du supermarché"
                   required
                   autoFocus
@@ -220,7 +220,7 @@ const Supermarkets = () => {
                   <select
                     value={formData.region}
                     onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                   >
                     {REGIONS.map(r => (
                       <option key={r} value={r}>{r}</option>
@@ -232,7 +232,7 @@ const Supermarkets = () => {
               <div className="flex space-x-3 pt-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-700 hover:bg-blue-800 text-white py-2.5 rounded-lg font-medium transition-colors"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-lg font-medium transition-colors"
                 >
                   {editingId ? 'Modifier' : 'Ajouter'}
                 </button>
@@ -257,7 +257,7 @@ const Supermarkets = () => {
           {!isCity() && (
             <button
               onClick={openAddForm}
-              className="mt-4 text-blue-700 hover:text-blue-800 font-medium"
+              className="mt-4 text-orange-600 hover:text-orange-700 font-medium"
             >
               + Ajouter votre premier supermarché
             </button>
@@ -285,7 +285,7 @@ const Supermarkets = () => {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => navigate(`/supermarket/${supermarket.id}`)}
-                    className="flex-1 flex items-center justify-center space-x-1 bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 rounded-lg text-sm font-medium transition-colors"
+                    className="flex-1 flex items-center justify-center space-x-1 bg-orange-50 hover:bg-orange-100 text-orange-700 py-2 rounded-lg text-sm font-medium transition-colors"
                   >
                     <FiEye size={14} />
                     <span>Voir</span>
@@ -320,7 +320,7 @@ const Supermarkets = () => {
                   onClick={() => setCurrentPage(page)}
                   className={`min-w-[36px] h-9 px-3 rounded text-sm font-medium transition-colors ${
                     page === currentPage
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-orange-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >

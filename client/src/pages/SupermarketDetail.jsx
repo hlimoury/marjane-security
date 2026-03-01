@@ -117,7 +117,7 @@ const SupermarketDetail = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -145,7 +145,7 @@ const SupermarketDetail = () => {
           {!isCity() && (
             <button
               onClick={openAddForm}
-              className="flex items-center space-x-2 bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center space-x-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             >
               <FiPlus size={16} />
               <span>Ajouter une instance</span>
@@ -173,7 +173,7 @@ const SupermarketDetail = () => {
                 <select
                   value={formData.month}
                   onChange={(e) => setFormData({ ...formData, month: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
                 >
                   {MONTHS.map(m => (
                     <option key={m.value} value={m.value}>{m.label}</option>
@@ -185,7 +185,7 @@ const SupermarketDetail = () => {
                 <select
                   value={formData.year}
                   onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
                 >
                   {years.map(y => (
                     <option key={y} value={y}>{y}</option>
@@ -195,7 +195,7 @@ const SupermarketDetail = () => {
               <div className="flex space-x-3 pt-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-700 hover:bg-blue-800 text-white py-2.5 rounded-lg font-medium transition-colors"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-lg font-medium transition-colors"
                 >
                   {editingInstanceId ? 'Modifier' : 'Ajouter'}
                 </button>
@@ -220,7 +220,7 @@ const SupermarketDetail = () => {
           {!isCity() && (
             <button
               onClick={openAddForm}
-              className="mt-4 text-blue-700 hover:text-blue-800 font-medium"
+              className="mt-4 text-orange-600 hover:text-orange-700 font-medium"
             >
               + Ajouter la première instance
             </button>
@@ -234,8 +234,8 @@ const SupermarketDetail = () => {
               className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow p-4 flex items-center justify-between"
             >
               <div className="flex items-center space-x-4">
-                <div className="bg-blue-50 rounded-lg p-3">
-                  <FiCalendar size={20} className="text-blue-700" />
+                <div className="bg-orange-50 rounded-lg p-3">
+                  <FiCalendar size={20} className="text-orange-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800">
@@ -250,7 +250,7 @@ const SupermarketDetail = () => {
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => navigate(`/instance/${instance.id}`)}
-                  className="flex items-center space-x-1 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  className="flex items-center space-x-1 bg-orange-50 hover:bg-orange-100 text-orange-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                   <span>Voir</span>
                   <FiChevronRight size={14} />

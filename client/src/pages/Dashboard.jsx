@@ -13,9 +13,9 @@ const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil
 const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION SUD', 'REGION ORIENT', 'REGION NORD'];
 
 const REGION_COLORS = {
-  'REGION CENTRE 1': { bg: 'bg-blue-100', text: 'text-blue-700', bar: 'bg-blue-500', ring: 'ring-blue-500' },
-  'REGION CENTRE 02': { bg: 'bg-indigo-100', text: 'text-indigo-700', bar: 'bg-indigo-500', ring: 'ring-indigo-500' },
-  'REGION SUD': { bg: 'bg-orange-100', text: 'text-orange-700', bar: 'bg-orange-500', ring: 'ring-orange-500' },
+  'REGION CENTRE 1': { bg: 'bg-orange-100', text: 'text-orange-700', bar: 'bg-orange-500', ring: 'ring-orange-500' },
+  'REGION CENTRE 02': { bg: 'bg-amber-100', text: 'text-amber-700', bar: 'bg-amber-500', ring: 'ring-amber-500' },
+  'REGION SUD': { bg: 'bg-rose-100', text: 'text-rose-700', bar: 'bg-rose-500', ring: 'ring-rose-500' },
   'REGION ORIENT': { bg: 'bg-purple-100', text: 'text-purple-700', bar: 'bg-purple-500', ring: 'ring-purple-500' },
   'REGION NORD': { bg: 'bg-teal-100', text: 'text-teal-700', bar: 'bg-teal-500', ring: 'ring-teal-500' },
 };
@@ -211,7 +211,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -227,7 +227,7 @@ const Dashboard = () => {
       className="flex items-center justify-between w-full text-left"
     >
       <div className="flex items-center gap-2">
-        {Icon && <Icon size={18} className="text-blue-600" />}
+        {Icon && <Icon size={18} className="text-orange-600" />}
         <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
       </div>
       {expandedSection[sectionKey] ? <FiChevronUp size={18} className="text-gray-400" /> : <FiChevronDown size={18} className="text-gray-400" />}
@@ -256,13 +256,13 @@ const Dashboard = () => {
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setSmPage(1); }}
               placeholder="Rechercher un supermarché..."
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
             />
           </div>
           <select
             value={filterRegion}
             onChange={(e) => { setFilterRegion(e.target.value); setSmPage(1); }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
           >
             <option value="">Toutes les régions</option>
             {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
@@ -270,7 +270,7 @@ const Dashboard = () => {
           <select
             value={filterYear}
             onChange={(e) => { setFilterYear(e.target.value); setSmPage(1); }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
           >
             <option value="">Toutes les années</option>
             {(filtered.years || []).map(y => <option key={y} value={y}>{y}</option>)}
@@ -278,7 +278,7 @@ const Dashboard = () => {
           <select
             value={filterMonth}
             onChange={(e) => { setFilterMonth(e.target.value); setSmPage(1); }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
           >
             <option value="">Tous les mois</option>
             {MONTHS.slice(1).map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
@@ -287,7 +287,7 @@ const Dashboard = () => {
         {(filterRegion || filterYear || filterMonth || searchQuery) && (
           <button
             onClick={() => { setFilterRegion(''); setFilterYear(''); setFilterMonth(''); setSearchQuery(''); setSmPage(1); }}
-            className="mt-3 text-xs text-blue-600 hover:text-blue-800 font-medium"
+            className="mt-3 text-xs text-orange-600 hover:text-orange-700 font-medium"
           >
             Réinitialiser les filtres
           </button>
@@ -296,7 +296,7 @@ const Dashboard = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
-        <KpiCard icon={FiShoppingCart} label="Supermarchés" value={filtered.totalSupermarkets} bgCls="bg-blue-100" textCls="text-blue-700" />
+        <KpiCard icon={FiShoppingCart} label="Supermarchés" value={filtered.totalSupermarkets} bgCls="bg-orange-100" textCls="text-orange-700" />
         <KpiCard icon={FiCalendar} label="Instances" value={filtered.totalInstances} bgCls="bg-indigo-100" textCls="text-indigo-700" />
         {CATEGORIES.map(c => {
           const params = new URLSearchParams();
@@ -377,12 +377,12 @@ const Dashboard = () => {
                   );
                 })}
                 {filtered.regionBreakdown.length > 1 && (
-                  <tr className="bg-blue-50 font-semibold">
-                    <td className="py-3 px-3 text-blue-800 text-xs">TOTAL</td>
-                    <td className="text-center py-3 px-2 text-blue-800">{filtered.regionBreakdown.reduce((s, r) => s + r.supermarkets, 0)}</td>
-                    <td className="text-center py-3 px-2 text-blue-800">{filtered.regionBreakdown.reduce((s, r) => s + r.instances, 0)}</td>
+                  <tr className="bg-orange-50 font-semibold">
+                    <td className="py-3 px-3 text-orange-800 text-xs">TOTAL</td>
+                    <td className="text-center py-3 px-2 text-orange-800">{filtered.regionBreakdown.reduce((s, r) => s + r.supermarkets, 0)}</td>
+                    <td className="text-center py-3 px-2 text-orange-800">{filtered.regionBreakdown.reduce((s, r) => s + r.instances, 0)}</td>
                     {CATEGORIES.map(c => (
-                      <td key={c.key} className="text-center py-3 px-2 text-blue-800">
+                      <td key={c.key} className="text-center py-3 px-2 text-orange-800">
                         {filtered.regionBreakdown.reduce((s, r) => s + r[c.key], 0)}
                       </td>
                     ))}
@@ -546,7 +546,7 @@ const Dashboard = () => {
                             <td className="text-center py-3 px-2">
                               <button
                                 onClick={() => navigate(`/supermarket/${sm.id}`)}
-                                className="text-blue-600 hover:text-blue-800 transition-colors"
+                                className="text-orange-600 hover:text-orange-700 transition-colors"
                                 title="Voir"
                               >
                                 <FiEye size={16} />
@@ -565,7 +565,7 @@ const Dashboard = () => {
                         key={page}
                         onClick={() => setSmPage(page)}
                         className={`min-w-[32px] h-8 px-2 rounded text-xs font-medium transition-colors ${
-                          page === smPage ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          page === smPage ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                       >
                         {page}
@@ -596,13 +596,13 @@ const KpiCard = ({ icon: Icon, label, value, bgCls, textCls, onClick }) => (
         <p className="text-xl font-bold text-gray-800">{value}</p>
       </div>
     </div>
-    {onClick && <p className="text-xs text-blue-500 mt-2 font-medium">Voir le détail →</p>}
+    {onClick && <p className="text-xs text-orange-500 mt-2 font-medium">Voir le détail →</p>}
   </div>
 );
 
 const SortTh = ({ label, col, sort, onClick }) => (
   <th
-    className="text-left py-2 px-3 font-semibold text-gray-600 cursor-pointer hover:text-blue-600 select-none"
+    className="text-left py-2 px-3 font-semibold text-gray-600 cursor-pointer hover:text-orange-600 select-none"
     onClick={() => onClick(col)}
   >
     <span className="inline-flex items-center gap-1">

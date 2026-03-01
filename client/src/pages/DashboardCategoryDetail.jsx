@@ -234,7 +234,7 @@ const DashboardCategoryDetail = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -362,7 +362,7 @@ const DashboardCategoryDetail = () => {
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="font-medium text-gray-800 group-hover:text-blue-600 transition-colors">
+                        <span className="font-medium text-gray-800 group-hover:text-orange-600 transition-colors">
                           {sub.name}
                         </span>
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.bgCls} ${config.textCls}`}>
@@ -379,7 +379,7 @@ const DashboardCategoryDetail = () => {
                         />
                       </div>
                     </div>
-                    <FiChevronRight size={20} className="text-gray-400 group-hover:text-blue-600 transition-colors shrink-0" />
+                    <FiChevronRight size={20} className="text-gray-400 group-hover:text-orange-600 transition-colors shrink-0" />
                   </div>
                 </button>
               );

@@ -22,7 +22,7 @@ const CARACTERISTIQUES = [
 ];
 
 const colorClasses = {
-  blue: { bg: 'bg-blue-50', hover: 'hover:bg-blue-100', text: 'text-blue-700', iconBg: 'bg-blue-100', border: 'border-blue-200' },
+  blue: { bg: 'bg-orange-50', hover: 'hover:bg-orange-100', text: 'text-orange-700', iconBg: 'bg-orange-100', border: 'border-orange-200' },
   amber: { bg: 'bg-amber-50', hover: 'hover:bg-amber-100', text: 'text-amber-700', iconBg: 'bg-amber-100', border: 'border-amber-200' },
   red: { bg: 'bg-red-50', hover: 'hover:bg-red-100', text: 'text-red-700', iconBg: 'bg-red-100', border: 'border-red-200' },
   orange: { bg: 'bg-orange-50', hover: 'hover:bg-orange-100', text: 'text-orange-700', iconBg: 'bg-orange-100', border: 'border-orange-200' },
@@ -100,7 +100,7 @@ const InstanceDetail = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -184,7 +184,7 @@ const InstanceDetail = () => {
 
             {caracLoading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
               </div>
             ) : (
               <>
@@ -194,13 +194,13 @@ const InstanceDetail = () => {
                 <textarea
                   value={editData}
                   onChange={(e) => setEditData(e.target.value)}
-                  className="flex-1 w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none min-h-[200px]"
+                  className="flex-1 w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-orange-500 outline-none resize-none min-h-[200px]"
                   placeholder='{"cle": "valeur"}'
                 />
                 <div className="flex space-x-3 mt-4">
                   <button
                     onClick={handleSaveCarac}
-                    className="flex-1 bg-blue-700 hover:bg-blue-800 text-white py-2.5 rounded-lg font-medium transition-colors"
+                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-lg font-medium transition-colors"
                   >
                     Sauvegarder
                   </button>

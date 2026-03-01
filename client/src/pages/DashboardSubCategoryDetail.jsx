@@ -12,7 +12,7 @@ const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil
 const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION SUD', 'REGION ORIENT', 'REGION NORD'];
 
 const REGION_COLORS = {
-  'REGION CENTRE 1': 'bg-blue-100 text-blue-700',
+  'REGION CENTRE 1': 'bg-orange-100 text-orange-700',
   'REGION CENTRE 02': 'bg-indigo-100 text-indigo-700',
   'REGION SUD': 'bg-orange-100 text-orange-700',
   'REGION ORIENT': 'bg-purple-100 text-purple-700',
@@ -166,7 +166,7 @@ const DashboardSubCategoryDetail = () => {
 
   const SortHeader = ({ label, col, className = '' }) => (
     <th
-      className={`py-3 px-4 font-semibold text-gray-600 cursor-pointer hover:text-blue-600 select-none ${className}`}
+      className={`py-3 px-4 font-semibold text-gray-600 cursor-pointer hover:text-orange-600 select-none ${className}`}
       onClick={() => handleSort(col)}
     >
       <span className="inline-flex items-center gap-1">
@@ -179,7 +179,7 @@ const DashboardSubCategoryDetail = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -229,13 +229,13 @@ const DashboardSubCategoryDetail = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher un supermarché..."
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
             />
           </div>
           <select
             value={filterRegion}
             onChange={(e) => setFilterRegion(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
           >
             <option value="">Toutes les régions</option>
             {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
@@ -243,7 +243,7 @@ const DashboardSubCategoryDetail = () => {
           <select
             value={filterYear}
             onChange={(e) => setFilterYear(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
           >
             <option value="">Toutes les années</option>
             {years.map(y => <option key={y} value={y}>{y}</option>)}
@@ -251,7 +251,7 @@ const DashboardSubCategoryDetail = () => {
           <select
             value={filterMonth}
             onChange={(e) => setFilterMonth(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
           >
             <option value="">Tous les mois</option>
             {MONTHS.slice(1).map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
@@ -260,7 +260,7 @@ const DashboardSubCategoryDetail = () => {
         {hasFilters && (
           <button
             onClick={resetFilters}
-            className="mt-3 text-xs text-blue-600 hover:text-blue-800 font-medium"
+            className="mt-3 text-xs text-orange-600 hover:text-orange-700 font-medium"
           >
             Réinitialiser les filtres
           </button>
@@ -332,7 +332,7 @@ const DashboardSubCategoryDetail = () => {
                       <td className="py-3 px-4 text-center">
                         <button
                           onClick={() => navigate(`/supermarket/${sm.id}`)}
-                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                          className="text-orange-600 hover:text-orange-700 transition-colors"
                           title="Voir le supermarché"
                         >
                           <FiEye size={18} />
@@ -388,7 +388,7 @@ const DashboardSubCategoryDetail = () => {
                     </div>
                     <button
                       onClick={() => navigate(`/instance/${entry.instance_id}/${category}`)}
-                      className="text-blue-600 hover:text-blue-800 shrink-0"
+                      className="text-orange-600 hover:text-orange-700 shrink-0"
                       title="Voir l'instance"
                     >
                       <FiEye size={16} />

@@ -32,13 +32,12 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-800 to-blue-950 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-700 px-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-blue-800">MARJANE</h1>
-          <div className="h-1 w-20 bg-yellow-400 mx-auto mt-2 rounded"></div>
-          <p className="text-gray-500 mt-3 text-sm">Plateforme de Gestion de Sécurité</p>
+          <img src="/marjane-logo.png" alt="Marjane Market" className="h-24 mx-auto mb-4" />
+          <p className="text-gray-600 text-sm font-medium">Plateforme de Gestion de Sécurité</p>
         </div>
 
         {/* Form */}
@@ -51,7 +50,7 @@ const Login = () => {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all"
               placeholder="Entrer votre identifiant"
               required
               autoFocus
@@ -66,7 +65,7 @@ const Login = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all"
               placeholder="Entrer votre mot de passe"
               required
             />
@@ -75,7 +74,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-700 hover:bg-blue-800 disabled:bg-blue-400 text-white font-semibold py-3 rounded-lg transition-colors"
+            className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-3 rounded-lg transition-colors"
           >
             {isLoading ? 'Connexion en cours...' : 'Se Connecter'}
           </button>
