@@ -210,7 +210,7 @@ const DashboardSubCategoryDetail = () => {
           </div>
           <div className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg">
             <span className="text-2xl font-bold">{filteredSupermarkets.length}</span>
-            <span className="text-sm ml-2">supermarchés</span>
+            <span className="text-sm ml-2">magasins</span>
           </div>
         </div>
       </div>
@@ -228,7 +228,7 @@ const DashboardSubCategoryDetail = () => {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher un supermarché..."
+              placeholder="Rechercher un magasin..."
               className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
             />
           </div>
@@ -271,20 +271,20 @@ const DashboardSubCategoryDetail = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         <div className="px-6 py-4 border-b border-gray-100">
           <h2 className="text-lg font-semibold text-gray-800">
-            Supermarchés concernés ({filteredSupermarkets.length})
+            Magasins concernés ({filteredSupermarkets.length})
           </h2>
         </div>
 
         {filteredSupermarkets.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
-            Aucun supermarché trouvé
+            Aucun magasin trouvé
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <SortHeader label="Supermarché" col="name" className="text-left" />
+                  <SortHeader label="Magasin" col="name" className="text-left" />
                   <SortHeader label="Région" col="region" className="text-left" />
                   <SortHeader label="Nb d'entrées" col="count" className="text-center" />
                   <th className="py-3 px-4 font-semibold text-gray-600 text-left">Périodes</th>
@@ -333,7 +333,7 @@ const DashboardSubCategoryDetail = () => {
                         <button
                           onClick={() => navigate(`/supermarket/${sm.id}`)}
                           className="text-orange-600 hover:text-orange-700 transition-colors"
-                          title="Voir le supermarché"
+                          title="Voir le magasin"
                         >
                           <FiEye size={18} />
                         </button>

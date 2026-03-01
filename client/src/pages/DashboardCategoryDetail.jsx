@@ -369,7 +369,7 @@ const DashboardCategoryDetail = () => {
                           {sub.count} entrée{sub.count > 1 ? 's' : ''}
                         </span>
                         <span className="text-xs text-gray-500">
-                          {sub.supermarketCount} supermarché{sub.supermarketCount > 1 ? 's' : ''}
+                          {sub.supermarketCount} magasin{sub.supermarketCount > 1 ? 's' : ''}
                         </span>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-2">

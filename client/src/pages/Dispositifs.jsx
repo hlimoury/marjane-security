@@ -108,7 +108,7 @@ const Dispositifs = () => {
 
       {/* Info banner */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6 text-sm text-blue-700">
-        Ces données sont partagées entre toutes les instances de ce supermarché.
+        Ces données sont partagées entre toutes les instances de ce magasin.
       </div>
 
       {/* Form Card */}

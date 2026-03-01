@@ -255,7 +255,7 @@ const Dashboard = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setSmPage(1); }}
-              placeholder="Rechercher un supermarché..."
+              placeholder="Rechercher un magasin..."
               className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
             />
           </div>
@@ -296,7 +296,7 @@ const Dashboard = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
-        <KpiCard icon={FiShoppingCart} label="Supermarchés" value={filtered.totalSupermarkets} bgCls="bg-orange-100" textCls="text-orange-700" />
+        <KpiCard icon={FiShoppingCart} label="Magasins" value={filtered.totalSupermarkets} bgCls="bg-orange-100" textCls="text-orange-700" />
         <KpiCard icon={FiCalendar} label="Instances" value={filtered.totalInstances} bgCls="bg-indigo-100" textCls="text-indigo-700" />
         {CATEGORIES.map(c => {
           const params = new URLSearchParams();
@@ -499,11 +499,11 @@ const Dashboard = () => {
 
       {/* Supermarket Detail Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <SectionHeader title={`Détail par Supermarché (${sortedSupermarkets.length})`} sectionKey="supermarkets" icon={FiShoppingCart} />
+        <SectionHeader title={`Détail par Magasin (${sortedSupermarkets.length})`} sectionKey="supermarkets" icon={FiShoppingCart} />
         {expandedSection.supermarkets && (
           <div className="mt-4">
             {sortedSupermarkets.length === 0 ? (
-              <p className="text-gray-400 text-sm">Aucun supermarché</p>
+              <p className="text-gray-400 text-sm">Aucun magasin</p>
             ) : (
               <>
                 <div className="overflow-x-auto">

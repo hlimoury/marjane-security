@@ -133,7 +133,7 @@ const SupermarketDetail = () => {
           className="flex items-center space-x-1 text-gray-500 hover:text-gray-700 text-sm mb-3 transition-colors"
         >
           <FiArrowLeft size={16} />
-          <span>Retour aux supermarchés</span>
+          <span>Retour aux magasins</span>
         </button>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -216,7 +216,7 @@ const SupermarketDetail = () => {
       {instances.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl shadow-sm">
           <FiCalendar size={48} className="mx-auto text-gray-300 mb-4" />
-          <p className="text-gray-500 text-lg">Aucune instance pour ce supermarché</p>
+          <p className="text-gray-500 text-lg">Aucune instance pour ce magasin</p>
           {!isCity() && (
             <button
               onClick={openAddForm}

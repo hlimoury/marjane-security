@@ -44,7 +44,7 @@ const Navbar = () => {
                 }`}
               >
                 <FiShoppingCart size={16} />
-                <span>Supermarchés</span>
+                <span>Magasins</span>
               </Link>
 
               {isAdmin() && (
@@ -91,7 +91,7 @@ const Navbar = () => {
               : 'text-white hover:bg-orange-600'
           }`}
         >
-          Supermarchés
+          Magasins
         </Link>
         {isAdmin() && (
           <Link
