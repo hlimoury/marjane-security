@@ -17,12 +17,14 @@ router.get('/stats', authMiddleware, adminOnly, async (req, res) => {
         COALESCE(jsonb_array_length(form.data->'entries'), 0) as formations_count,
         COALESCE(jsonb_array_length(rec.data->'entries'), 0) as reclamations_count,
         COALESCE(jsonb_array_length(ano.data->'entries'), 0) as anomalies_count,
+        COALESCE(jsonb_array_length(crm.data->'entries'), 0) as controle_rm_count,
         CASE WHEN interp.id IS NOT NULL THEN 1 ELSE 0 END as has_interpellations,
         CASE WHEN acc.id IS NOT NULL THEN 1 ELSE 0 END as has_accidents,
         CASE WHEN ai.id IS NOT NULL THEN 1 ELSE 0 END as has_autres_incidents,
         CASE WHEN form.id IS NOT NULL THEN 1 ELSE 0 END as has_formations,
         CASE WHEN rec.id IS NOT NULL THEN 1 ELSE 0 END as has_reclamations,
-        CASE WHEN ano.id IS NOT NULL THEN 1 ELSE 0 END as has_anomalies
+        CASE WHEN ano.id IS NOT NULL THEN 1 ELSE 0 END as has_anomalies,
+        CASE WHEN crm.id IS NOT NULL THEN 1 ELSE 0 END as has_controle_rm
       FROM instances i
       JOIN supermarkets s ON i.supermarket_id = s.id
       LEFT JOIN interpellations interp ON i.id = interp.instance_id
@@ -31,6 +33,7 @@ router.get('/stats', authMiddleware, adminOnly, async (req, res) => {
       LEFT JOIN formations form ON i.id = form.instance_id
       LEFT JOIN reclamations rec ON i.id = rec.instance_id
       LEFT JOIN anomalies ano ON i.id = ano.instance_id
+      LEFT JOIN controle_rm crm ON i.id = crm.instance_id
       ORDER BY i.year DESC, i.month DESC
     `);
 
@@ -111,7 +114,7 @@ router.get('/category/:type/subcategories', authMiddleware, adminOnly, async (re
   try {
     const { type } = req.params;
     const { region, year, month } = req.query;
-    const validTypes = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies'];
+    const validTypes = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies', 'controle_rm'];
     if (!validTypes.includes(type)) {
       return res.status(400).json({ message: 'Type invalide' });
     }
@@ -162,6 +165,9 @@ router.get('/category/:type/subcategories', authMiddleware, adminOnly, async (re
           subCategories = entry.type ? [entry.type] : [];
         } else if (type === 'reclamations') {
           subCategories = entry.motif ? [entry.motif] : [];
+        } else if (type === 'controle_rm') {
+          const typeLabel = entry.type === 'entrepot' ? 'Contrôle entrepôt' : 'Contrôle fournisseurs direct';
+          subCategories = entry.sous_type ? [`${typeLabel} — ${entry.sous_type}`] : [];
         }
 
         subCategories.forEach(sub => {
@@ -201,7 +207,7 @@ router.get('/category/:type/subcategory/:subcat', authMiddleware, adminOnly, asy
     const { type, subcat } = req.params;
     const { region, year, month } = req.query;
     const decodedSubcat = decodeURIComponent(subcat);
-    const validTypes = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies'];
+    const validTypes = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies', 'controle_rm'];
     if (!validTypes.includes(type)) {
       return res.status(400).json({ message: 'Type invalide' });
     }
@@ -254,6 +260,9 @@ router.get('/category/:type/subcategory/:subcat', authMiddleware, adminOnly, asy
           subCategories = entry.type ? [entry.type] : [];
         } else if (type === 'reclamations') {
           subCategories = entry.motif ? [entry.motif] : [];
+        } else if (type === 'controle_rm') {
+          const typeLabel = entry.type === 'entrepot' ? 'Contrôle entrepôt' : 'Contrôle fournisseurs direct';
+          subCategories = entry.sous_type ? [`${typeLabel} — ${entry.sous_type}`] : [];
         }
 
         if (subCategories.includes(decodedSubcat)) {
@@ -304,7 +313,7 @@ router.get('/category/:type/subcategory/:subcat', authMiddleware, adminOnly, asy
 router.get('/category/:type', authMiddleware, adminOnly, async (req, res) => {
   try {
     const { type } = req.params;
-    const validTypes = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies'];
+    const validTypes = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies', 'controle_rm'];
     if (!validTypes.includes(type)) {
       return res.status(400).json({ message: 'Type invalide' });
     }

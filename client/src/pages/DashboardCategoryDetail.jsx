@@ -4,7 +4,7 @@ import { getDashboardSubCategories } from '../services/api';
 import { toast } from 'react-toastify';
 import {
   FiArrowLeft, FiFilter, FiChevronRight, FiSearch,
-  FiAlertTriangle, FiAlertCircle, FiFileText, FiBook, FiMessageSquare
+  FiAlertTriangle, FiAlertCircle, FiFileText, FiBook, FiMessageSquare, FiClipboard
 } from 'react-icons/fi';
 
 const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
@@ -132,6 +132,16 @@ const CATEGORY_CONFIG = {
     textCls: 'text-purple-700',
     barCls: 'bg-purple-500',
     ringCls: 'ring-purple-500',
+  },
+  controle_rm: {
+    label: 'Contrôle RM',
+    subLabel: 'Type — Sous-type',
+    icon: FiClipboard,
+    color: 'teal',
+    bgCls: 'bg-teal-100',
+    textCls: 'text-teal-700',
+    barCls: 'bg-teal-500',
+    ringCls: 'ring-teal-500',
   },
 };
 

@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import {
   FiArrowLeft, FiFilter, FiEye, FiSearch, FiMapPin,
   FiAlertTriangle, FiAlertCircle, FiFileText, FiBook, FiMessageSquare,
-  FiChevronDown, FiChevronUp
+  FiChevronDown, FiChevronUp, FiClipboard
 } from 'react-icons/fi';
 
 const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
@@ -61,6 +61,13 @@ const CATEGORY_CONFIG = {
     bgCls: 'bg-purple-100',
     textCls: 'text-purple-700',
     barCls: 'bg-purple-500',
+  },
+  controle_rm: {
+    label: 'Contrôle RM',
+    icon: FiClipboard,
+    bgCls: 'bg-teal-100',
+    textCls: 'text-teal-700',
+    barCls: 'bg-teal-500',
   },
 };
 

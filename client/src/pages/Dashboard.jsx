@@ -4,7 +4,7 @@ import { getDashboardStats } from '../services/api';
 import { toast } from 'react-toastify';
 import {
   FiShoppingCart, FiCalendar, FiAlertTriangle, FiAlertCircle,
-  FiFileText, FiBook, FiMessageSquare, FiSearch,
+  FiFileText, FiBook, FiMessageSquare, FiSearch, FiClipboard,
   FiMapPin, FiTrendingUp, FiFilter, FiChevronDown,
   FiChevronUp, FiEye
 } from 'react-icons/fi';
@@ -27,6 +27,7 @@ const CATEGORIES = [
   { key: 'formations', label: 'Formations', icon: FiBook, color: 'green', barCls: 'bg-green-500', bgCls: 'bg-green-100', textCls: 'text-green-700' },
   { key: 'reclamations', label: 'Réclamations', icon: FiMessageSquare, color: 'purple', barCls: 'bg-purple-500', bgCls: 'bg-purple-100', textCls: 'text-purple-700' },
   { key: 'anomalies', label: 'Anomalies', icon: FiSearch, color: 'pink', barCls: 'bg-pink-500', bgCls: 'bg-pink-100', textCls: 'text-pink-700' },
+  { key: 'controle_rm', label: 'Contrôle RM', icon: FiClipboard, color: 'teal', barCls: 'bg-teal-500', bgCls: 'bg-teal-100', textCls: 'text-teal-700' },
 ];
 
 const Dashboard = () => {
@@ -98,7 +99,7 @@ const Dashboard = () => {
 
     // Completion
     let filledCount = 0;
-    const totalPossible = instances.length * 8;
+    const totalPossible = instances.length * 9;
     instances.forEach(i => {
       CATEGORIES.forEach(c => { if (parseInt(i[`has_${c.key}`])) filledCount++; });
       const sm = supermarkets.find(s => s.id === i.supermarket_id);
@@ -155,7 +156,7 @@ const Dashboard = () => {
       if (!smMap[i.supermarket_id]) return;
       const sm = smMap[i.supermarket_id];
       sm.instance_count++;
-      sm.possible += 8;
+      sm.possible += 9;
       CATEGORIES.forEach(c => {
         sm[c.key] += parseInt(i[`${c.key}_count`] || 0);
         sm.total_entries += parseInt(i[`${c.key}_count`] || 0);

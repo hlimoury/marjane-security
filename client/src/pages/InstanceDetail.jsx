@@ -3,12 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getInstance, getCaracteristique, saveCaracteristique } from '../services/api';
 import { toast } from 'react-toastify';
-import { FiArrowLeft, FiShield, FiAlertTriangle, FiAlertCircle, FiFileText, FiBook, FiMessageSquare, FiSearch, FiStar, FiCheck, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiShield, FiAlertTriangle, FiAlertCircle, FiFileText, FiBook, FiMessageSquare, FiSearch, FiStar, FiCheck, FiX, FiClipboard } from 'react-icons/fi';
 
 const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
 // Characteristics that have dedicated form pages (navigate instead of modal)
-const DEDICATED_PAGES = ['dispositifs', 'interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies', 'scoring'];
+const DEDICATED_PAGES = ['dispositifs', 'interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies', 'scoring', 'controle_rm'];
 
 const CARACTERISTIQUES = [
   { key: 'dispositifs', label: 'Dispositifs', icon: FiShield, color: 'blue', description: 'Équipements et dispositifs de sécurité' },
@@ -18,6 +18,7 @@ const CARACTERISTIQUES = [
   { key: 'formations', label: 'Formation', icon: FiBook, color: 'green', description: 'Formations en sécurité' },
   { key: 'reclamations', label: 'Réclamations', icon: FiMessageSquare, color: 'purple', description: 'Réclamations reçues' },
   { key: 'anomalies', label: 'Anomalies', icon: FiSearch, color: 'pink', description: 'Anomalies détectées' },
+  { key: 'controle_rm', label: 'Contrôle RM', icon: FiClipboard, color: 'teal', description: 'Contrôle entrepôt et fournisseurs direct' },
   { key: 'scoring', label: 'Scoring', icon: FiStar, color: 'yellow', description: 'Scores et évaluations' },
 ];
 
@@ -30,6 +31,7 @@ const colorClasses = {
   purple: { bg: 'bg-purple-50', hover: 'hover:bg-purple-100', text: 'text-purple-700', iconBg: 'bg-purple-100', border: 'border-purple-200' },
   pink: { bg: 'bg-pink-50', hover: 'hover:bg-pink-100', text: 'text-pink-700', iconBg: 'bg-pink-100', border: 'border-pink-200' },
   yellow: { bg: 'bg-yellow-50', hover: 'hover:bg-yellow-100', text: 'text-yellow-700', iconBg: 'bg-yellow-100', border: 'border-yellow-200' },
+  teal: { bg: 'bg-teal-50', hover: 'hover:bg-teal-100', text: 'text-teal-700', iconBg: 'bg-teal-100', border: 'border-teal-200' },
 };
 
 const InstanceDetail = () => {

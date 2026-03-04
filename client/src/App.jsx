@@ -17,6 +17,7 @@ import AutresIncidents from './pages/AutresIncidents';
 import Formations from './pages/Formations';
 import Reclamations from './pages/Reclamations';
 import Anomalies from './pages/Anomalies';
+import ControleRM from './pages/ControleRM';
 import Scoring from './pages/Scoring';
 import DashboardCategoryDetail from './pages/DashboardCategoryDetail';
 import DashboardSubCategoryDetail from './pages/DashboardSubCategoryDetail';
@@ -64,6 +65,9 @@ const AppRoutes = () => {
         } />
         <Route path="/instance/:instanceId/anomalies" element={
           <ProtectedRoute><Anomalies /></ProtectedRoute>
+        } />
+        <Route path="/instance/:instanceId/controle_rm" element={
+          <ProtectedRoute><ControleRM /></ProtectedRoute>
         } />
         <Route path="/instance/:instanceId/scoring" element={
           <ProtectedRoute><Scoring /></ProtectedRoute>
