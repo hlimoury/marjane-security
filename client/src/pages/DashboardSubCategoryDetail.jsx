@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { getDashboardSubCategoryDetail } from '../services/api';
 import { toast } from 'react-toastify';
@@ -160,8 +160,8 @@ const DashboardSubCategoryDetail = () => {
       if (category === 'formations') return e.type === decodedSubcategory;
       if (category === 'reclamations') return e.motif === decodedSubcategory;
       if (category === 'controle_rm') {
-        const typeLabel = entry.type === 'entrepot' ? 'Contrôle entrepôt' : 'Contrôle fournisseurs direct';
-        return `${typeLabel} — ${entry.sous_type}` === decodedSubcategory;
+        const typeLabel = e.type === 'entrepot' ? 'Contrôle entrepôt' : 'Contrôle fournisseurs direct';
+        return `${typeLabel} — ${e.sous_type}` === decodedSubcategory;
       }
       return true;
     });
@@ -337,85 +337,95 @@ const DashboardSubCategoryDetail = () => {
               <tbody>
                 {filteredSupermarkets.map((sm, idx) => {
                   const pct = (sm.count / maxCount) * 100;
+                  const isSelected = selectedForChart?.id === sm.id;
+                  const trendData = isSelected ? trendDataForSupermarket : [];
+
                   return (
-                    <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium text-gray-800">{sm.name}</td>
-                      <td className="py-3 px-4">
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${REGION_COLORS[sm.region] || 'bg-gray-100 text-gray-700'}`}>
-                          {sm.region}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <span className={`font-bold ${config.textCls}`}>{sm.count}</span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <button
-                          onClick={() => setSelectedForChart(selectedForChart?.id === sm.id ? null : { id: sm.id, name: sm.name })}
-                          className="flex flex-wrap gap-1 text-left hover:opacity-80 transition-opacity group"
-                          title="Cliquer pour voir la tendance"
-                        >
-                          {sm.instances.slice(0, 4).map((inst, i) => (
-                            <span key={i} className="text-xs bg-gray-100 group-hover:bg-orange-100 text-gray-600 group-hover:text-orange-700 px-2 py-0.5 rounded cursor-pointer">
-                              {inst}
-                            </span>
-                          ))}
-                          {sm.instances.length > 4 && (
-                            <span className="text-xs text-gray-400">+{sm.instances.length - 4}</span>
-                          )}
-                          <span className="text-xs text-orange-500 font-medium ml-1">
-                            {selectedForChart?.id === sm.id ? '▲ Masquer' : '▼ Tendance'}
+                    <React.Fragment key={idx}>
+                      <tr className="border-b border-gray-50 hover:bg-gray-50">
+                        <td className="py-3 px-4 font-medium text-gray-800">{sm.name}</td>
+                        <td className="py-3 px-4">
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${REGION_COLORS[sm.region] || 'bg-gray-100 text-gray-700'}`}>
+                            {sm.region}
                           </span>
-                        </button>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-gray-100 rounded-full h-2 min-w-[60px]">
-                            <div
-                              className={`h-2 rounded-full ${config.barCls} transition-all`}
-                              style={{ width: `${pct}%` }}
-                            />
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className={`font-bold ${config.textCls}`}>{sm.count}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => setSelectedForChart(isSelected ? null : { id: sm.id, name: sm.name })}
+                            className="flex flex-wrap gap-1 text-left hover:opacity-80 transition-opacity group"
+                            title="Cliquer pour voir la tendance"
+                          >
+                            {sm.instances.slice(0, 4).map((inst, i) => (
+                              <span key={i} className="text-xs bg-gray-100 group-hover:bg-orange-100 text-gray-600 group-hover:text-orange-700 px-2 py-0.5 rounded cursor-pointer">
+                                {inst}
+                              </span>
+                            ))}
+                            {sm.instances.length > 4 && (
+                              <span className="text-xs text-gray-400">+{sm.instances.length - 4}</span>
+                            )}
+                            <span className="text-xs text-orange-500 font-medium ml-1">
+                              {isSelected ? '▲ Masquer' : '▼ Tendance'}
+                            </span>
+                          </button>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 bg-gray-100 rounded-full h-2 min-w-[60px]">
+                              <div
+                                className={`h-2 rounded-full ${config.barCls} transition-all`}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-gray-500 w-10 text-right">{Math.round(pct)}%</span>
                           </div>
-                          <span className="text-xs text-gray-500 w-10 text-right">{Math.round(pct)}%</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <button
-                          onClick={() => navigate(`/supermarket/${sm.id}`)}
-                          className="text-orange-600 hover:text-orange-700 transition-colors"
-                          title="Voir le magasin"
-                        >
-                          <FiEye size={18} />
-                        </button>
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            onClick={() => navigate(`/supermarket/${sm.id}`)}
+                            className="text-orange-600 hover:text-orange-700 transition-colors"
+                            title="Voir le magasin"
+                          >
+                            <FiEye size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                      {isSelected && (
+                        <tr>
+                          <td colSpan={6} className="p-0 align-top bg-gray-50">
+                            <div className="p-6">
+                              {trendData.length > 0 ? (
+                                <>
+                                  <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-semibold text-gray-800">
+                                      Tendance — {sm.name} : {decodedSubcategory}
+                                    </h3>
+                                    <button
+                                      onClick={() => setSelectedForChart(null)}
+                                      className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+                                    >
+                                      Fermer
+                                    </button>
+                                  </div>
+                                  <LineChart data={trendData} barCls={config.barCls} />
+                                </>
+                              ) : (
+                                <div>
+                                  <p className="text-gray-500 text-sm">Données insuffisantes pour afficher la tendance.</p>
+                                  <button onClick={() => setSelectedForChart(null)} className="mt-2 text-sm text-orange-600">Fermer</button>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>
             </table>
-          </div>
-        )}
-
-        {/* Line chart - appears when clicking Périodes */}
-        {selectedForChart && trendDataForSupermarket.length > 0 && (
-          <div className="border-t border-gray-100 p-6 bg-gray-50">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-800">
-                Tendance — {selectedForChart.name} : {decodedSubcategory}
-              </h3>
-              <button
-                onClick={() => setSelectedForChart(null)}
-                className="text-sm text-orange-600 hover:text-orange-700 font-medium"
-              >
-                Fermer
-              </button>
-            </div>
-            <LineChart data={trendDataForSupermarket} barCls={config.barCls} />
-          </div>
-        )}
-        {selectedForChart && trendDataForSupermarket.length === 0 && (
-          <div className="border-t border-gray-100 p-6 bg-gray-50">
-            <p className="text-gray-500 text-sm">Données insuffisantes pour afficher la tendance.</p>
-            <button onClick={() => setSelectedForChart(null)} className="mt-2 text-sm text-orange-600">Fermer</button>
           </div>
         )}
       </div>
