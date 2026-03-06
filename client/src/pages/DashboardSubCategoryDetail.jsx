@@ -91,6 +91,7 @@ const DashboardSubCategoryDetail = () => {
   const [sortDir, setSortDir] = useState('desc');
 
   const [showEntries, setShowEntries] = useState(false);
+  const [selectedForChart, setSelectedForChart] = useState(null);
 
   const years = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -143,6 +144,40 @@ const DashboardSubCategoryDetail = () => {
     if (!filteredSupermarkets.length) return 1;
     return Math.max(...filteredSupermarkets.map(s => s.count), 1);
   }, [filteredSupermarkets]);
+
+  const trendDataForSupermarket = useMemo(() => {
+    if (!selectedForChart || !data?.entries?.length) return [];
+    const entries = data.entries.filter(e => {
+      if (e.supermarket_id !== selectedForChart.id) return false;
+      if (category === 'anomalies') {
+        return (e.sous_categories || []).includes(decodedSubcategory);
+      }
+      if (category === 'interpellations') {
+        return (e.rayons || (e.rayon ? [e.rayon] : [])).includes(decodedSubcategory);
+      }
+      if (category === 'accidents') return e.cause === decodedSubcategory;
+      if (category === 'autres_incidents') return e.type === decodedSubcategory;
+      if (category === 'formations') return e.type === decodedSubcategory;
+      if (category === 'reclamations') return e.motif === decodedSubcategory;
+      if (category === 'controle_rm') {
+        const typeLabel = entry.type === 'entrepot' ? 'Contrôle entrepôt' : 'Contrôle fournisseurs direct';
+        return `${typeLabel} — ${entry.sous_type}` === decodedSubcategory;
+      }
+      return true;
+    });
+    const byPeriod = {};
+    entries.forEach(e => {
+      const key = `${e.year}-${String(e.month).padStart(2, '0')}`;
+      byPeriod[key] = (byPeriod[key] || 0) + 1;
+    });
+    return Object.entries(byPeriod)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([period, count]) => {
+        const [y, m] = period.split('-');
+        const shortMonth = MONTHS[parseInt(m)]?.slice(0, 3) || m;
+        return { period, label: `${shortMonth} ${y}`, count };
+      });
+  }, [selectedForChart, data?.entries, category, decodedSubcategory]);
 
   const hasFilters = filterRegion || filterYear || filterMonth || search;
 
@@ -314,16 +349,23 @@ const DashboardSubCategoryDetail = () => {
                         <span className={`font-bold ${config.textCls}`}>{sm.count}</span>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="flex flex-wrap gap-1">
+                        <button
+                          onClick={() => setSelectedForChart(selectedForChart?.id === sm.id ? null : { id: sm.id, name: sm.name })}
+                          className="flex flex-wrap gap-1 text-left hover:opacity-80 transition-opacity group"
+                          title="Cliquer pour voir la tendance"
+                        >
                           {sm.instances.slice(0, 4).map((inst, i) => (
-                            <span key={i} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                            <span key={i} className="text-xs bg-gray-100 group-hover:bg-orange-100 text-gray-600 group-hover:text-orange-700 px-2 py-0.5 rounded cursor-pointer">
                               {inst}
                             </span>
                           ))}
                           {sm.instances.length > 4 && (
                             <span className="text-xs text-gray-400">+{sm.instances.length - 4}</span>
                           )}
-                        </div>
+                          <span className="text-xs text-orange-500 font-medium ml-1">
+                            {selectedForChart?.id === sm.id ? '▲ Masquer' : '▼ Tendance'}
+                          </span>
+                        </button>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
@@ -350,6 +392,30 @@ const DashboardSubCategoryDetail = () => {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Line chart - appears when clicking Périodes */}
+        {selectedForChart && trendDataForSupermarket.length > 0 && (
+          <div className="border-t border-gray-100 p-6 bg-gray-50">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-800">
+                Tendance — {selectedForChart.name} : {decodedSubcategory}
+              </h3>
+              <button
+                onClick={() => setSelectedForChart(null)}
+                className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+              >
+                Fermer
+              </button>
+            </div>
+            <LineChart data={trendDataForSupermarket} barCls={config.barCls} />
+          </div>
+        )}
+        {selectedForChart && trendDataForSupermarket.length === 0 && (
+          <div className="border-t border-gray-100 p-6 bg-gray-50">
+            <p className="text-gray-500 text-sm">Données insuffisantes pour afficher la tendance.</p>
+            <button onClick={() => setSelectedForChart(null)} className="mt-2 text-sm text-orange-600">Fermer</button>
           </div>
         )}
       </div>
@@ -407,6 +473,60 @@ const DashboardSubCategoryDetail = () => {
           )}
         </div>
       )}
+    </div>
+  );
+};
+
+const CHART_COLORS = { pink: '#ec4899', amber: '#f59e0b', red: '#ef4444', orange: '#f97316', green: '#22c55e', purple: '#a855f7', teal: '#14b8a6' };
+const barClsToColor = (cls) => {
+  if (cls.includes('pink')) return CHART_COLORS.pink;
+  if (cls.includes('amber')) return CHART_COLORS.amber;
+  if (cls.includes('red')) return CHART_COLORS.red;
+  if (cls.includes('orange')) return CHART_COLORS.orange;
+  if (cls.includes('green')) return CHART_COLORS.green;
+  if (cls.includes('purple')) return CHART_COLORS.purple;
+  if (cls.includes('teal')) return CHART_COLORS.teal;
+  return CHART_COLORS.pink;
+};
+
+const LineChart = ({ data, barCls = 'bg-pink-500' }) => {
+  if (!data?.length) return null;
+  const color = barClsToColor(barCls);
+  const maxVal = Math.max(...data.map(d => d.count), 1);
+  const w = 600;
+  const h = 180;
+  const padding = { top: 20, right: 20, bottom: 40, left: 40 };
+  const chartW = w - padding.left - padding.right;
+  const chartH = h - padding.top - padding.bottom;
+  const points = data.map((d, i) => {
+    const x = padding.left + (i / Math.max(data.length - 1, 1)) * chartW;
+    const y = padding.top + chartH - (d.count / maxVal) * chartH;
+    return { ...d, x, y };
+  });
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  const fillD = pathD + ` L ${points[points.length - 1]?.x || 0} ${padding.top + chartH} L ${points[0]?.x || 0} ${padding.top + chartH} Z`;
+
+  return (
+    <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full max-w-2xl h-48" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={fillD} fill="url(#lineGrad)" />
+        <path d={pathD} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        {points.map((p, i) => (
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r="4" fill={color} />
+            <text x={p.x} y={h - 8} textAnchor="middle" fill="#6b7280" style={{ fontSize: 10, fontFamily: 'system-ui' }}>
+              {p.label.length > 12 ? p.label.slice(0, 10) + '…' : p.label}
+            </text>
+            <text x={p.x} y={p.y - 10} textAnchor="middle" fill="#374151" style={{ fontSize: 11, fontWeight: 600, fontFamily: 'system-ui' }}>{p.count}</text>
+          </g>
+        ))}
+      </svg>
     </div>
   );
 };
