@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getInstance, getCaracteristique, saveCaracteristique } from '../services/api';
 import { toast } from 'react-toastify';
@@ -37,6 +37,7 @@ const colorClasses = {
 const InstanceDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isCity } = useAuth();
   const [instance, setInstance] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -47,7 +48,7 @@ const InstanceDetail = () => {
 
   useEffect(() => {
     loadInstance();
-  }, [id]);
+  }, [id, location.key]);
 
   const loadInstance = async () => {
     try {

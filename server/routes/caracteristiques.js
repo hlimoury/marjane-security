@@ -42,6 +42,27 @@ router.get('/:type/:instanceId', authMiddleware, validateTable, async (req, res)
     const access = await checkInstanceAccess(instanceId, req.user);
     if (access.error) return res.status(access.status).json({ message: access.error });
 
+    // Dispositifs: inherit from previous month if this instance has no data
+    if (type === 'dispositifs') {
+      const result = await pool.query(`SELECT * FROM dispositifs WHERE instance_id = $1`, [instanceId]);
+      if (result.rows.length > 0) {
+        return res.json({ ...result.rows[0], exists: true });
+      }
+      const inst = access.instance;
+      const inherited = await pool.query(`
+        SELECT d.data FROM dispositifs d
+        JOIN instances i ON d.instance_id = i.id
+        WHERE i.supermarket_id = $1
+          AND (i.year < $2 OR (i.year = $2 AND i.month < $3))
+        ORDER BY i.year DESC, i.month DESC
+        LIMIT 1
+      `, [inst.supermarket_id, inst.year, inst.month]);
+      if (inherited.rows.length > 0) {
+        return res.json({ instance_id: parseInt(instanceId), data: inherited.rows[0].data || {}, exists: false, inherited: true });
+      }
+      return res.json({ instance_id: parseInt(instanceId), data: {}, exists: false });
+    }
+
     const result = await pool.query(`SELECT * FROM ${type} WHERE instance_id = $1`, [instanceId]);
 
     if (result.rows.length === 0) {
@@ -67,6 +88,40 @@ router.post('/:type/:instanceId', authMiddleware, validateTable, async (req, res
 
     const access = await checkInstanceAccess(instanceId, req.user);
     if (access.error) return res.status(access.status).json({ message: access.error });
+
+    // Dispositifs: never use entries array logic, and propagate to future months only
+    if (type === 'dispositifs') {
+      const inst = access.instance;
+      const dataStr = JSON.stringify(data);
+
+      const existing = await pool.query(`SELECT id FROM dispositifs WHERE instance_id = $1`, [instanceId]);
+      if (existing.rows.length > 0) {
+        await pool.query(
+          `UPDATE dispositifs SET data = $1, updated_at = CURRENT_TIMESTAMP WHERE instance_id = $2`,
+          [dataStr, instanceId]
+        );
+      } else {
+        await pool.query(`INSERT INTO dispositifs (instance_id, data) VALUES ($1, $2)`, [instanceId, dataStr]);
+      }
+
+      const futureInstances = await pool.query(`
+        SELECT id FROM instances
+        WHERE supermarket_id = $1
+          AND (year > $2 OR (year = $2 AND month > $3))
+      `, [inst.supermarket_id, inst.year, inst.month]);
+
+      for (const row of futureInstances.rows) {
+        const fut = await pool.query(`SELECT id FROM dispositifs WHERE instance_id = $1`, [row.id]);
+        if (fut.rows.length > 0) {
+          await pool.query(`UPDATE dispositifs SET data = $1, updated_at = CURRENT_TIMESTAMP WHERE instance_id = $2`, [dataStr, row.id]);
+        } else {
+          await pool.query(`INSERT INTO dispositifs (instance_id, data) VALUES ($1, $2)`, [row.id, dataStr]);
+        }
+      }
+
+      const result = await pool.query(`SELECT * FROM dispositifs WHERE instance_id = $1`, [instanceId]);
+      return res.json(result.rows[0]);
+    }
 
     // If entries array is empty, delete the row entirely so status shows "Non rempli"
     const isEmpty = Array.isArray(data.entries) && data.entries.length === 0;

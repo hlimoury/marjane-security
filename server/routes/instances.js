@@ -64,9 +64,9 @@ router.get('/:id', authMiddleware, async (req, res) => {
       status[table] = check.rows.length > 0;
     }
 
-    // Dispositifs is instance-level — check this instance has data
+    // Dispositifs is instance-level — filled if a row exists for this instance
     const dispCheck = await pool.query(
-      "SELECT id FROM dispositifs WHERE instance_id = $1 AND data IS NOT NULL AND data != '{}'::jsonb",
+      "SELECT id FROM dispositifs WHERE instance_id = $1",
       [id]
     );
     status.dispositifs = dispCheck.rows.length > 0;
