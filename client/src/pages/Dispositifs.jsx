@@ -30,6 +30,7 @@ const Dispositifs = () => {
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [locked, setLocked] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -42,7 +43,9 @@ const Dispositifs = () => {
 
       const caracRes = await getCaracteristique('dispositifs', instanceId);
 
-      if (caracRes.data.exists && caracRes.data.data) {
+      setLocked(!!caracRes.data.locked);
+      // Use data when present: own row (exists) or inherited from previous month
+      if (caracRes.data.data && Object.keys(caracRes.data.data).length > 0) {
         setData({ ...DEFAULT_DATA, ...caracRes.data.data });
       }
     } catch (err) {
@@ -106,8 +109,10 @@ const Dispositifs = () => {
       </div>
 
       {/* Info banner */}
-      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-6 text-sm text-orange-700">
-        Ces données sont propres à ce mois. Chaque instance (mois) a ses propres valeurs.
+      <div className={`rounded-lg p-3 mb-6 text-sm border ${locked ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-orange-50 border-orange-200 text-orange-700'}`}>
+        {locked
+          ? 'Les dispositifs sont en lecture seule pour les mois futurs. Modifiez le mois courant ou un mois passé pour mettre à jour les données.'
+          : 'Ces données sont propres à ce mois. Chaque instance (mois) a ses propres valeurs.'}
       </div>
 
       {/* Form Card */}
@@ -121,7 +126,7 @@ const Dispositifs = () => {
             <div key={field.key} className="flex items-center justify-between px-6 py-3.5 hover:bg-gray-50">
               <label className="font-medium text-gray-700 text-sm">{field.label}</label>
 
-              {editing ? (
+              {editing && !locked ? (
                 <div className="flex items-center space-x-2">
                   <input
                     type="number"
@@ -144,7 +149,9 @@ const Dispositifs = () => {
 
         {/* Action buttons */}
         <div className="px-6 py-4 border-t border-gray-100 flex flex-wrap gap-3">
-          {editing ? (
+          {locked ? (
+            <span className="text-amber-600 text-sm font-medium">Lecture seule — mois futur</span>
+          ) : editing ? (
             <>
               <button
                 onClick={handleSave}
@@ -166,6 +173,7 @@ const Dispositifs = () => {
             <>
               <button
                 onClick={() => setEditing(true)}
+                disabled={locked}
                 className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 <FiEdit2 size={16} />
@@ -173,6 +181,7 @@ const Dispositifs = () => {
               </button>
               <button
                 onClick={handleReset}
+                disabled={locked}
                 className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 <FiRefreshCw size={16} />

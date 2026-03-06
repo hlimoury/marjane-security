@@ -44,11 +44,15 @@ router.get('/:type/:instanceId', authMiddleware, validateTable, async (req, res)
 
     // Dispositifs: inherit from previous month if this instance has no data
     if (type === 'dispositifs') {
+      const inst = access.instance;
+      const now = new Date();
+      const isFutureMonth = inst.year > now.getFullYear() || (inst.year === now.getFullYear() && inst.month > now.getMonth() + 1);
+      const locked = isFutureMonth;
+
       const result = await pool.query(`SELECT * FROM dispositifs WHERE instance_id = $1`, [instanceId]);
       if (result.rows.length > 0) {
-        return res.json({ ...result.rows[0], exists: true });
+        return res.json({ ...result.rows[0], exists: true, locked });
       }
-      const inst = access.instance;
       const inherited = await pool.query(`
         SELECT d.data FROM dispositifs d
         JOIN instances i ON d.instance_id = i.id
@@ -58,9 +62,17 @@ router.get('/:type/:instanceId', authMiddleware, validateTable, async (req, res)
         LIMIT 1
       `, [inst.supermarket_id, inst.year, inst.month]);
       if (inherited.rows.length > 0) {
-        return res.json({ instance_id: parseInt(instanceId), data: inherited.rows[0].data || {}, exists: false, inherited: true });
+        return res.json({ instance_id: parseInt(instanceId), data: inherited.rows[0].data || {}, exists: false, inherited: true, locked });
       }
-      return res.json({ instance_id: parseInt(instanceId), data: {}, exists: false });
+      // Fallback: old data may be in supermarket_dispositifs (before instance-level migration)
+      const supDisp = await pool.query(
+        'SELECT data FROM supermarket_dispositifs WHERE supermarket_id = $1',
+        [inst.supermarket_id]
+      );
+      if (supDisp.rows.length > 0 && supDisp.rows[0].data && Object.keys(supDisp.rows[0].data).length > 0) {
+        return res.json({ instance_id: parseInt(instanceId), data: supDisp.rows[0].data, exists: false, inherited: true, locked });
+      }
+      return res.json({ instance_id: parseInt(instanceId), data: {}, exists: false, locked });
     }
 
     const result = await pool.query(`SELECT * FROM ${type} WHERE instance_id = $1`, [instanceId]);
@@ -92,6 +104,11 @@ router.post('/:type/:instanceId', authMiddleware, validateTable, async (req, res
     // Dispositifs: never use entries array logic, and propagate to future months only
     if (type === 'dispositifs') {
       const inst = access.instance;
+      const now = new Date();
+      const isFutureMonth = inst.year > now.getFullYear() || (inst.year === now.getFullYear() && inst.month > now.getMonth() + 1);
+      if (isFutureMonth) {
+        return res.status(403).json({ message: 'Impossible de modifier les dispositifs pour un mois futur' });
+      }
       const dataStr = JSON.stringify(data);
 
       const existing = await pool.query(`SELECT id FROM dispositifs WHERE instance_id = $1`, [instanceId]);
