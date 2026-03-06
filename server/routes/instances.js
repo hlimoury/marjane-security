@@ -53,7 +53,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
     }
 
     // Check which characteristics have actual data (entries array not empty)
-    const tables = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies'];
+    const tables = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies', 'controle_rm'];
     const status = {};
 
     for (const table of tables) {
@@ -64,12 +64,14 @@ router.get('/:id', authMiddleware, async (req, res) => {
       status[table] = check.rows.length > 0;
     }
 
-    // Dispositifs and Scoring are stored at supermarket level — check data is not empty
+    // Dispositifs is instance-level — check this instance has data
     const dispCheck = await pool.query(
-      "SELECT id FROM supermarket_dispositifs WHERE supermarket_id = $1 AND data IS NOT NULL AND data != '{}'::jsonb",
-      [instance.supermarket_id]
+      "SELECT id FROM dispositifs WHERE instance_id = $1 AND data IS NOT NULL AND data != '{}'::jsonb",
+      [id]
     );
     status.dispositifs = dispCheck.rows.length > 0;
+
+    // Scoring is stored at supermarket level — check data is not empty
 
     const scorCheck = await pool.query(
       "SELECT id FROM supermarket_scoring WHERE supermarket_id = $1 AND data IS NOT NULL AND data != '{}'::jsonb",

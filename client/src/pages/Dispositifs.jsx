@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getSupermarketDispositifs, saveSupermarketDispositifs, getInstance } from '../services/api';
+import { getCaracteristique, saveCaracteristique, getInstance } from '../services/api';
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiEdit2, FiRefreshCw, FiSave, FiX } from 'react-icons/fi';
 
@@ -40,8 +40,7 @@ const Dispositifs = () => {
       const instRes = await getInstance(instanceId);
       setInstance(instRes.data);
 
-      const supermarketId = instRes.data.supermarket_id;
-      const caracRes = await getSupermarketDispositifs(supermarketId);
+      const caracRes = await getCaracteristique('dispositifs', instanceId);
 
       if (caracRes.data.exists && caracRes.data.data) {
         setData({ ...DEFAULT_DATA, ...caracRes.data.data });
@@ -57,7 +56,7 @@ const Dispositifs = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await saveSupermarketDispositifs(instance.supermarket_id, data);
+      await saveCaracteristique('dispositifs', instanceId, data);
       toast.success('Dispositifs sauvegardés avec succès');
       setEditing(false);
     } catch (err) {
@@ -101,14 +100,14 @@ const Dispositifs = () => {
         <h1 className="text-2xl font-bold text-gray-800">Dispositifs de Sécurité et Sûreté</h1>
         {instance && (
           <p className="text-gray-500 text-sm mt-1">
-            {instance.supermarket_name} — Commun à toutes les instances
+            {instance.supermarket_name} — {MONTHS[instance.month]} {instance.year}
           </p>
         )}
       </div>
 
       {/* Info banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6 text-sm text-blue-700">
-        Ces données sont partagées entre toutes les instances de ce magasin.
+      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-6 text-sm text-orange-700">
+        Ces données sont propres à ce mois. Chaque instance (mois) a ses propres valeurs.
       </div>
 
       {/* Form Card */}

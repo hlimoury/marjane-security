@@ -24,7 +24,8 @@ router.get('/stats', authMiddleware, adminOnly, async (req, res) => {
         CASE WHEN form.id IS NOT NULL THEN 1 ELSE 0 END as has_formations,
         CASE WHEN rec.id IS NOT NULL THEN 1 ELSE 0 END as has_reclamations,
         CASE WHEN ano.id IS NOT NULL THEN 1 ELSE 0 END as has_anomalies,
-        CASE WHEN crm.id IS NOT NULL THEN 1 ELSE 0 END as has_controle_rm
+        CASE WHEN crm.id IS NOT NULL THEN 1 ELSE 0 END as has_controle_rm,
+        CASE WHEN disp.id IS NOT NULL AND disp.data IS NOT NULL AND disp.data != '{}'::jsonb THEN 1 ELSE 0 END as has_dispositifs
       FROM instances i
       JOIN supermarkets s ON i.supermarket_id = s.id
       LEFT JOIN interpellations interp ON i.id = interp.instance_id
@@ -34,17 +35,16 @@ router.get('/stats', authMiddleware, adminOnly, async (req, res) => {
       LEFT JOIN reclamations rec ON i.id = rec.instance_id
       LEFT JOIN anomalies ano ON i.id = ano.instance_id
       LEFT JOIN controle_rm crm ON i.id = crm.instance_id
+      LEFT JOIN dispositifs disp ON i.id = disp.instance_id
       ORDER BY i.year DESC, i.month DESC
     `);
 
-    // 2) Supermarket-level data (dispositifs & scoring)
+    // 2) Supermarket-level data (scoring)
     const supermarketData = await pool.query(`
       SELECT
         s.id, s.name, s.region,
-        CASE WHEN sd.id IS NOT NULL THEN 1 ELSE 0 END as has_dispositifs,
         CASE WHEN ss.id IS NOT NULL THEN 1 ELSE 0 END as has_scoring
       FROM supermarkets s
-      LEFT JOIN supermarket_dispositifs sd ON s.id = sd.supermarket_id
       LEFT JOIN supermarket_scoring ss ON s.id = ss.supermarket_id
       ORDER BY s.region, s.name
     `);

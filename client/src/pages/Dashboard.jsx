@@ -102,11 +102,9 @@ const Dashboard = () => {
     const totalPossible = instances.length * 9;
     instances.forEach(i => {
       CATEGORIES.forEach(c => { if (parseInt(i[`has_${c.key}`])) filledCount++; });
+      if (parseInt(i.has_dispositifs)) filledCount++;
       const sm = supermarkets.find(s => s.id === i.supermarket_id);
-      if (sm) {
-        if (parseInt(sm.has_dispositifs)) filledCount++;
-        if (parseInt(sm.has_scoring)) filledCount++;
-      }
+      if (sm && parseInt(sm.has_scoring)) filledCount++;
     });
     const completionPct = totalPossible > 0 ? Math.round((filledCount / totalPossible) * 100) : 0;
 
@@ -162,11 +160,9 @@ const Dashboard = () => {
         sm.total_entries += parseInt(i[`${c.key}_count`] || 0);
         if (parseInt(i[`has_${c.key}`])) sm.filled++;
       });
+      if (parseInt(i.has_dispositifs)) sm.filled++;
       const supermarket = supermarkets.find(s => s.id === i.supermarket_id);
-      if (supermarket) {
-        if (parseInt(supermarket.has_dispositifs)) sm.filled++;
-        if (parseInt(supermarket.has_scoring)) sm.filled++;
-      }
+      if (supermarket && parseInt(supermarket.has_scoring)) sm.filled++;
     });
     const smList = Object.values(smMap);
 
