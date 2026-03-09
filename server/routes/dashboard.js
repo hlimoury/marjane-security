@@ -4,6 +4,77 @@ const { authMiddleware, adminOnly } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Canonical names (accented) for all subcategories across all categories
+const CANONICAL_NAMES = {
+  // Anomalies - AXE 2
+  'Produit abime': 'Produit abîmé',
+  'Produit perime': 'Produit périmé',
+  'Rupture rayon Marche (Fruits & Legumes)': 'Rupture rayon Marché (Fruits & Légumes)',
+  'Rupture rayon Epicerie': 'Rupture rayon Épicerie',
+  // Anomalies - AXE 1
+  'Dechets visibles en surface de vente': 'Déchets visibles en surface de vente',
+  'Tenue des salaries non conforme': 'Tenue des salariés non conforme',
+  // Anomalies - AXE 3
+  'Allee bloquee': 'Allée bloquée',
+  'Palette dangereuse': 'Palette dangereuse',
+  'Issue de secours obstruee': 'Issue de secours obstruée',
+  'Moyens d\'incendie bloques': 'Moyens d\'incendie bloqués',
+  'Reserve non rangee': 'Réserve non rangée',
+  'Frigo encombre': 'Frigo encombré',
+  'Non port des EPI': 'Non port des EPI',
+  'Absence de l\'ADS en poste': 'Absence de l\'ADS en poste',
+  // Anomalies - AXE 4
+  'Attente critique stand boucherie': 'Attente critique stand boucherie',
+  'Attente critique stand fromage': 'Attente critique stand fromage',
+  // Accidents
+  'Chutes et glissades': 'Chutes et glissades',
+  'Scie Electrique boucherie': 'Scie Électrique boucherie',
+  // Autres incidents
+  'Depart de feu': 'Départ de feu',
+  'Defauts electriques': 'Défauts électriques',
+  'Equipements de froid': 'Équipements de froid',
+  'Equipement de cuisson': 'Équipement de cuisson',
+  'Chutes d\'objets': 'Chutes d\'objets',
+  // Reclamations
+  'Produit impropre (abime, moisi, odeur suspecte, rupture de la chaine du froid)': 'Produit impropre (abîmé, moisi, odeur suspecte, rupture de la chaîne du froid)',
+  'Produits endommages (emballage dechire, boite cabossee, etc.)': 'Produits endommagés (emballage déchiré, boîte cabossée, etc.)',
+  'Produits non conformes (etiquette, poids indique, etc.)': 'Produits non conformes (étiquette, poids indiqué, etc.)',
+  'Erreur de prix en caisse (ecart entre prix affiche et facture)': 'Erreur de prix en caisse (écart entre prix affiché et facture)',
+  'Promotions non appliquees ou mal expliquees': 'Promotions non appliquées ou mal expliquées',
+  'Hygiene insuffisante (sol, odeurs, toilettes, etc.)': 'Hygiène insuffisante (sol, odeurs, toilettes, etc.)',
+  'Hygiene et nuisibles (presence de cafards, moucherons, charancons, rats, souris)': 'Hygiène et nuisibles (présence de cafards, moucherons, charançons, rats, souris)',
+  'Securite du magasin (vols, sentiment d\'insecurite)': 'Sécurité du magasin (vols, sentiment d\'insécurité)',
+  'Problemes de stationnement (parking plein, securite, produits manquants)': 'Problèmes de stationnement (parking plein, sécurité, produits manquants)',
+  'Nuisances sonores (musique trop forte, annonces trop frequentes)': 'Nuisances sonores (musique trop forte, annonces trop fréquentes)',
+  'Comportement inapproprie d\'un employe ou agent de securite': 'Comportement inapproprié d\'un employé ou agent de sécurité',
+  'Manque de disponibilite du personnel pour aider': 'Manque de disponibilité du personnel pour aider',
+  // Controle RM
+  'Marche': 'Marché',
+  'Controle entrepot': 'Contrôle entrepôt',
+  'Controle fournisseurs direct': 'Contrôle fournisseurs direct',
+};
+
+// Strip diacritics for comparison
+const stripAccents = (str) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+// Build a fast lookup: stripped → canonical
+const CANONICAL_LOOKUP = {};
+Object.values(CANONICAL_NAMES).forEach(canonical => {
+  CANONICAL_LOOKUP[stripAccents(canonical).toLowerCase()] = canonical;
+});
+Object.keys(CANONICAL_NAMES).forEach(old => {
+  CANONICAL_LOOKUP[stripAccents(old).toLowerCase()] = CANONICAL_NAMES[old];
+});
+
+// Normalize a subcategory name: return canonical accented form if known
+const normalizeSubCategory = (name) => {
+  if (!name) return name;
+  if (CANONICAL_NAMES[name]) return CANONICAL_NAMES[name];
+  const key = stripAccents(name).toLowerCase();
+  if (CANONICAL_LOOKUP[key]) return CANONICAL_LOOKUP[key];
+  return name;
+};
+
 router.get('/stats', authMiddleware, adminOnly, async (req, res) => {
   try {
     // 1) All instance-level data with category entry counts in one query
@@ -62,7 +133,8 @@ router.get('/stats', authMiddleware, adminOnly, async (req, res) => {
       const entries = row.data?.entries || [];
       entries.forEach(entry => {
         const rayons = entry.rayons || (entry.rayon ? [entry.rayon] : []);
-        rayons.forEach(r => {
+        rayons.forEach(rawR => {
+          const r = normalizeSubCategory(rawR);
           rayonStats[r] = (rayonStats[r] || 0) + 1;
         });
       });
@@ -170,8 +242,9 @@ router.get('/category/:type/subcategories', authMiddleware, adminOnly, async (re
           subCategories = entry.sous_type ? [`${typeLabel} — ${entry.sous_type}`] : [];
         }
 
-        subCategories.forEach(sub => {
-          if (!sub) return;
+        subCategories.forEach(rawSub => {
+          if (!rawSub) return;
+          const sub = normalizeSubCategory(rawSub);
           subCategoryStats[sub] = (subCategoryStats[sub] || 0) + 1;
 
           if (!supermarketsBySubCategory[sub]) {
@@ -265,7 +338,8 @@ router.get('/category/:type/subcategory/:subcat', authMiddleware, adminOnly, asy
           subCategories = entry.sous_type ? [`${typeLabel} — ${entry.sous_type}`] : [];
         }
 
-        if (subCategories.includes(decodedSubcat)) {
+        const normalizedSubs = subCategories.map(s => normalizeSubCategory(s));
+        if (normalizedSubs.includes(decodedSubcat)) {
           entries.push({
             ...entry,
             instance_id: row.instance_id,
@@ -346,6 +420,92 @@ router.get('/category/:type', authMiddleware, adminOnly, async (req, res) => {
     res.json(entries);
   } catch (err) {
     console.error('Erreur dashboard category:', err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// POST /api/dashboard/migrate-accents - One-time migration to fix old data without accents
+router.post('/migrate-accents', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const tables = ['anomalies', 'interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'controle_rm'];
+    let totalUpdated = 0;
+
+    for (const table of tables) {
+      const rows = await pool.query(`SELECT id, instance_id, data FROM ${table}`);
+
+      for (const row of rows.rows) {
+        const entries = row.data?.entries;
+        if (!entries || !Array.isArray(entries)) continue;
+
+        let changed = false;
+        const updatedEntries = entries.map(entry => {
+          const updated = { ...entry };
+
+          if (table === 'anomalies' && Array.isArray(updated.sous_categories)) {
+            const fixed = updated.sous_categories.map(s => {
+              const n = normalizeSubCategory(s);
+              if (n !== s) changed = true;
+              return n;
+            });
+            updated.sous_categories = fixed;
+          }
+          if (table === 'interpellations') {
+            if (Array.isArray(updated.rayons)) {
+              const fixed = updated.rayons.map(s => {
+                const n = normalizeSubCategory(s);
+                if (n !== s) changed = true;
+                return n;
+              });
+              updated.rayons = fixed;
+            }
+            if (updated.rayon) {
+              const n = normalizeSubCategory(updated.rayon);
+              if (n !== updated.rayon) { changed = true; updated.rayon = n; }
+            }
+          }
+          if (table === 'accidents' && updated.cause) {
+            const n = normalizeSubCategory(updated.cause);
+            if (n !== updated.cause) { changed = true; updated.cause = n; }
+          }
+          if (table === 'autres_incidents') {
+            if (updated.type) {
+              const n = normalizeSubCategory(updated.type);
+              if (n !== updated.type) { changed = true; updated.type = n; }
+            }
+            if (updated.sous_type) {
+              const n = normalizeSubCategory(updated.sous_type);
+              if (n !== updated.sous_type) { changed = true; updated.sous_type = n; }
+            }
+          }
+          if (table === 'formations' && updated.type) {
+            const n = normalizeSubCategory(updated.type);
+            if (n !== updated.type) { changed = true; updated.type = n; }
+          }
+          if (table === 'reclamations' && updated.motif) {
+            const n = normalizeSubCategory(updated.motif);
+            if (n !== updated.motif) { changed = true; updated.motif = n; }
+          }
+          if (table === 'controle_rm' && updated.sous_type) {
+            const n = normalizeSubCategory(updated.sous_type);
+            if (n !== updated.sous_type) { changed = true; updated.sous_type = n; }
+          }
+
+          return updated;
+        });
+
+        if (changed) {
+          await pool.query(
+            `UPDATE ${table} SET data = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+            [JSON.stringify({ entries: updatedEntries }), row.id]
+          );
+          totalUpdated++;
+        }
+      }
+    }
+
+    res.json({ message: `Migration terminée: ${totalUpdated} enregistrements mis à jour` });
+  } catch (err) {
+    console.error('Erreur migration accents:', err);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
