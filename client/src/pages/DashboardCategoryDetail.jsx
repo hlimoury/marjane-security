@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { getDashboardSubCategories } from '../services/api';
 import { toast } from 'react-toastify';
 import {
-  FiArrowLeft, FiFilter, FiChevronRight, FiSearch,
+  FiArrowLeft, FiFilter, FiChevronRight, FiChevronDown, FiChevronUp, FiSearch,
   FiAlertTriangle, FiAlertCircle, FiFileText, FiBook, FiMessageSquare, FiClipboard
 } from 'react-icons/fi';
 
@@ -160,9 +160,11 @@ const DashboardCategoryDetail = () => {
   const [filterYear, setFilterYear] = useState(searchParams.get('year') || '');
   const [filterMonth, setFilterMonth] = useState(searchParams.get('month') || '');
   const [filterAxe, setFilterAxe] = useState('');
+  const [expandedMotif, setExpandedMotif] = useState(null);
 
   const [years, setYears] = useState([]);
   const isAnomalies = category === 'anomalies';
+  const isReclamations = category === 'reclamations';
 
   useEffect(() => {
     loadData();
@@ -363,14 +365,23 @@ const DashboardCategoryDetail = () => {
           <div className="divide-y divide-gray-100">
             {filteredSubCategories.map((sub, index) => {
               const pct = (sub.count / maxCount) * 100;
+              const hasDetails = isReclamations && sub.details && sub.details.length > 0;
+              const isExpanded = expandedMotif === sub.name;
               return (
-                <button
-                  key={index}
-                  onClick={() => handleSubCategoryClick(sub.name)}
-                  className="w-full p-4 hover:bg-gray-50 transition-colors text-left group"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
+                <div key={index}>
+                  <div className="flex items-center w-full p-4 hover:bg-gray-50 transition-colors text-left group">
+                    {hasDetails && (
+                      <button
+                        onClick={() => setExpandedMotif(isExpanded ? null : sub.name)}
+                        className="mr-3 shrink-0 text-gray-400 hover:text-purple-600 transition-colors"
+                      >
+                        {isExpanded ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleSubCategoryClick(sub.name)}
+                      className="flex-1 min-w-0 text-left"
+                    >
                       <div className="flex items-center gap-3 mb-2">
                         <span className="font-medium text-gray-800 group-hover:text-orange-600 transition-colors">
                           {sub.name}
@@ -388,10 +399,31 @@ const DashboardCategoryDetail = () => {
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                    </div>
-                    <FiChevronRight size={20} className="text-gray-400 group-hover:text-orange-600 transition-colors shrink-0" />
+                    </button>
+                    <button
+                      onClick={() => handleSubCategoryClick(sub.name)}
+                      className="shrink-0 ml-3"
+                    >
+                      <FiChevronRight size={20} className="text-gray-400 group-hover:text-orange-600 transition-colors" />
+                    </button>
                   </div>
-                </button>
+                  {hasDetails && isExpanded && (
+                    <div className="bg-purple-50 border-t border-purple-100 px-6 py-3 space-y-2">
+                      {sub.details.map((det, i) => {
+                        const detPct = sub.count > 0 ? (det.count / sub.count) * 100 : 0;
+                        return (
+                          <div key={i} className="flex items-center gap-3">
+                            <span className="text-sm text-purple-800 font-medium w-48 shrink-0 truncate" title={det.name}>{det.name}</span>
+                            <div className="flex-1 bg-purple-100 rounded-full h-1.5">
+                              <div className="h-1.5 rounded-full bg-purple-400 transition-all" style={{ width: `${detPct}%` }} />
+                            </div>
+                            <span className="text-xs font-bold text-purple-700 w-8 text-right">{det.count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>

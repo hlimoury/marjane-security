@@ -222,6 +222,7 @@ router.get('/category/:type/subcategories', authMiddleware, adminOnly, async (re
 
     const subCategoryStats = {};
     const supermarketsBySubCategory = {};
+    const detailsByMotif = {};
 
     result.rows.forEach(row => {
       const entries = row.data?.entries || [];
@@ -254,16 +255,31 @@ router.get('/category/:type/subcategories', authMiddleware, adminOnly, async (re
             supermarketsBySubCategory[sub] = new Set();
           }
           supermarketsBySubCategory[sub].add(row.supermarket_id);
+
+          // For reclamations: track detail breakdown per motif
+          if (type === 'reclamations' && entry.detail) {
+            if (!detailsByMotif[sub]) detailsByMotif[sub] = {};
+            const det = entry.detail;
+            detailsByMotif[sub][det] = (detailsByMotif[sub][det] || 0) + 1;
+          }
         });
       });
     });
 
     const subCategoriesArray = Object.entries(subCategoryStats)
-      .map(([name, count]) => ({
-        name,
-        count,
-        supermarketCount: supermarketsBySubCategory[name]?.size || 0
-      }))
+      .map(([name, count]) => {
+        const item = {
+          name,
+          count,
+          supermarketCount: supermarketsBySubCategory[name]?.size || 0
+        };
+        if (type === 'reclamations' && detailsByMotif[name]) {
+          item.details = Object.entries(detailsByMotif[name])
+            .map(([detail, cnt]) => ({ name: detail, count: cnt }))
+            .sort((a, b) => b.count - a.count);
+        }
+        return item;
+      })
       .sort((a, b) => b.count - a.count);
 
     res.json({
