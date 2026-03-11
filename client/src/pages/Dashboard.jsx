@@ -97,17 +97,6 @@ const Dashboard = () => {
       categoryTotals[c.key] = instances.reduce((sum, i) => sum + parseInt(i[`${c.key}_count`] || 0), 0);
     });
 
-    // Completion
-    let filledCount = 0;
-    const totalPossible = instances.length * 9;
-    instances.forEach(i => {
-      CATEGORIES.forEach(c => { if (parseInt(i[`has_${c.key}`])) filledCount++; });
-      if (parseInt(i.has_dispositifs)) filledCount++;
-      const sm = supermarkets.find(s => s.id === i.supermarket_id);
-      if (sm && parseInt(sm.has_scoring)) filledCount++;
-    });
-    const completionPct = totalPossible > 0 ? Math.round((filledCount / totalPossible) * 100) : 0;
-
     // Region breakdown
     const regionBreakdown = REGIONS.map(region => {
       const regionInstances = instances.filter(i => i.region === region);
@@ -145,8 +134,6 @@ const Dashboard = () => {
         ...s,
         instance_count: 0,
         total_entries: 0,
-        filled: 0,
-        possible: 0,
       };
       CATEGORIES.forEach(c => { smMap[s.id][c.key] = 0; });
     });
@@ -154,15 +141,10 @@ const Dashboard = () => {
       if (!smMap[i.supermarket_id]) return;
       const sm = smMap[i.supermarket_id];
       sm.instance_count++;
-      sm.possible += 9;
       CATEGORIES.forEach(c => {
         sm[c.key] += parseInt(i[`${c.key}_count`] || 0);
         sm.total_entries += parseInt(i[`${c.key}_count`] || 0);
-        if (parseInt(i[`has_${c.key}`])) sm.filled++;
       });
-      if (parseInt(i.has_dispositifs)) sm.filled++;
-      const supermarket = supermarkets.find(s => s.id === i.supermarket_id);
-      if (supermarket && parseInt(supermarket.has_scoring)) sm.filled++;
     });
     const smList = Object.values(smMap);
 
@@ -171,7 +153,6 @@ const Dashboard = () => {
 
     return {
       totalSupermarkets, totalInstances, categoryTotals,
-      completionPct, filledCount, totalPossible,
       regionBreakdown, monthly, smList, years,
       rayonStats: rawData.rayon_stats || {},
       accidentTypeStats: rawData.accident_type_stats || {},
@@ -294,7 +275,7 @@ const Dashboard = () => {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
         <KpiCard icon={FiShoppingCart} label="Magasins" value={filtered.totalSupermarkets} bgCls="bg-orange-100" textCls="text-orange-700" />
-        <KpiCard icon={FiCalendar} label="Instances" value={filtered.totalInstances} bgCls="bg-indigo-100" textCls="text-indigo-700" />
+        <KpiCard icon={FiCalendar} label="Mois" value={filtered.totalInstances} bgCls="bg-indigo-100" textCls="text-indigo-700" />
         {CATEGORIES.map(c => {
           const params = new URLSearchParams();
           if (filterRegion) params.set('region', filterRegion);
@@ -313,21 +294,6 @@ const Dashboard = () => {
             />
           );
         })}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-gray-500 text-xs font-medium">Completion</p>
-            <span className={`text-xs font-bold ${filtered.completionPct >= 70 ? 'text-green-600' : filtered.completionPct >= 40 ? 'text-yellow-600' : 'text-red-600'}`}>
-              {filtered.completionPct}%
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2.5 mb-1">
-            <div
-              className={`h-2.5 rounded-full transition-all ${filtered.completionPct >= 70 ? 'bg-green-500' : filtered.completionPct >= 40 ? 'bg-yellow-500' : 'bg-red-500'}`}
-              style={{ width: `${filtered.completionPct}%` }}
-            />
-          </div>
-          <p className="text-gray-400 text-xs">{filtered.filledCount} / {filtered.totalPossible} complétion</p>
-        </div>
       </div>
 
       {/* Region Breakdown */}
@@ -340,7 +306,7 @@ const Dashboard = () => {
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-2 px-3 font-semibold text-gray-600">Région</th>
                   <th className="text-center py-2 px-2 font-semibold text-gray-600">Superm.</th>
-                  <th className="text-center py-2 px-2 font-semibold text-gray-600">Instances</th>
+                  <th className="text-center py-2 px-2 font-semibold text-gray-600">Mois</th>
                   {CATEGORIES.map(c => (
                     <th key={c.key} className="text-center py-2 px-2 font-semibold text-gray-600" title={c.label}>
                       {c.label.substring(0, 6)}.
@@ -462,7 +428,7 @@ const Dashboard = () => {
                 <thead>
                   <tr className="border-b border-gray-200">
                     <th className="text-left py-2 px-3 font-semibold text-gray-600">Période</th>
-                    <th className="text-center py-2 px-2 font-semibold text-gray-600">Instances</th>
+                    <th className="text-center py-2 px-2 font-semibold text-gray-600">Mois</th>
                     {CATEGORIES.map(c => (
                       <th key={c.key} className="text-center py-2 px-2 font-semibold text-gray-600" title={c.label}>
                         {c.label.substring(0, 6)}.
@@ -509,15 +475,13 @@ const Dashboard = () => {
                       <tr className="border-b border-gray-200">
                         <SortTh label="Nom" col="name" sort={supermarketSort} onClick={handleSmSort} />
                         <SortTh label="Région" col="region" sort={supermarketSort} onClick={handleSmSort} />
-                        <SortTh label="Instances" col="instance_count" sort={supermarketSort} onClick={handleSmSort} />
+                        <SortTh label="Mois" col="instance_count" sort={supermarketSort} onClick={handleSmSort} />
                         <SortTh label="Entrées" col="total_entries" sort={supermarketSort} onClick={handleSmSort} />
-                        <th className="text-center py-2 px-2 font-semibold text-gray-600">Complétion</th>
                         <th className="text-center py-2 px-2 font-semibold text-gray-600">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {paginatedSm.map(sm => {
-                        const pct = sm.possible > 0 ? Math.round((sm.filled / sm.possible) * 100) : 0;
                         const rc = REGION_COLORS[sm.region] || {};
                         return (
                           <tr key={sm.id} className="border-b border-gray-50 hover:bg-gray-50">
@@ -529,17 +493,6 @@ const Dashboard = () => {
                             </td>
                             <td className="text-center py-3 px-2 text-gray-700">{sm.instance_count}</td>
                             <td className="text-center py-3 px-2 text-gray-700">{sm.total_entries}</td>
-                            <td className="py-3 px-2">
-                              <div className="flex items-center gap-2 justify-center">
-                                <div className="w-16 bg-gray-200 rounded-full h-1.5">
-                                  <div
-                                    className={`h-1.5 rounded-full ${pct >= 70 ? 'bg-green-500' : pct >= 40 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                                    style={{ width: `${pct}%` }}
-                                  />
-                                </div>
-                                <span className="text-xs font-medium text-gray-600 w-8">{pct}%</span>
-                              </div>
-                            </td>
                             <td className="text-center py-3 px-2">
                               <button
                                 onClick={() => navigate(`/supermarket/${sm.id}`)}
