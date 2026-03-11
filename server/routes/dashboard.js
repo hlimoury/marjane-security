@@ -4,75 +4,78 @@ const { authMiddleware, adminOnly } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Canonical names (accented) for all subcategories across all categories
-const CANONICAL_NAMES = {
-  // Anomalies - AXE 2
-  'Produit abime': 'Produit abîmé',
-  'Produit perime': 'Produit périmé',
-  'Rupture rayon Marche (Fruits & Legumes)': 'Rupture rayon Marché (Fruits & Légumes)',
-  'Rupture rayon Epicerie': 'Rupture rayon Épicerie',
-  // Anomalies - AXE 1
-  'Dechets visibles en surface de vente': 'Déchets visibles en surface de vente',
-  'Tenue des salaries non conforme': 'Tenue des salariés non conforme',
-  // Anomalies - AXE 3
-  'Allee bloquee': 'Allée bloquée',
-  'Palette dangereuse': 'Palette dangereuse',
-  'Issue de secours obstruee': 'Issue de secours obstruée',
-  'Moyens d\'incendie bloques': 'Moyens d\'incendie bloqués',
-  'Reserve non rangee': 'Réserve non rangée',
-  'Frigo encombre': 'Frigo encombré',
-  'Non port des EPI': 'Non port des EPI',
-  'Absence de l\'ADS en poste': 'Absence de l\'ADS en poste',
-  // Anomalies - AXE 4
-  'Attente critique stand boucherie': 'Attente critique stand boucherie',
-  'Attente critique stand fromage': 'Attente critique stand fromage',
-  // Accidents
-  'Chutes et glissades': 'Chutes et glissades',
-  'Scie Electrique boucherie': 'Scie Électrique boucherie',
-  // Autres incidents
-  'Depart de feu': 'Départ de feu',
-  'Defauts electriques': 'Défauts électriques',
-  'Equipements de froid': 'Équipements de froid',
-  'Equipement de cuisson': 'Équipement de cuisson',
-  'Chutes d\'objets': 'Chutes d\'objets',
-  // Reclamations
-  'Produit impropre (abime, moisi, odeur suspecte, rupture de la chaine du froid)': 'Produit impropre (abîmé, moisi, odeur suspecte, rupture de la chaîne du froid)',
-  'Produits endommages (emballage dechire, boite cabossee, etc.)': 'Produits endommagés (emballage déchiré, boîte cabossée, etc.)',
-  'Produits non conformes (etiquette, poids indique, etc.)': 'Produits non conformes (étiquette, poids indiqué, etc.)',
-  'Erreur de prix en caisse (ecart entre prix affiche et facture)': 'Erreur de prix en caisse (écart entre prix affiché et facture)',
-  'Promotions non appliquees ou mal expliquees': 'Promotions non appliquées ou mal expliquées',
-  'Hygiene insuffisante (sol, odeurs, toilettes, etc.)': 'Hygiène insuffisante (sol, odeurs, toilettes, etc.)',
-  'Hygiene et nuisibles (presence de cafards, moucherons, charancons, rats, souris)': 'Hygiène et nuisibles (présence de cafards, moucherons, charançons, rats, souris)',
-  'Securite du magasin (vols, sentiment d\'insecurite)': 'Sécurité du magasin (vols, sentiment d\'insécurité)',
-  'Problemes de stationnement (parking plein, securite, produits manquants)': 'Problèmes de stationnement (parking plein, sécurité, produits manquants)',
-  'Nuisances sonores (musique trop forte, annonces trop frequentes)': 'Nuisances sonores (musique trop forte, annonces trop fréquentes)',
-  'Comportement inapproprie d\'un employe ou agent de securite': 'Comportement inapproprié d\'un employé ou agent de sécurité',
-  'Manque de disponibilite du personnel pour aider': 'Manque de disponibilité du personnel pour aider',
-  // Controle RM
-  'Marche': 'Marché',
-  'Controle entrepot': 'Contrôle entrepôt',
-  'Controle fournisseurs direct': 'Contrôle fournisseurs direct',
-};
+// All correct (accented) subcategory names across every category
+const ALL_CANONICAL = [
+  // Anomalies AXE 1
+  'Sol sale', 'Cagettes / supports sales', 'Déchets visibles en surface de vente',
+  'Moucherons', 'Insectes rampants', 'Rongeurs',
+  'Tenue des salariés non conforme', 'Check-out caisse sale',
+  // Anomalies AXE 2
+  'Produit abîmé', 'Produit périmé',
+  'Rupture rayon Marché (Fruits & Légumes)', 'Rupture rayon Épicerie',
+  'Rupture rayon Boucherie', 'Rupture rayon Fromage',
+  'Rupture multiple rayons', 'Rupture rayon Poissonnerie',
+  // Anomalies AXE 3
+  'Allée bloquée', 'Palette dangereuse', 'Issue de secours obstruée',
+  'Moyens d\'incendie bloqués', 'Sol glissant', 'Réserve non rangée',
+  'Frigo encombré', 'Porte frigo ouverte', 'Non port des EPI',
+  'Absence de l\'ADS en poste',
+  // Anomalies AXE 4
+  'Attente critique stand fromage', 'Attente critique stand boucherie',
+  'Attente critique stand Poissonnerie', 'Attente critique Balance FLEG',
+  'File d\'attente critique caisses', 'Nombre de caisses ouvertes insuffisant',
+  'Conflit visible entre salariés', 'Comportement non professionnel (personnel)',
+  'Comportement non professionnel ADS',
+  // Interpellations rayons
+  'Biscuiterie', 'Épicerie', 'DPH', 'Liquide', 'Non alimentaire', 'PF',
+  // Accidents causes
+  'Chutes et glissades', 'Manutention manuelle', 'Hachoirs', 'Trancheuse',
+  'Scie Électrique boucherie', 'Outils tranchants', 'Chutes d\'objets',
+  'Agressions et violences', 'Autres',
+  // Autres incidents types
+  'Départ de feu', 'Agression envers le personnel', 'Passage des autorités',
+  'Sinistre déclaré par un client', 'Acte de sécurisation', 'Autre',
+  // Autres incidents sous-types
+  'Défauts électriques', 'Équipements de froid', 'Équipement de cuisson',
+  'Actes de malveillance', 'Accumulation de déchets', 'Travaux par point chaud',
+  // Formations types
+  'Incendie', 'SST', 'Intégration',
+  // Réclamations motifs
+  'Produit périmé',
+  'Produit impropre (abîmé, moisi, odeur suspecte, rupture de la chaîne du froid)',
+  'Produits endommagés (emballage déchiré, boîte cabossée, etc.)',
+  'Produits non conformes (étiquette, poids indiqué, etc.)',
+  'Produit manquant dans un pack ou une boîte',
+  'Erreur de prix en caisse (écart entre prix affiché et facture)',
+  'Promotions non appliquées ou mal expliquées',
+  'Attente trop longue aux caisses', 'Erreur de rendu monnaie',
+  'Problème avec les moyens de paiement (CB, chèques, bons d\'achat, cartes de fidélité...)',
+  'Double facturation ou oubli d\'annulation d\'un article',
+  'Manque d\'accueil (courtoisie, indifférence)',
+  'Comportement inapproprié d\'un employé ou agent de sécurité',
+  'Manque de disponibilité du personnel pour aider',
+  'Hygiène insuffisante (sol, odeurs, toilettes, etc.)',
+  'Hygiène et nuisibles (présence de cafards, moucherons, charançons, rats, souris)',
+  'Sécurité du magasin (vols, sentiment d\'insécurité)',
+  'Problèmes de stationnement (parking plein, sécurité, produits manquants)',
+  'Nuisances sonores (musique trop forte, annonces trop fréquentes)',
+  // Contrôle RM sous-types
+  'PGC', 'Marché', 'N.AL',
+  'Contrôle entrepôt', 'Contrôle fournisseurs direct',
+];
 
-// Strip diacritics for comparison
 const stripAccents = (str) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-// Build a fast lookup: stripped → canonical
+// Build lookup: stripped lowercase → canonical accented form
 const CANONICAL_LOOKUP = {};
-Object.values(CANONICAL_NAMES).forEach(canonical => {
-  CANONICAL_LOOKUP[stripAccents(canonical).toLowerCase()] = canonical;
-});
-Object.keys(CANONICAL_NAMES).forEach(old => {
-  CANONICAL_LOOKUP[stripAccents(old).toLowerCase()] = CANONICAL_NAMES[old];
+ALL_CANONICAL.forEach(name => {
+  CANONICAL_LOOKUP[stripAccents(name).toLowerCase()] = name;
 });
 
-// Normalize a subcategory name: return canonical accented form if known
 const normalizeSubCategory = (name) => {
   if (!name) return name;
-  if (CANONICAL_NAMES[name]) return CANONICAL_NAMES[name];
   const key = stripAccents(name).toLowerCase();
-  if (CANONICAL_LOOKUP[key]) return CANONICAL_LOOKUP[key];
-  return name;
+  return CANONICAL_LOOKUP[key] || name;
 };
 
 router.get('/stats', authMiddleware, adminOnly, async (req, res) => {

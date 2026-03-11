@@ -6,7 +6,7 @@ import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 
 const TYPES = ['Client', 'Personnel', 'Prestataire'];
 
-const RAYONS = ['Biscuiterie', 'Epicerie', 'DPH', 'Liquide', 'Non alimentaire', 'PF'];
+const RAYONS = ['Biscuiterie', 'Épicerie', 'DPH', 'Liquide', 'Non alimentaire', 'PF'];
 
 const EMPTY_FORM = {
   type: 'Client',
