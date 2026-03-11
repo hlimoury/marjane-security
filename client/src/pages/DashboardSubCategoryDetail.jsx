@@ -76,6 +76,7 @@ const DashboardSubCategoryDetail = () => {
   const { category, subcategory } = useParams();
   const [searchParams] = useSearchParams();
   const decodedSubcategory = decodeURIComponent(subcategory);
+  const detailParam = searchParams.get('detail') || '';
   const config = CATEGORY_CONFIG[category] || CATEGORY_CONFIG.anomalies;
   const Icon = config.icon;
 
@@ -100,16 +101,14 @@ const DashboardSubCategoryDetail = () => {
 
   useEffect(() => {
     loadData();
-  }, [category, subcategory, filterRegion, filterYear, filterMonth]);
+  }, [category, subcategory, detailParam, filterRegion, filterYear, filterMonth]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await getDashboardSubCategoryDetail(category, decodedSubcategory, {
-        region: filterRegion,
-        year: filterYear,
-        month: filterMonth,
-      });
+      const params = { region: filterRegion, year: filterYear, month: filterMonth };
+      if (detailParam) params.detail = detailParam;
+      const res = await getDashboardSubCategoryDetail(category, decodedSubcategory, params);
       setData(res.data);
     } catch (err) {
       toast.error('Erreur lors du chargement');
@@ -158,7 +157,11 @@ const DashboardSubCategoryDetail = () => {
       if (category === 'accidents') return e.cause === decodedSubcategory;
       if (category === 'autres_incidents') return e.type === decodedSubcategory;
       if (category === 'formations') return e.type === decodedSubcategory;
-      if (category === 'reclamations') return e.motif === decodedSubcategory;
+      if (category === 'reclamations') {
+        if (e.motif !== decodedSubcategory) return false;
+        if (detailParam) return e.detail === detailParam;
+        return true;
+      }
       if (category === 'controle_rm') {
         const typeLabel = e.type === 'entrepot' ? 'Contrôle entrepôt' : 'Contrôle fournisseurs direct';
         return `${typeLabel} — ${e.sous_type}` === decodedSubcategory;
@@ -177,7 +180,7 @@ const DashboardSubCategoryDetail = () => {
         const shortMonth = MONTHS[parseInt(m)]?.slice(0, 3) || m;
         return { period, label: `${shortMonth} ${y}`, count };
       });
-  }, [selectedForChart, data?.entries, category, decodedSubcategory]);
+  }, [selectedForChart, data?.entries, category, decodedSubcategory, detailParam]);
 
   const hasFilters = filterRegion || filterYear || filterMonth || search;
 
@@ -242,9 +245,17 @@ const DashboardSubCategoryDetail = () => {
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
           <span>{config.label}</span>
           <span>→</span>
-          <span className={`font-medium ${config.textCls}`}>{decodedSubcategory}</span>
+          {detailParam ? (
+            <>
+              <span>{decodedSubcategory}</span>
+              <span>→</span>
+              <span className={`font-medium ${config.textCls}`}>{detailParam}</span>
+            </>
+          ) : (
+            <span className={`font-medium ${config.textCls}`}>{decodedSubcategory}</span>
+          )}
         </div>
-        <h1 className="text-2xl font-bold text-gray-800">{decodedSubcategory}</h1>
+        <h1 className="text-2xl font-bold text-gray-800">{detailParam || decodedSubcategory}</h1>
         <div className="flex items-center gap-4 mt-3">
           <div className={`${config.bgCls} ${config.textCls} px-4 py-2 rounded-lg`}>
             <span className="text-2xl font-bold">{data?.totalEntries || 0}</span>

@@ -74,6 +74,7 @@ export const getDashboardSubCategoryDetail = (type, subcat, params = {}) => {
   if (params.region) searchParams.set('region', params.region);
   if (params.year) searchParams.set('year', params.year);
   if (params.month) searchParams.set('month', params.month);
+  if (params.detail) searchParams.set('detail', params.detail);
   const qs = searchParams.toString();
   return api.get(`/dashboard/category/${type}/subcategory/${encodeURIComponent(subcat)}${qs ? '?' + qs : ''}`);
 };

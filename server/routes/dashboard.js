@@ -297,8 +297,9 @@ router.get('/category/:type/subcategories', authMiddleware, adminOnly, async (re
 router.get('/category/:type/subcategory/:subcat', authMiddleware, adminOnly, async (req, res) => {
   try {
     const { type, subcat } = req.params;
-    const { region, year, month } = req.query;
+    const { region, year, month, detail } = req.query;
     const decodedSubcat = decodeURIComponent(subcat);
+    const decodedDetail = detail ? decodeURIComponent(detail) : null;
     const validTypes = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies', 'controle_rm'];
     if (!validTypes.includes(type)) {
       return res.status(400).json({ message: 'Type invalide' });
@@ -358,7 +359,10 @@ router.get('/category/:type/subcategory/:subcat', authMiddleware, adminOnly, asy
         }
 
         const normalizedSubs = subCategories.map(s => normalizeSubCategory(s));
-        if (normalizedSubs.includes(decodedSubcat)) {
+        const motifMatches = normalizedSubs.includes(decodedSubcat);
+        const detailMatches = !decodedDetail || (entry.detail && entry.detail === decodedDetail);
+        const includeEntry = motifMatches && (type !== 'reclamations' || !decodedDetail || detailMatches);
+        if (includeEntry) {
           entries.push({
             ...entry,
             instance_id: row.instance_id,
@@ -392,6 +396,7 @@ router.get('/category/:type/subcategory/:subcat', authMiddleware, adminOnly, asy
     res.json({
       type,
       subCategory: decodedSubcat,
+      subDetail: decodedDetail || null,
       totalEntries: entries.length,
       supermarkets,
       entries

@@ -234,11 +234,12 @@ const DashboardCategoryDetail = () => {
     setFilterAxe('');
   };
 
-  const handleSubCategoryClick = (subCategory) => {
+  const handleSubCategoryClick = (subCategory, detail = null) => {
     const params = new URLSearchParams();
     if (filterRegion) params.set('region', filterRegion);
     if (filterYear) params.set('year', filterYear);
     if (filterMonth) params.set('month', filterMonth);
+    if (detail) params.set('detail', detail);
     const qs = params.toString();
     navigate(`/dashboard/${category}/subcategory/${encodeURIComponent(subCategory)}${qs ? '?' + qs : ''}`);
   };
@@ -367,6 +368,7 @@ const DashboardCategoryDetail = () => {
               const pct = (sub.count / maxCount) * 100;
               const hasDetails = isReclamations && sub.details && sub.details.length > 0;
               const isExpanded = expandedMotif === sub.name;
+              const motifClickable = !hasDetails;
               return (
                 <div key={index}>
                   <div className="flex items-center w-full p-4 hover:bg-gray-50 transition-colors text-left group">
@@ -378,12 +380,13 @@ const DashboardCategoryDetail = () => {
                         {isExpanded ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
                       </button>
                     )}
-                    <button
-                      onClick={() => handleSubCategoryClick(sub.name)}
-                      className="flex-1 min-w-0 text-left"
+                    <div
+                      role={motifClickable ? 'button' : undefined}
+                      onClick={motifClickable ? () => handleSubCategoryClick(sub.name) : undefined}
+                      className={`flex-1 min-w-0 ${motifClickable ? 'cursor-pointer' : ''}`}
                     >
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="font-medium text-gray-800 group-hover:text-orange-600 transition-colors">
+                        <span className={`font-medium text-gray-800 ${motifClickable ? 'group-hover:text-orange-600 transition-colors' : ''}`}>
                           {sub.name}
                         </span>
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.bgCls} ${config.textCls}`}>
@@ -399,26 +402,33 @@ const DashboardCategoryDetail = () => {
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                    </button>
-                    <button
-                      onClick={() => handleSubCategoryClick(sub.name)}
-                      className="shrink-0 ml-3"
-                    >
-                      <FiChevronRight size={20} className="text-gray-400 group-hover:text-orange-600 transition-colors" />
-                    </button>
+                    </div>
+                    {motifClickable && (
+                      <button
+                        onClick={() => handleSubCategoryClick(sub.name)}
+                        className="shrink-0 ml-3"
+                      >
+                        <FiChevronRight size={20} className="text-gray-400 group-hover:text-orange-600 transition-colors" />
+                      </button>
+                    )}
                   </div>
                   {hasDetails && isExpanded && (
-                    <div className="bg-purple-50 border-t border-purple-100 px-6 py-3 space-y-2">
+                    <div className="bg-purple-50 border-t border-purple-100 px-6 py-3 space-y-2 pl-14">
                       {sub.details.map((det, i) => {
                         const detPct = sub.count > 0 ? (det.count / sub.count) * 100 : 0;
                         return (
-                          <div key={i} className="flex items-center gap-3">
-                            <span className="text-sm text-purple-800 font-medium w-48 shrink-0 truncate" title={det.name}>{det.name}</span>
+                          <button
+                            key={i}
+                            onClick={() => handleSubCategoryClick(sub.name, det.name)}
+                            className="w-full flex items-center gap-3 hover:bg-purple-100 rounded-lg px-2 py-1.5 -mx-2 transition-colors text-left group/det"
+                          >
+                            <span className="text-sm text-purple-800 font-medium w-48 shrink-0 truncate group-hover/det:text-orange-600" title={det.name}>{det.name}</span>
                             <div className="flex-1 bg-purple-100 rounded-full h-1.5">
                               <div className="h-1.5 rounded-full bg-purple-400 transition-all" style={{ width: `${detPct}%` }} />
                             </div>
                             <span className="text-xs font-bold text-purple-700 w-8 text-right">{det.count}</span>
-                          </div>
+                            <FiChevronRight size={16} className="text-purple-400 group-hover/det:text-orange-600 shrink-0" />
+                          </button>
                         );
                       })}
                     </div>
