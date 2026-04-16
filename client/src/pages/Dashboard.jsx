@@ -10,14 +10,15 @@ import {
 } from 'react-icons/fi';
 
 const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION SUD', 'REGION ORIENT', 'REGION NORD'];
+const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION CENTRE NORD', 'REGION SUD', 'REGION NORD', 'REGION ORIENT'];
 
 const REGION_COLORS = {
   'REGION CENTRE 1': { bg: 'bg-orange-100', text: 'text-orange-700', bar: 'bg-orange-500', ring: 'ring-orange-500' },
   'REGION CENTRE 02': { bg: 'bg-amber-100', text: 'text-amber-700', bar: 'bg-amber-500', ring: 'ring-amber-500' },
+  'REGION CENTRE NORD': { bg: 'bg-sky-100', text: 'text-sky-700', bar: 'bg-sky-500', ring: 'ring-sky-500' },
   'REGION SUD': { bg: 'bg-rose-100', text: 'text-rose-700', bar: 'bg-rose-500', ring: 'ring-rose-500' },
-  'REGION ORIENT': { bg: 'bg-purple-100', text: 'text-purple-700', bar: 'bg-purple-500', ring: 'ring-purple-500' },
   'REGION NORD': { bg: 'bg-teal-100', text: 'text-teal-700', bar: 'bg-teal-500', ring: 'ring-teal-500' },
+  'REGION ORIENT': { bg: 'bg-purple-100', text: 'text-purple-700', bar: 'bg-purple-500', ring: 'ring-purple-500' },
 };
 
 const CATEGORIES = [

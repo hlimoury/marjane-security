@@ -534,4 +534,92 @@ router.post('/migrate-accents', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
+// POST /api/dashboard/migrate-regions - Reassign supermarket regions + create ZAYD BENCHEIKH account
+router.post('/migrate-regions', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const bcrypt = require('bcryptjs');
+
+    // Region assignments from the new org chart (name patterns → region)
+    const REGION_MAP = {
+      'REGION CENTRE 1': [
+        'TWIN', '2 MARS', 'SIDI OTHMANE', 'SIDI MAAROUF', 'INARA', 'BERRECHID',
+        'BERNOUSSI', 'DAR BOUAAZA', 'QUARTIER LES', 'HOPITAUX', 'CASA LAYMOUNE',
+        'BOUSKOURA BO', 'BOUSKOURA VICTORIA', 'VILLAGE 1', 'PANORAMIQUE',
+        'ROCHE NOIRE', 'CASA ALMAZ', 'TAH', 'CASA OASIS', 'VERTINTA',
+        'BO-VILLAGE II', 'VILLE VERTE', 'EL JADIDA', 'ELJADIDA',
+      ],
+      'REGION CENTRE 02': [
+        'BEAUSEJOUR', 'PAQUET', 'LIBERTE', 'RYAD ANFA', 'EMILE ZOLA',
+        'IBNOUTACHAFINE', 'MOHAMEDIA', 'CASA OULFA', 'LAMENAIS', 'AERIA',
+        'CASA VAL FLEURI', 'CHEFCHAOUNI', 'CIL', 'AIN SEBAA', 'MEKOUAR',
+        'CASA FOURAT', 'GHANDI', 'BENSLIMANE', 'HERMITAGE', 'TADDART',
+        'CASA PALMIER', 'SIDI MOUMEN', 'RAHMA', 'LISSASFA',
+      ],
+      'REGION CENTRE NORD': [
+        'RABAT', 'TEMARA', 'HARHOURA', 'HAY RIAD', 'EL MENZEH', 'ELMENZEH',
+        'MAJORELLE', 'MABELLA', 'DAR ESSALAM', 'INDIGO', 'ZAER',
+        'OCEAN', 'CHAMPION', 'SALE', 'BOUZNIKA', 'MANDARONA',
+        'AHMED CHAOUKI', 'KENITRA', 'SOUK LARBAA', 'TIFELT',
+      ],
+      'REGION SUD': [
+        'GUELIZ', 'MARRAKECH', 'SEMLALIA', 'BENI MELLAL', 'SAFI',
+        'TARGA', 'AGADIR', 'KHOURIBGA', 'TALBORJT', 'MOHAMMADI',
+        'TAKADOUM', 'BENGRIR', 'BENGUERIR', 'UM6P', 'IZDIHAR',
+        'OULED TEIMA',
+      ],
+      'REGION NORD': [
+        'TANGER', 'TETOUAN', 'MARTIL', 'MOUJAHIDINE', 'ROMANA',
+        'BOUJARAH', 'WILAYA', 'IBERIA', 'CASTILLA', 'TOROS',
+        'BOULEVARD',
+      ],
+      'REGION ORIENT': [
+        'FES', 'MEKNES', 'ZAITOUN', 'FONTAINE', 'ERRACHIDIA', 'MIDELT',
+        'EL HAJEB', 'OUJDA', 'HAMRIA', 'TAZA', 'CDC', 'SEFROU', 'SALAM',
+      ],
+    };
+
+    const allSupermarkets = await pool.query('SELECT id, name, region FROM supermarkets');
+    let updated = 0;
+
+    for (const sm of allSupermarkets.rows) {
+      const upperName = sm.name.toUpperCase();
+      let newRegion = null;
+
+      for (const [region, keywords] of Object.entries(REGION_MAP)) {
+        for (const kw of keywords) {
+          if (upperName.includes(kw.toUpperCase())) {
+            newRegion = region;
+            break;
+          }
+        }
+        if (newRegion) break;
+      }
+
+      if (newRegion && newRegion !== sm.region) {
+        await pool.query('UPDATE supermarkets SET region = $1 WHERE id = $2', [newRegion, sm.id]);
+        updated++;
+      }
+    }
+
+    // Create ZAYD BENCHEIKH user if not exists
+    let userCreated = false;
+    const existingUser = await pool.query("SELECT id FROM users WHERE username = 'zayd'");
+    if (existingUser.rows.length === 0) {
+      const hash = await bcrypt.hash('zayd2026', 10);
+      await pool.query(
+        "INSERT INTO users (username, password_hash, role, region) VALUES ('zayd', $1, 'region', 'REGION NORD')",
+        [hash]
+      );
+      userCreated = true;
+    }
+
+    res.json({
+      message: `Migration régions terminée: ${updated} magasins réassignés. Compte ZAYD: ${userCreated ? 'créé (user: zayd / pass: zayd2026)' : 'existait déjà'}`
+    });
+  } catch (err) {
+    console.error('Erreur migration régions:', err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 module.exports = router;

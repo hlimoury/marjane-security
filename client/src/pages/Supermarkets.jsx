@@ -5,7 +5,7 @@ import { getSupermarkets, createSupermarket, updateSupermarket, deleteSupermarke
 import { toast } from 'react-toastify';
 import { FiPlus, FiEdit2, FiTrash2, FiEye, FiX, FiMapPin, FiShoppingCart, FiSearch } from 'react-icons/fi';
 
-const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION SUD', 'REGION ORIENT', 'REGION NORD'];
+const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION CENTRE NORD', 'REGION SUD', 'REGION NORD', 'REGION ORIENT'];
 
 const ITEMS_PER_PAGE = 10;
 

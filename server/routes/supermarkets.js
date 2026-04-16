@@ -71,7 +71,7 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Region requise' });
     }
 
-    const validRegions = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION SUD', 'REGION ORIENT', 'REGION NORD'];
+    const validRegions = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION CENTRE NORD', 'REGION SUD', 'REGION NORD', 'REGION ORIENT'];
     if (!validRegions.includes(region)) {
       return res.status(400).json({ message: 'Region invalide' });
     }
@@ -121,7 +121,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Region requise' });
     }
 
-    const validRegions = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION SUD', 'REGION ORIENT', 'REGION NORD'];
+    const validRegions = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION CENTRE NORD', 'REGION SUD', 'REGION NORD', 'REGION ORIENT'];
     if (!validRegions.includes(region)) {
       return res.status(400).json({ message: 'Region invalide' });
     }

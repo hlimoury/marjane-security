@@ -9,14 +9,15 @@ import {
 } from 'react-icons/fi';
 
 const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION SUD', 'REGION ORIENT', 'REGION NORD'];
+const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION CENTRE NORD', 'REGION SUD', 'REGION NORD', 'REGION ORIENT'];
 
 const REGION_COLORS = {
   'REGION CENTRE 1': 'bg-orange-100 text-orange-700',
-  'REGION CENTRE 02': 'bg-indigo-100 text-indigo-700',
-  'REGION SUD': 'bg-orange-100 text-orange-700',
-  'REGION ORIENT': 'bg-purple-100 text-purple-700',
+  'REGION CENTRE 02': 'bg-amber-100 text-amber-700',
+  'REGION CENTRE NORD': 'bg-sky-100 text-sky-700',
+  'REGION SUD': 'bg-rose-100 text-rose-700',
   'REGION NORD': 'bg-teal-100 text-teal-700',
+  'REGION ORIENT': 'bg-purple-100 text-purple-700',
 };
 
 const CATEGORY_CONFIG = {
