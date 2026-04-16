@@ -141,14 +141,16 @@ const initDatabase = async () => {
       { username: 'main', password: 'main123', role: 'main', region: null },
       { username: 'centre1', password: 'centre1123', role: 'region', region: 'REGION CENTRE 1' },
       { username: 'centre2', password: 'centre2123', role: 'region', region: 'REGION CENTRE 02' },
+      { username: 'nord', password: 'nord123', role: 'region', region: 'REGION CENTRE NORD' },
       { username: 'sud', password: 'sud123', role: 'region', region: 'REGION SUD' },
+      { username: 'zayd', password: 'zayd2026', role: 'region', region: 'REGION NORD' },
       { username: 'orient', password: 'orient123', role: 'region', region: 'REGION ORIENT' },
-      { username: 'nord', password: 'nord123', role: 'region', region: 'REGION NORD' },
       { username: 'anocentre1', password: 'anocentre1123', role: 'city', region: 'REGION CENTRE 1' },
       { username: 'anocentre02', password: 'anocentre02123', role: 'city', region: 'REGION CENTRE 02' },
+      { username: 'anocentrenord', password: 'anocentrenord123', role: 'city', region: 'REGION CENTRE NORD' },
       { username: 'anosud', password: 'anosud123', role: 'city', region: 'REGION SUD' },
-      { username: 'anoorient', password: 'anoorient123', role: 'city', region: 'REGION ORIENT' },
       { username: 'anonord', password: 'anonord123', role: 'city', region: 'REGION NORD' },
+      { username: 'anoorient', password: 'anoorient123', role: 'city', region: 'REGION ORIENT' },
     ];
 
     // Clean up old city* accounts

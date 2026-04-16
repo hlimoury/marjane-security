@@ -601,6 +601,9 @@ router.post('/migrate-regions', authMiddleware, adminOnly, async (req, res) => {
       }
     }
 
+    // Move 'nord' user (Larbi Blala) to REGION CENTRE NORD
+    await pool.query("UPDATE users SET region = 'REGION CENTRE NORD' WHERE username = 'nord'");
+
     // Create ZAYD BENCHEIKH user if not exists
     let userCreated = false;
     const existingUser = await pool.query("SELECT id FROM users WHERE username = 'zayd'");
@@ -613,8 +616,18 @@ router.post('/migrate-regions', authMiddleware, adminOnly, async (req, res) => {
       userCreated = true;
     }
 
+    // Create anomalies account for CENTRE NORD if not exists
+    const existingAno = await pool.query("SELECT id FROM users WHERE username = 'anocentrenord'");
+    if (existingAno.rows.length === 0) {
+      const hash = await bcrypt.hash('anocentrenord123', 10);
+      await pool.query(
+        "INSERT INTO users (username, password_hash, role, region) VALUES ('anocentrenord', $1, 'city', 'REGION CENTRE NORD')",
+        [hash]
+      );
+    }
+
     res.json({
-      message: `Migration régions terminée: ${updated} magasins réassignés. Compte ZAYD: ${userCreated ? 'créé (user: zayd / pass: zayd2026)' : 'existait déjà'}`
+      message: `Migration régions terminée: ${updated} magasins réassignés. Compte nord → CENTRE NORD. Compte ZAYD: ${userCreated ? 'créé (user: zayd / pass: zayd2026)' : 'existait déjà'}`
     });
   } catch (err) {
     console.error('Erreur migration régions:', err);
