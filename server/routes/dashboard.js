@@ -539,63 +539,89 @@ router.post('/migrate-regions', authMiddleware, adminOnly, async (req, res) => {
   try {
     const bcrypt = require('bcryptjs');
 
-    // Region assignments from the new org chart (name patterns → region)
-    const REGION_MAP = {
+    const stripAcc = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const normName = (n) => stripAcc(n.replace(/^MM\s+/i, '').trim()).toUpperCase();
+
+    const REGION_STORES = {
       'REGION CENTRE 1': [
-        'TWIN', '2 MARS', 'SIDI OTHMANE', 'SIDI MAAROUF', 'INARA', 'BERRECHID',
-        'BERNOUSSI', 'DAR BOUAAZA', 'QUARTIER LES', 'HOPITAUX', 'CASA LAYMOUNE',
-        'BOUSKOURA BO', 'BOUSKOURA VICTORIA', 'VILLAGE 1', 'PANORAMIQUE',
-        'ROCHE NOIRE', 'CASA ALMAZ', 'TAH', 'CASA OASIS', 'VERTINTA',
-        'BO-VILLAGE II', 'VILLE VERTE', 'EL JADIDA', 'ELJADIDA',
+        'TWIN', '2 MARS', 'PANORAMIQUE', 'ROCHE NOIRE',
+        'SIDI OTHMANE', 'SIDI MAAROUF O VILLAGE', 'SIDI MAAROUF', 'CASA ALMAZ', 'TAH',
+        'INARA', 'BERRECHID', 'CASA OASIS', 'VERTINTA',
+        'BERNOUSSI', 'DAR BOUAAZA CGI', 'DAR BOUAAZA', 'BO-VILLAGE II', 'VILLE VERTE',
+        'QUARTIER LES HOPITAUX', 'QUARTIER LES', 'BOUSKOURA VICTORIA',
+        'EL JADIDA ESSALAM', 'EL JADIDA', 'ELJADIDA NAJD',
+        'CASA LAYMOUNE', 'BOUSKOURA BO VILLAGE 1', 'BOUSKOURA BO',
       ],
       'REGION CENTRE 02': [
-        'BEAUSEJOUR', 'PAQUET', 'LIBERTE', 'RYAD ANFA', 'EMILE ZOLA',
-        'IBNOUTACHAFINE', 'MOHAMEDIA', 'CASA OULFA', 'LAMENAIS', 'AERIA',
-        'CASA VAL FLEURI', 'CHEFCHAOUNI', 'CIL', 'AIN SEBAA', 'MEKOUAR',
-        'CASA FOURAT', 'GHANDI', 'BENSLIMANE', 'HERMITAGE', 'TADDART',
-        'CASA PALMIER', 'SIDI MOUMEN', 'RAHMA', 'LISSASFA',
+        'BEAUSEJOUR', 'PAQUET', 'CIL', 'AIN SEBAA MEKOUAR', 'AIN SEBAA',
+        'LIBERTE', 'RYAD ANFA', 'CASA FOURAT', 'GHANDI',
+        'EMILE ZOLA', 'IBNOUTACHAFINE', 'BENSLIMANE', 'HERMITAGE',
+        'MOHAMEDIA PARC', 'MOHAMEDIA', 'CASA OULFA', 'TADDART', 'CASA PALMIER',
+        'LAMENAIS', 'AERIA MALL', 'AERIA', 'SIDI MOUMEN', 'RAHMA',
+        'CASA VAL FLEURI', 'CHEFCHAOUNI', 'LISSASFA',
       ],
       'REGION CENTRE NORD': [
-        'RABAT', 'TEMARA', 'HARHOURA', 'HAY RIAD', 'EL MENZEH', 'ELMENZEH',
-        'MAJORELLE', 'MABELLA', 'DAR ESSALAM', 'INDIGO', 'ZAER',
-        'OCEAN', 'CHAMPION', 'SALE', 'BOUZNIKA', 'MANDARONA',
-        'AHMED CHAOUKI', 'KENITRA', 'SOUK LARBAA', 'TIFELT',
+        'RABAT CITY CENTER', 'RABAT OCEAN 2', 'RABAT OCEAN', 'RABAT CHAMPION',
+        'RABAT MABELLA', 'RABAT ELMENZEH INDIGO III', 'RABAT',
+        'ZAER', 'TEMARA', 'HARHOURA',
+        'SALE BAB LAKWASS', 'SALE ELJADIDA', 'SALE',
+        'HAY RIAD', 'EL MENZEH MAJORELLE', 'EL MENZEH', 'ELMENZEH',
+        'BOUZNIKA MANDARONA', 'BOUZNIKA',
+        'AHMED CHAOUQI', 'AHMED CHAOUKI',
+        'KENITRA MAAMOURA', 'KENITRA', 'SOUK LARBAA',
+        'DAR ESSALAM', 'TIFELT', 'MABELLA', 'MAJORELLE', 'INDIGO', 'OCEAN', 'CHAMPION',
       ],
       'REGION SUD': [
-        'GUELIZ', 'MARRAKECH', 'SEMLALIA', 'BENI MELLAL', 'SAFI',
-        'TARGA', 'AGADIR', 'KHOURIBGA', 'TALBORJT', 'MOHAMMADI',
-        'TAKADOUM', 'BENGRIR', 'BENGUERIR', 'UM6P', 'IZDIHAR',
-        'OULED TEIMA',
+        'GUELIZ', 'MARRAKECH SEMLALIA II', 'MARRAKECH SEMLALIA', 'MARRAKECH IZDIHAR', 'MARRAKECH',
+        'BENI MELLAL TAKADOUM', 'BENI MELLAL', 'SAFI 1', 'SAFI',
+        'TARGA', 'AGADIR EL HOUDA', 'AGADIR TALBORJT', 'AGADIR HAY MOHAMMADI', 'AGADIR',
+        'KHOURIBGA', 'UM6P BENGUERIR', 'BENGUERIR', 'BENGRIR',
+        'OULED TEIMA', 'SEMLALIA', 'IZDIHAR', 'TALBORJT', 'TAKADOUM',
       ],
       'REGION NORD': [
-        'TANGER', 'TETOUAN', 'MARTIL', 'MOUJAHIDINE', 'ROMANA',
-        'BOUJARAH', 'WILAYA', 'IBERIA', 'CASTILLA', 'TOROS',
-        'BOULEVARD',
+        'TANGER BOULEVARD', 'TANGER CITY CENTER', 'TANGER VAL FLEURI',
+        'TANGER IBERIA', 'TANGER CASTILLA', 'TANGER TOROS', 'TANGER MOUJAHIDINE', 'TANGER',
+        'TETOUAN BOUJARAH', 'TETOUAN WILAYA', 'TETOUAN',
+        'MARTIL', 'ROMANA',
+        'MOUJAHIDINE', 'BOUJARAH', 'WILAYA', 'IBERIA', 'CASTILLA', 'TOROS', 'BOULEVARD',
       ],
       'REGION ORIENT': [
-        'FES', 'MEKNES', 'ZAITOUN', 'FONTAINE', 'ERRACHIDIA', 'MIDELT',
-        'EL HAJEB', 'OUJDA', 'HAMRIA', 'TAZA', 'CDC', 'SEFROU', 'SALAM',
+        'FES SALAM', 'FES SEFROU', 'FES FONTAINE', 'FES CDC', 'FES',
+        'MEKNES ZAITOUN', 'MEKNES HAMRIA', 'MEKNES',
+        'ERRACHIDIA', 'MIDELT', 'EL HAJEB', 'OUJDA MEDINA', 'OUJDA', 'TAZA',
+        'ZAITOUN', 'FONTAINE', 'HAMRIA', 'CDC', 'SEFROU', 'SALAM',
       ],
     };
 
+    const STORE_TO_REGION = {};
+    for (const [region, names] of Object.entries(REGION_STORES)) {
+      for (const name of names) STORE_TO_REGION[name] = region;
+    }
+    const SORTED_KEYS = Object.keys(STORE_TO_REGION).sort((a, b) => b.length - a.length);
+
     const allSupermarkets = await pool.query('SELECT id, name, region FROM supermarkets');
     let updated = 0;
+    const unmatched = [];
 
     for (const sm of allSupermarkets.rows) {
-      const upperName = sm.name.toUpperCase();
-      let newRegion = null;
+      const norm = normName(sm.name);
+      let newRegion = STORE_TO_REGION[norm] || null;
 
-      for (const [region, keywords] of Object.entries(REGION_MAP)) {
-        for (const kw of keywords) {
-          if (upperName.includes(kw.toUpperCase())) {
-            newRegion = region;
+      if (!newRegion) {
+        for (const key of SORTED_KEYS) {
+          if (norm.includes(key)) {
+            newRegion = STORE_TO_REGION[key];
             break;
           }
         }
-        if (newRegion) break;
       }
 
-      if (newRegion && newRegion !== sm.region) {
+      if (!newRegion) {
+        unmatched.push(sm.name);
+        continue;
+      }
+
+      if (newRegion !== sm.region) {
         await pool.query('UPDATE supermarkets SET region = $1 WHERE id = $2', [newRegion, sm.id]);
         updated++;
       }
@@ -627,7 +653,8 @@ router.post('/migrate-regions', authMiddleware, adminOnly, async (req, res) => {
     }
 
     res.json({
-      message: `Migration régions terminée: ${updated} magasins réassignés. Compte nord → CENTRE NORD. Compte ZAYD: ${userCreated ? 'créé (user: zayd / pass: zayd2026)' : 'existait déjà'}`
+      message: `Migration régions terminée: ${updated} magasins réassignés. Compte nord → CENTRE NORD. Compte ZAYD: ${userCreated ? 'créé (user: zayd / pass: zayd2026)' : 'existait déjà'}`,
+      unmatched: unmatched.length > 0 ? unmatched : undefined,
     });
   } catch (err) {
     console.error('Erreur migration régions:', err);
