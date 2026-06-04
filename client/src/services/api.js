@@ -79,6 +79,9 @@ export const getDashboardSubCategoryDetail = (type, subcat, params = {}) => {
   return api.get(`/dashboard/category/${type}/subcategory/${encodeURIComponent(subcat)}${qs ? '?' + qs : ''}`);
 };
 
+// Report generation (non-city users)
+export const generateReport = (data) => api.post('/dashboard/report', data);
+
 // Totals (all users)
 export const getTotals = (params = {}) => {
   const searchParams = new URLSearchParams();

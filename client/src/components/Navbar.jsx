@@ -1,9 +1,9 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiLogOut, FiHome, FiShoppingCart, FiBarChart2, FiList } from 'react-icons/fi';
+import { FiLogOut, FiHome, FiShoppingCart, FiBarChart2, FiList, FiFileText } from 'react-icons/fi';
 
 const Navbar = () => {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, isCity } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -58,6 +58,20 @@ const Navbar = () => {
                 <FiList size={16} />
                 <span>Totaux</span>
               </Link>
+
+              {!isCity() && (
+                <Link
+                  to="/rapport"
+                  className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive('/rapport')
+                      ? 'bg-orange-600 text-white'
+                      : 'text-white hover:bg-orange-600 hover:text-white'
+                  }`}
+                >
+                  <FiFileText size={16} />
+                  <span>Rapport</span>
+                </Link>
+              )}
 
               {isAdmin() && (
                 <Link
@@ -115,6 +129,18 @@ const Navbar = () => {
         >
           Totaux
         </Link>
+        {!isCity() && (
+          <Link
+            to="/rapport"
+            className={`flex-1 text-center py-2 rounded-md text-sm font-medium ${
+              isActive('/rapport')
+                ? 'bg-orange-600 text-white'
+                : 'text-white hover:bg-orange-600'
+            }`}
+          >
+            Rapport
+          </Link>
+        )}
         {isAdmin() && (
           <Link
             to="/dashboard"

@@ -629,6 +629,117 @@ router.get('/totals', authMiddleware, async (req, res) => {
   }
 });
 
+// POST /api/dashboard/report - Generate report data (all users except city)
+router.post('/report', authMiddleware, async (req, res) => {
+  if (req.user.role === 'city') {
+    return res.status(403).json({ message: 'Accès refusé' });
+  }
+
+  try {
+    const { categories = [], supermarketIds = [], startMonth, startYear, endMonth, endYear } = req.body;
+    const userRole = req.user.role;
+    const userRegion = req.user.region;
+
+    const validCats = ['anomalies', 'interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'controle_rm'];
+    const selectedCats = categories.filter(c => validCats.includes(c));
+    if (selectedCats.length === 0) {
+      return res.status(400).json({ message: 'Sélectionnez au moins une catégorie' });
+    }
+
+    let where = 'WHERE 1=1';
+    const params = [];
+    let pi = 1;
+
+    if (userRole === 'region') {
+      where += ` AND s.region = $${pi++}`;
+      params.push(userRegion);
+    }
+    if (supermarketIds.length > 0) {
+      where += ` AND s.id = ANY($${pi++})`;
+      params.push(supermarketIds);
+    }
+
+    const sY = parseInt(startYear), sM = parseInt(startMonth);
+    const eY = parseInt(endYear), eM = parseInt(endMonth);
+    where += ` AND (i.year * 100 + i.month) >= $${pi++}`;
+    params.push(sY * 100 + sM);
+    where += ` AND (i.year * 100 + i.month) <= $${pi++}`;
+    params.push(eY * 100 + eM);
+
+    let smWhere = 'WHERE 1=1';
+    const smParams = [];
+    let spi = 1;
+    if (userRole === 'region') {
+      smWhere += ` AND region = $${spi++}`;
+      smParams.push(userRegion);
+    }
+    if (supermarketIds.length > 0) {
+      smWhere += ` AND id = ANY($${spi++})`;
+      smParams.push(supermarketIds);
+    }
+    const smResult = await pool.query(`SELECT id, name, region FROM supermarkets ${smWhere} ORDER BY name`, smParams);
+
+    const categoryData = {};
+
+    for (const cat of selectedCats) {
+      const query = `
+        SELECT s.id as supermarket_id, s.name as supermarket_name, t.data
+        FROM ${cat} t
+        JOIN instances i ON t.instance_id = i.id
+        JOIN supermarkets s ON i.supermarket_id = s.id
+        ${where}
+      `;
+      const result = await pool.query(query, params);
+
+      const perSupermarket = {};
+      let grandTotal = 0;
+      const subCategoryTotals = {};
+
+      result.rows.forEach(row => {
+        const smId = row.supermarket_id;
+        if (!perSupermarket[smId]) perSupermarket[smId] = { total: 0, details: {} };
+
+        const entries = row.data?.entries || [];
+        entries.forEach(entry => {
+          perSupermarket[smId].total++;
+          grandTotal++;
+
+          let subs = [];
+          if (cat === 'anomalies') subs = entry.sous_categories || [];
+          else if (cat === 'interpellations') subs = entry.rayons || (entry.rayon ? [entry.rayon] : []);
+          else if (cat === 'accidents') subs = entry.cause ? [entry.cause] : [];
+          else if (cat === 'autres_incidents') subs = entry.type ? [entry.type] : [];
+          else if (cat === 'formations') subs = entry.type ? [entry.type] : [];
+          else if (cat === 'reclamations') subs = entry.motif ? [entry.motif] : [];
+          else if (cat === 'controle_rm') {
+            const lbl = entry.type === 'entrepot' ? 'Contrôle entrepôt' : 'Contrôle fournisseurs direct';
+            subs = entry.sous_type ? [`${lbl} — ${entry.sous_type}`] : [];
+          }
+
+          subs.forEach(rawSub => {
+            if (!rawSub) return;
+            const sub = normalizeSubCategory(rawSub);
+            perSupermarket[smId].details[sub] = (perSupermarket[smId].details[sub] || 0) + 1;
+            subCategoryTotals[sub] = (subCategoryTotals[sub] || 0) + 1;
+          });
+        });
+      });
+
+      categoryData[cat] = { total: grandTotal, subCategoryTotals, perSupermarket };
+    }
+
+    res.json({
+      supermarkets: smResult.rows,
+      categories: categoryData,
+      period: { startMonth: sM, startYear: sY, endMonth: eM, endYear: eY },
+      region: userRegion || 'Toutes les régions',
+    });
+  } catch (err) {
+    console.error('Erreur report:', err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 // POST /api/dashboard/migrate-regions - Reassign supermarket regions + create ZAYD BENCHEIKH account
 router.post('/migrate-regions', authMiddleware, adminOnly, async (req, res) => {
   try {
