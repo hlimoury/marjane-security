@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { getReportsList, getReportById, markReportDownloaded } from '../services/api';
 import { toast } from 'react-toastify';
 import {
-  FiInbox, FiMail, FiMailOpen, FiDownload, FiChevronDown,
-  FiChevronUp, FiClock, FiUser, FiMapPin, FiCheck, FiLoader
+  FiInbox, FiMail, FiDownload, FiChevronDown,
+  FiChevronUp, FiClock, FiMapPin, FiCheck, FiLoader
 } from 'react-icons/fi';
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, HeadingLevel, AlignmentType, WidthType, ShadingType, convertInchesToTwip } from 'docx';
 import { saveAs } from 'file-saver';
@@ -247,7 +247,7 @@ const AdminRapports = () => {
                     className="w-full px-5 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors text-left">
                     <div className="flex-shrink-0">
                       {report.is_read
-                        ? <FiMailOpen size={20} className="text-gray-400" />
+                        ? <FiCheck size={20} className="text-gray-400" />
                         : <FiMail size={20} className="text-orange-500" />}
                     </div>
                     <div className="flex-1 min-w-0">
