@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getSupermarkets, generateReport } from '../services/api';
+import { getSupermarkets, generateReport, sendReportToAdmin, getLastSentReport } from '../services/api';
 import { toast } from 'react-toastify';
 import {
   FiFileText, FiDownload, FiFilter, FiCheck, FiCheckSquare,
-  FiSquare, FiChevronDown, FiChevronUp, FiLoader
+  FiSquare, FiChevronDown, FiChevronUp, FiLoader, FiSend, FiClock, FiEye
 } from 'react-icons/fi';
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, HeadingLevel, AlignmentType, WidthType, ShadingType, BorderStyle, convertInchesToTwip } from 'docx';
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
@@ -199,7 +199,7 @@ function downloadPdf(reportData) {
     });
 
     if (tableRows.length > 0) {
-      doc.autoTable({
+      autoTable(doc, {
         startY: y,
         head: [['Magasin', 'Total', 'Sous-catégories']],
         body: tableRows,
@@ -243,14 +243,20 @@ const Rapport = () => {
   const [endMonth, setEndMonth] = useState(currentMonth);
   const [smSearch, setSmSearch] = useState('');
   const [smExpanded, setSmExpanded] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [lastSent, setLastSent] = useState(null);
 
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
-        const res = await getSupermarkets();
-        setSupermarkets(res.data);
-        setSelectedSmIds(res.data.map(s => s.id));
+        const [smRes, lsRes] = await Promise.all([
+          getSupermarkets(),
+          getLastSentReport().catch(() => ({ data: null })),
+        ]);
+        setSupermarkets(smRes.data);
+        setSelectedSmIds(smRes.data.map(s => s.id));
+        if (lsRes.data) setLastSent(lsRes.data);
       } catch { toast.error('Erreur chargement magasins'); }
       finally { setLoading(false); }
     })();
@@ -306,6 +312,25 @@ const Rapport = () => {
     } catch (err) {
       toast.error('Erreur lors de la génération');
     } finally { setGenerating(false); }
+  };
+
+  const handleSendToAdmin = async () => {
+    if (!reportData) return;
+    try {
+      setSending(true);
+      const pLabel = periodText(reportData.period);
+      const catLabels = Object.keys(reportData.categories).map(k => CAT_LABELS[k] || k);
+      const res = await sendReportToAdmin({
+        reportData,
+        periodLabel: pLabel,
+        categories: catLabels,
+        supermarketCount: reportData.supermarkets.length,
+      });
+      setLastSent({ created_at: res.data.sent_at, is_read: false, is_downloaded: false });
+      toast.success('Rapport envoyé à l\'administrateur');
+    } catch (err) {
+      toast.error('Erreur lors de l\'envoi');
+    } finally { setSending(false); }
   };
 
   const filteredSm = supermarkets.filter(s => !smSearch || s.name.toLowerCase().includes(smSearch.toLowerCase()));
@@ -442,6 +467,24 @@ const Rapport = () => {
             >
               {generating ? <><FiLoader className="animate-spin" size={16} /> Génération...</> : <><FiFileText size={16} /> Générer le rapport</>}
             </button>
+
+            {/* Last sent info */}
+            {lastSent && (
+              <div className="bg-white rounded-xl shadow-sm border p-3">
+                <h3 className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5"><FiClock size={12} /> Dernier envoi</h3>
+                <p className="text-xs text-gray-600">
+                  Envoyé le <strong>{new Date(lastSent.created_at).toLocaleDateString('fr-FR')}</strong> à {new Date(lastSent.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+                <div className="flex gap-2 mt-1.5">
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${lastSent.is_read ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                    {lastSent.is_read ? 'Lu' : 'Non lu'}
+                  </span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${lastSent.is_downloaded ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+                    {lastSent.is_downloaded ? 'Téléchargé' : 'Non téléchargé'}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right: Preview + Download */}
@@ -456,15 +499,21 @@ const Rapport = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Download buttons */}
-                <div className="flex gap-3">
-                  <button onClick={() => downloadPdf(reportData)}
-                    className="flex-1 flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm">
-                    <FiDownload size={16} /> Télécharger PDF
+                {/* Download + Send buttons */}
+                <div className="flex gap-3 flex-wrap">
+                  <button onClick={() => { try { downloadPdf(reportData); } catch(e) { console.error(e); toast.error('Erreur PDF'); } }}
+                    className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm">
+                    <FiDownload size={16} /> PDF
                   </button>
                   <button onClick={async () => { try { await downloadDocx(reportData); } catch { toast.error('Erreur DOCX'); } }}
-                    className="flex-1 flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm">
-                    <FiDownload size={16} /> Télécharger DOCX
+                    className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm">
+                    <FiDownload size={16} /> DOCX
+                  </button>
+                  <button onClick={handleSendToAdmin} disabled={sending}
+                    className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm ${
+                      sending ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 text-white'
+                    }`}>
+                    {sending ? <><FiLoader className="animate-spin" size={16} /> Envoi...</> : <><FiSend size={16} /> Envoyer à l'admin</>}
                   </button>
                 </div>
 

@@ -119,6 +119,24 @@ const initDatabase = async () => {
       );
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sent_reports (
+        id SERIAL PRIMARY KEY,
+        sender_id INTEGER REFERENCES users(id),
+        sender_username VARCHAR(100) NOT NULL,
+        sender_region VARCHAR(100),
+        period_label VARCHAR(200),
+        categories TEXT[],
+        supermarket_count INTEGER DEFAULT 0,
+        report_data JSONB NOT NULL DEFAULT '{}',
+        is_read BOOLEAN DEFAULT FALSE,
+        is_downloaded BOOLEAN DEFAULT FALSE,
+        read_at TIMESTAMP,
+        downloaded_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // Allow 'city' role in users table (safe to run on existing DB)
     await pool.query(`
       ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;

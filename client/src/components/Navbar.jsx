@@ -1,11 +1,20 @@
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiLogOut, FiHome, FiShoppingCart, FiBarChart2, FiList, FiFileText } from 'react-icons/fi';
+import { getUnreadReportCount } from '../services/api';
+import { FiLogOut, FiHome, FiShoppingCart, FiBarChart2, FiList, FiFileText, FiInbox } from 'react-icons/fi';
 
 const Navbar = () => {
   const { user, logout, isAdmin, isCity } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      getUnreadReportCount().then(res => setUnreadCount(res.data.count || 0)).catch(() => {});
+    }
+  }, [user, location.pathname]);
 
   if (!user) return null;
 
@@ -75,6 +84,25 @@ const Navbar = () => {
 
               {isAdmin() && (
                 <Link
+                  to="/rapports-recus"
+                  className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors relative ${
+                    isActive('/rapports-recus')
+                      ? 'bg-orange-600 text-white'
+                      : 'text-white hover:bg-orange-600 hover:text-white'
+                  }`}
+                >
+                  <FiInbox size={16} />
+                  <span>Rapports</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Link>
+              )}
+
+              {isAdmin() && (
+                <Link
                   to="/dashboard"
                   className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive('/dashboard')
@@ -139,6 +167,23 @@ const Navbar = () => {
             }`}
           >
             Rapport
+          </Link>
+        )}
+        {isAdmin() && (
+          <Link
+            to="/rapports-recus"
+            className={`flex-1 text-center py-2 rounded-md text-sm font-medium relative ${
+              isActive('/rapports-recus')
+                ? 'bg-orange-600 text-white'
+                : 'text-white hover:bg-orange-600'
+            }`}
+          >
+            Rapports
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 right-0 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </Link>
         )}
         {isAdmin() && (

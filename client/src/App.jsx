@@ -23,6 +23,7 @@ import DashboardCategoryDetail from './pages/DashboardCategoryDetail';
 import DashboardSubCategoryDetail from './pages/DashboardSubCategoryDetail';
 import Totaux from './pages/Totaux';
 import Rapport from './pages/Rapport';
+import AdminRapports from './pages/AdminRapports';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -81,6 +82,10 @@ const AppRoutes = () => {
 
         <Route path="/rapport" element={
           <ProtectedRoute><Rapport /></ProtectedRoute>
+        } />
+
+        <Route path="/rapports-recus" element={
+          <ProtectedRoute adminOnly><AdminRapports /></ProtectedRoute>
         } />
 
         <Route path="/dashboard" element={

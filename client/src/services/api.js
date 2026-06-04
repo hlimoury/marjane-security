@@ -82,6 +82,14 @@ export const getDashboardSubCategoryDetail = (type, subcat, params = {}) => {
 // Report generation (non-city users)
 export const generateReport = (data) => api.post('/dashboard/report', data);
 
+// Sent Reports
+export const sendReportToAdmin = (data) => api.post('/reports/send', data);
+export const getReportsList = () => api.get('/reports');
+export const getReportById = (id) => api.get(`/reports/${id}`);
+export const markReportDownloaded = (id) => api.put(`/reports/${id}/downloaded`);
+export const getUnreadReportCount = () => api.get('/reports/unread-count');
+export const getLastSentReport = () => api.get('/reports/user/last-sent');
+
 // Totals (all users)
 export const getTotals = (params = {}) => {
   const searchParams = new URLSearchParams();
