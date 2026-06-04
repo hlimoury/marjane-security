@@ -21,6 +21,7 @@ import ControleRM from './pages/ControleRM';
 import Scoring from './pages/Scoring';
 import DashboardCategoryDetail from './pages/DashboardCategoryDetail';
 import DashboardSubCategoryDetail from './pages/DashboardSubCategoryDetail';
+import Totaux from './pages/Totaux';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -71,6 +72,10 @@ const AppRoutes = () => {
         } />
         <Route path="/instance/:instanceId/scoring" element={
           <ProtectedRoute><Scoring /></ProtectedRoute>
+        } />
+
+        <Route path="/totaux" element={
+          <ProtectedRoute><Totaux /></ProtectedRoute>
         } />
 
         <Route path="/dashboard" element={

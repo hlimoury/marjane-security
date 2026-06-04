@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiLogOut, FiHome, FiShoppingCart, FiBarChart2 } from 'react-icons/fi';
+import { FiLogOut, FiHome, FiShoppingCart, FiBarChart2, FiList } from 'react-icons/fi';
 
 const Navbar = () => {
   const { user, logout, isAdmin } = useAuth();
@@ -45,6 +45,18 @@ const Navbar = () => {
               >
                 <FiShoppingCart size={16} />
                 <span>Magasins</span>
+              </Link>
+
+              <Link
+                to="/totaux"
+                className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/totaux')
+                    ? 'bg-orange-600 text-white'
+                    : 'text-white hover:bg-orange-600 hover:text-white'
+                }`}
+              >
+                <FiList size={16} />
+                <span>Totaux</span>
               </Link>
 
               {isAdmin() && (
@@ -92,6 +104,16 @@ const Navbar = () => {
           }`}
         >
           Magasins
+        </Link>
+        <Link
+          to="/totaux"
+          className={`flex-1 text-center py-2 rounded-md text-sm font-medium ${
+            isActive('/totaux')
+              ? 'bg-orange-600 text-white'
+              : 'text-white hover:bg-orange-600'
+          }`}
+        >
+          Totaux
         </Link>
         {isAdmin() && (
           <Link

@@ -79,4 +79,13 @@ export const getDashboardSubCategoryDetail = (type, subcat, params = {}) => {
   return api.get(`/dashboard/category/${type}/subcategory/${encodeURIComponent(subcat)}${qs ? '?' + qs : ''}`);
 };
 
+// Totals (all users)
+export const getTotals = (params = {}) => {
+  const searchParams = new URLSearchParams();
+  if (params.year) searchParams.set('year', params.year);
+  if (params.month) searchParams.set('month', params.month);
+  const qs = searchParams.toString();
+  return api.get(`/dashboard/totals${qs ? '?' + qs : ''}`);
+};
+
 export default api;

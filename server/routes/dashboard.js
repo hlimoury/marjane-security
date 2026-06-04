@@ -534,6 +534,101 @@ router.post('/migrate-accents', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
+// GET /api/dashboard/totals - Totals per supermarket per category (all users)
+router.get('/totals', authMiddleware, async (req, res) => {
+  try {
+    const { year, month } = req.query;
+    const userRole = req.user.role;
+    const userRegion = req.user.region;
+    const isCity = userRole === 'city';
+
+    let where = 'WHERE 1=1';
+    const params = [];
+    let pi = 1;
+
+    if (userRole === 'region' || userRole === 'city') {
+      where += ` AND s.region = $${pi++}`;
+      params.push(userRegion);
+    }
+    if (year) { where += ` AND i.year = $${pi++}`; params.push(parseInt(year)); }
+    if (month) { where += ` AND i.month = $${pi++}`; params.push(parseInt(month)); }
+
+    const categories = isCity
+      ? ['anomalies']
+      : ['anomalies', 'interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'controle_rm'];
+
+    const regionParam = (userRole === 'region' || userRole === 'city') ? [userRegion] : [];
+    let smQuery = 'SELECT id, name, region FROM supermarkets';
+    if (regionParam.length) smQuery += ' WHERE region = $1';
+    smQuery += ' ORDER BY name';
+    const smResult = await pool.query(smQuery, regionParam);
+
+    let yearsQuery = 'SELECT DISTINCT i.year FROM instances i JOIN supermarkets s ON i.supermarket_id = s.id';
+    if (regionParam.length) yearsQuery += ' WHERE s.region = $1';
+    yearsQuery += ' ORDER BY year DESC';
+    const yearsResult = await pool.query(yearsQuery, regionParam);
+
+    const categoryData = {};
+
+    for (const cat of categories) {
+      const query = `
+        SELECT s.id as supermarket_id, t.data
+        FROM ${cat} t
+        JOIN instances i ON t.instance_id = i.id
+        JOIN supermarkets s ON i.supermarket_id = s.id
+        ${where}
+      `;
+      const result = await pool.query(query, params);
+
+      const perSupermarket = {};
+      let grandTotal = 0;
+      const subCategoryTotals = {};
+
+      result.rows.forEach(row => {
+        const smId = row.supermarket_id;
+        if (!perSupermarket[smId]) perSupermarket[smId] = { total: 0, details: {} };
+
+        const entries = row.data?.entries || [];
+        entries.forEach(entry => {
+          perSupermarket[smId].total++;
+          grandTotal++;
+
+          let subs = [];
+          if (cat === 'anomalies') subs = entry.sous_categories || [];
+          else if (cat === 'interpellations') subs = entry.rayons || (entry.rayon ? [entry.rayon] : []);
+          else if (cat === 'accidents') subs = entry.cause ? [entry.cause] : [];
+          else if (cat === 'autres_incidents') subs = entry.type ? [entry.type] : [];
+          else if (cat === 'formations') subs = entry.type ? [entry.type] : [];
+          else if (cat === 'reclamations') subs = entry.motif ? [entry.motif] : [];
+          else if (cat === 'controle_rm') {
+            const lbl = entry.type === 'entrepot' ? 'Contrôle entrepôt' : 'Contrôle fournisseurs direct';
+            subs = entry.sous_type ? [`${lbl} — ${entry.sous_type}`] : [];
+          }
+
+          subs.forEach(rawSub => {
+            if (!rawSub) return;
+            const sub = normalizeSubCategory(rawSub);
+            perSupermarket[smId].details[sub] = (perSupermarket[smId].details[sub] || 0) + 1;
+            subCategoryTotals[sub] = (subCategoryTotals[sub] || 0) + 1;
+          });
+        });
+      });
+
+      categoryData[cat] = { total: grandTotal, subCategoryTotals, perSupermarket };
+    }
+
+    res.json({
+      supermarkets: smResult.rows,
+      categories: categoryData,
+      years: yearsResult.rows.map(r => r.year),
+      isCity,
+    });
+  } catch (err) {
+    console.error('Erreur totals:', err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 // POST /api/dashboard/migrate-regions - Reassign supermarket regions + create ZAYD BENCHEIKH account
 router.post('/migrate-regions', authMiddleware, adminOnly, async (req, res) => {
   try {
