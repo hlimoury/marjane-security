@@ -480,6 +480,11 @@ const DashboardSubCategoryDetail = () => {
                           {entry.criticite}
                         </span>
                       )}
+                      {entry.commentaire && (
+                        <p className="mt-1.5 text-xs text-gray-500 bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-100">
+                          <span className="font-medium text-gray-600">Commentaire: </span>{entry.commentaire}
+                        </p>
+                      )}
                     </div>
                     <button
                       onClick={() => navigate(`/instance/${entry.instance_id}/${category}`)}

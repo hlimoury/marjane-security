@@ -65,7 +65,7 @@ const Totaux = () => {
 
     return data.supermarkets
       .map(sm => {
-        const smData = catData.perSupermarket[sm.id] || { total: 0, details: {} };
+        const smData = catData.perSupermarket[sm.id] || { total: 0, details: {}, comments: [] };
         return {
           id: sm.id,
           name: sm.name,
@@ -74,6 +74,7 @@ const Totaux = () => {
           details: Object.entries(smData.details)
             .sort((a, b) => b[1] - a[1])
             .map(([name, count]) => ({ name, count })),
+          comments: smData.comments || [],
         };
       })
       .filter(r => !q || r.name.toLowerCase().includes(q))
@@ -249,27 +250,45 @@ const Totaux = () => {
                       ) : <span className="w-4" />}
                     </button>
 
-                    {isExpanded && sm.details.length > 0 && (
+                    {isExpanded && (sm.details.length > 0 || sm.comments.length > 0) && (
                       <div className={`${activeCatConfig.bgCls} px-6 py-3 border-t`}>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {sm.details.map(d => {
-                            const detPct = sm.total > 0 ? (d.count / sm.total) * 100 : 0;
-                            return (
-                              <div key={d.name} className="bg-white rounded-lg px-3 py-2 border text-sm flex items-center gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-gray-700 truncate text-xs">{d.name}</p>
-                                  <div className="h-1 bg-gray-100 rounded-full mt-1 overflow-hidden">
-                                    <div
-                                      className={`h-full rounded-full ${activeCatConfig.barCls}`}
-                                      style={{ width: `${detPct}%` }}
-                                    />
+                        {sm.details.length > 0 && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {sm.details.map(d => {
+                              const detPct = sm.total > 0 ? (d.count / sm.total) * 100 : 0;
+                              return (
+                                <div key={d.name} className="bg-white rounded-lg px-3 py-2 border text-sm flex items-center gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-gray-700 truncate text-xs">{d.name}</p>
+                                    <div className="h-1 bg-gray-100 rounded-full mt-1 overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full ${activeCatConfig.barCls}`}
+                                        style={{ width: `${detPct}%` }}
+                                      />
+                                    </div>
                                   </div>
+                                  <span className={`font-bold text-sm ${activeCatConfig.textCls}`}>{d.count}</span>
                                 </div>
-                                <span className={`font-bold text-sm ${activeCatConfig.textCls}`}>{d.count}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {sm.comments.length > 0 && (
+                          <div className="mt-3 border-t border-white/50 pt-3">
+                            <p className="text-xs font-semibold text-gray-600 mb-2">Commentaires ({sm.comments.length})</p>
+                            <div className="space-y-1.5">
+                              {sm.comments.map((c, ci) => (
+                                <div key={ci} className="bg-white rounded-lg px-3 py-2 border text-xs">
+                                  <div className="flex items-center gap-2 text-gray-400 mb-0.5">
+                                    <span className="font-medium text-gray-600">{c.type}</span>
+                                    {c.date && <span>• {c.date}</span>}
+                                  </div>
+                                  <p className="text-gray-700">{c.text}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

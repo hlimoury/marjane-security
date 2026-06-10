@@ -15,6 +15,7 @@ const EMPTY_FORM = {
   valeur_kdh: '',
   rayons: [],
   date: '',
+  commentaire: '',
 };
 
 const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
@@ -81,6 +82,7 @@ const Interpellations = () => {
       valeur_kdh: Number(form.valeur_kdh) || 0,
       rayons: form.rayons,
       date: form.date,
+      commentaire: form.commentaire || '',
     };
 
     if (editingIndex !== null) {
@@ -106,6 +108,7 @@ const Interpellations = () => {
       valeur_kdh: entry.valeur_kdh.toString(),
       rayons: existingRayons,
       date: entry.date,
+      commentaire: entry.commentaire || '',
     });
     setRayonToAdd('');
     setEditingIndex(index);
@@ -269,6 +272,17 @@ const Interpellations = () => {
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Commentaire / Description</label>
+            <textarea
+              value={form.commentaire}
+              onChange={(e) => setForm({ ...form, commentaire: e.target.value })}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none resize-y"
+              placeholder="Décrivez les circonstances de l'interpellation..."
+              rows={3}
+            />
+          </div>
+
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
@@ -315,6 +329,7 @@ const Interpellations = () => {
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Valeur KDH</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Rayon(s)</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Date</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-600">Commentaire</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-600">Actions</th>
                 </tr>
               </thead>
@@ -331,6 +346,11 @@ const Interpellations = () => {
                       ))}
                     </td>
                     <td className="py-3 px-4 text-gray-800">{entry.date}</td>
+                    <td className="py-3 px-4 text-gray-600 text-xs max-w-[200px]">
+                      {entry.commentaire ? (
+                        <span className="line-clamp-2" title={entry.commentaire}>{entry.commentaire}</span>
+                      ) : <span className="text-gray-300">—</span>}
+                    </td>
                     <td className="py-3 px-4">
                       <div className="flex gap-2">
                         <button

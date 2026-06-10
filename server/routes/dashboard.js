@@ -586,12 +586,18 @@ router.get('/totals', authMiddleware, async (req, res) => {
 
       result.rows.forEach(row => {
         const smId = row.supermarket_id;
-        if (!perSupermarket[smId]) perSupermarket[smId] = { total: 0, details: {} };
+        if (!perSupermarket[smId]) perSupermarket[smId] = { total: 0, details: {}, comments: [] };
 
         const entries = row.data?.entries || [];
         entries.forEach(entry => {
           perSupermarket[smId].total++;
           grandTotal++;
+
+          if (cat === 'interpellations' && entry.commentaire) {
+            perSupermarket[smId].comments.push({
+              type: entry.type, date: entry.date, text: entry.commentaire,
+            });
+          }
 
           let subs = [];
           if (cat === 'anomalies') subs = entry.sous_categories || [];
@@ -697,12 +703,18 @@ router.post('/report', authMiddleware, async (req, res) => {
 
       result.rows.forEach(row => {
         const smId = row.supermarket_id;
-        if (!perSupermarket[smId]) perSupermarket[smId] = { total: 0, details: {} };
+        if (!perSupermarket[smId]) perSupermarket[smId] = { total: 0, details: {}, comments: [] };
 
         const entries = row.data?.entries || [];
         entries.forEach(entry => {
           perSupermarket[smId].total++;
           grandTotal++;
+
+          if (cat === 'interpellations' && entry.commentaire) {
+            perSupermarket[smId].comments.push({
+              type: entry.type, date: entry.date, text: entry.commentaire,
+            });
+          }
 
           let subs = [];
           if (cat === 'anomalies') subs = entry.sous_categories || [];

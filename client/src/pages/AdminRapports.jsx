@@ -77,6 +77,7 @@ function buildAdminDocx(report) {
     );
     const rows = [new TableRow({ tableHeader: true, children: headerCells })];
 
+    const commentsForCat = [];
     supermarkets.forEach(sm => {
       const smData = cat.perSupermarket[sm.id];
       if (!smData || smData.total === 0) return;
@@ -85,11 +86,28 @@ function buildAdminDocx(report) {
         new TableCell({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(smData.total), bold: true, size: 18 })] })] }),
         new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: topDetails(smData.details) || '—', size: 16, color: '666666' })] })] }),
       ]}));
+      if (catKey === 'interpellations' && smData.comments?.length > 0) {
+        smData.comments.forEach(c => commentsForCat.push({ store: sm.name, ...c }));
+      }
     });
 
     if (rows.length > 1) {
       children.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows }));
     }
+
+    if (commentsForCat.length > 0) {
+      children.push(new Paragraph({ spacing: { before: 150, after: 80 }, children: [
+        new TextRun({ text: 'Commentaires des interpellations :', bold: true, size: 18, color: '333333' }),
+      ]}));
+      commentsForCat.forEach(c => {
+        children.push(new Paragraph({ spacing: { after: 60 }, indent: { left: 200 }, children: [
+          new TextRun({ text: `${c.store}`, bold: true, size: 16 }),
+          new TextRun({ text: ` (${c.type}${c.date ? ', ' + c.date : ''}) : `, size: 16, color: '888888' }),
+          new TextRun({ text: c.text, size: 16, color: '444444', italics: true }),
+        ]}));
+      });
+    }
+
     children.push(new Paragraph({ spacing: { after: 100 }, children: [] }));
   });
 
@@ -128,10 +146,14 @@ function buildAdminPdf(report) {
     }
 
     const tableRows = [];
+    const pdfComments = [];
     supermarkets.forEach(sm => {
       const smData = cat.perSupermarket[sm.id];
       if (!smData || smData.total === 0) return;
       tableRows.push([sm.name, String(smData.total), topDetails(smData.details, 3) || '—']);
+      if (catKey === 'interpellations' && smData.comments?.length > 0) {
+        smData.comments.forEach(c => pdfComments.push({ store: sm.name, ...c }));
+      }
     });
 
     if (tableRows.length > 0) {
@@ -144,6 +166,22 @@ function buildAdminPdf(report) {
       y = doc.lastAutoTable.finalY + 10;
     } else {
       doc.setFontSize(9); doc.setTextColor(150); doc.text('Aucune donnée.', 14, y); y += 8;
+    }
+
+    if (pdfComments.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(10); doc.setTextColor(50);
+      doc.text('Commentaires des interpellations :', 14, y); y += 5;
+      doc.setFontSize(8);
+      pdfComments.forEach(c => {
+        if (y > 275) { doc.addPage(); y = 20; }
+        doc.setTextColor(40);
+        const line = `${c.store} (${c.type}${c.date ? ', ' + c.date : ''}) : ${c.text}`;
+        const split = doc.splitTextToSize(line, 178);
+        doc.text(split, 16, y);
+        y += split.length * 3.5 + 2;
+      });
+      y += 4;
     }
   });
 
@@ -318,9 +356,12 @@ const AdminRapports = () => {
 
                             {rd.report_data && Object.entries(rd.report_data.categories || {}).map(([catKey, catData]) => {
                               const smRows = (rd.report_data.supermarkets || [])
-                                .map(sm => ({ ...sm, ...(catData.perSupermarket[sm.id] || { total: 0, details: {} }) }))
+                                .map(sm => ({ ...sm, ...(catData.perSupermarket[sm.id] || { total: 0, details: {}, comments: [] }) }))
                                 .filter(r => r.total > 0)
                                 .sort((a, b) => b.total - a.total);
+                              const allComments = catKey === 'interpellations'
+                                ? smRows.flatMap(sm => (sm.comments || []).map(c => ({ store: sm.name, ...c })))
+                                : [];
 
                               return (
                                 <div key={catKey} className="mb-4">
@@ -348,6 +389,20 @@ const AdminRapports = () => {
                                       </tbody>
                                     </table>
                                   ) : <p className="text-sm text-gray-400 italic">Aucune donnée</p>}
+                                  {allComments.length > 0 && (
+                                    <div className="mt-3 border-t pt-3">
+                                      <p className="text-xs font-semibold text-gray-600 mb-2">Commentaires ({allComments.length})</p>
+                                      <div className="space-y-1.5">
+                                        {allComments.map((c, ci) => (
+                                          <div key={ci} className="bg-gray-50 rounded-lg px-3 py-2 text-xs border">
+                                            <span className="font-medium text-gray-700">{c.store}</span>
+                                            <span className="text-gray-400"> ({c.type}{c.date ? `, ${c.date}` : ''}) : </span>
+                                            <span className="text-gray-600 italic">{c.text}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })}
