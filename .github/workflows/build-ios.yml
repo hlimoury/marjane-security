@@ -1,0 +1,66 @@
+name: Build iOS IPA (unsigned)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ios-app/**'
+      - '.github/workflows/build-ios.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: ios-app
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Build archive (no code signing)
+        run: |
+          xcodebuild archive \
+            -project MarjaneAdmin.xcodeproj \
+            -scheme MarjaneAdmin \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/MarjaneAdmin.xcarchive" \
+            -destination "generic/platform=iOS" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_ENTITLEMENTS="" \
+            DEVELOPMENT_TEAM=""
+
+      - name: Package unsigned IPA
+        run: |
+          ARCHIVE="$RUNNER_TEMP/MarjaneAdmin.xcarchive"
+          APP_PATH="$ARCHIVE/Products/Applications/MarjaneAdmin.app"
+
+          if [ ! -d "$APP_PATH" ]; then
+            echo "App not found at $APP_PATH"
+            ls -la "$ARCHIVE/Products/Applications" || true
+            exit 1
+          fi
+
+          WORKDIR="$RUNNER_TEMP/ipa"
+          rm -rf "$WORKDIR"
+          mkdir -p "$WORKDIR/Payload"
+          cp -R "$APP_PATH" "$WORKDIR/Payload/"
+
+          cd "$WORKDIR"
+          zip -qr "$RUNNER_TEMP/MarjaneAdmin-unsigned.ipa" Payload
+          echo "Created IPA:"
+          ls -lh "$RUNNER_TEMP/MarjaneAdmin-unsigned.ipa"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarjaneAdmin-unsigned-ipa
+          path: ${{ runner.temp }}/MarjaneAdmin-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 30
