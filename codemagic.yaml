@@ -1,0 +1,58 @@
+workflows:
+  marjane-admin-unsigned-ipa:
+    name: Marjane Admin Unsigned IPA
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+
+    environment:
+      xcode: latest
+      vars:
+        XCODE_PROJECT: MarjaneAdmin.xcodeproj
+        XCODE_SCHEME: MarjaneAdmin
+
+    scripts:
+      - name: Build unsigned archive
+        script: |
+          cd ios-app
+          xcodebuild archive \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -archivePath "$CM_BUILD_DIR/MarjaneAdmin.xcarchive" \
+            -destination "generic/platform=iOS" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_ENTITLEMENTS="" \
+            DEVELOPMENT_TEAM=""
+
+      - name: Package unsigned IPA
+        script: |
+          ARCHIVE="$CM_BUILD_DIR/MarjaneAdmin.xcarchive"
+          APP_PATH="$ARCHIVE/Products/Applications/MarjaneAdmin.app"
+
+          if [ ! -d "$APP_PATH" ]; then
+            echo "App not found at $APP_PATH"
+            ls -la "$ARCHIVE/Products/Applications" || true
+            exit 1
+          fi
+
+          WORKDIR="$CM_BUILD_DIR/ipa"
+          rm -rf "$WORKDIR"
+          mkdir -p "$WORKDIR/Payload"
+          cp -R "$APP_PATH" "$WORKDIR/Payload/"
+
+          cd "$WORKDIR"
+          zip -qr "$CM_BUILD_DIR/MarjaneAdmin-unsigned.ipa" Payload
+          ls -lh "$CM_BUILD_DIR/MarjaneAdmin-unsigned.ipa"
+
+    artifacts:
+      - MarjaneAdmin-unsigned.ipa
+      - /tmp/xcodebuild_logs/*.log
