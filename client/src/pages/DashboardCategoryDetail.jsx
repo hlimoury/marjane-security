@@ -9,6 +9,12 @@ import {
 
 const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION CENTRE NORD', 'REGION SUD', 'REGION NORD', 'REGION ORIENT'];
+const INTERPELLATION_TYPES = ['Client', 'Personnel', 'Prestataire'];
+
+const formatKdh = (value) => {
+  const num = Number(value) || 0;
+  return num.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
+};
 
 const AXES = [
   {
@@ -160,15 +166,17 @@ const DashboardCategoryDetail = () => {
   const [filterYear, setFilterYear] = useState(searchParams.get('year') || '');
   const [filterMonth, setFilterMonth] = useState(searchParams.get('month') || '');
   const [filterAxe, setFilterAxe] = useState('');
+  const [filterPersonType, setFilterPersonType] = useState(searchParams.get('personType') || '');
   const [expandedMotif, setExpandedMotif] = useState(null);
 
   const [years, setYears] = useState([]);
   const isAnomalies = category === 'anomalies';
   const isReclamations = category === 'reclamations';
+  const isInterpellations = category === 'interpellations';
 
   useEffect(() => {
     loadData();
-  }, [category, filterRegion, filterYear, filterMonth]);
+  }, [category, filterRegion, filterYear, filterMonth, filterPersonType]);
 
   useEffect(() => {
     loadYears();
@@ -191,6 +199,7 @@ const DashboardCategoryDetail = () => {
         region: filterRegion,
         year: filterYear,
         month: filterMonth,
+        personType: filterPersonType,
       });
       setData(res.data);
     } catch (err) {
@@ -224,7 +233,7 @@ const DashboardCategoryDetail = () => {
     return Math.max(...filteredSubCategories.map(s => s.count), 1);
   }, [filteredSubCategories]);
 
-  const hasFilters = filterRegion || filterYear || filterMonth || search || filterAxe;
+  const hasFilters = filterRegion || filterYear || filterMonth || search || filterAxe || filterPersonType;
 
   const resetFilters = () => {
     setFilterRegion('');
@@ -232,6 +241,7 @@ const DashboardCategoryDetail = () => {
     setFilterMonth('');
     setSearch('');
     setFilterAxe('');
+    setFilterPersonType('');
   };
 
   const handleSubCategoryClick = (subCategory, detail = null) => {
@@ -239,6 +249,7 @@ const DashboardCategoryDetail = () => {
     if (filterRegion) params.set('region', filterRegion);
     if (filterYear) params.set('year', filterYear);
     if (filterMonth) params.set('month', filterMonth);
+    if (filterPersonType) params.set('personType', filterPersonType);
     if (detail) params.set('detail', detail);
     const qs = params.toString();
     navigate(`/dashboard/${category}/subcategory/${encodeURIComponent(subCategory)}${qs ? '?' + qs : ''}`);
@@ -274,7 +285,7 @@ const DashboardCategoryDetail = () => {
             <p className="text-gray-500 text-sm">{config.subLabel}</p>
           </div>
         </div>
-        <div className="flex items-center gap-4 mt-3">
+        <div className="flex items-center gap-4 mt-3 flex-wrap">
           <div className={`${config.bgCls} ${config.textCls} px-4 py-2 rounded-lg`}>
             <span className="text-2xl font-bold">{data?.total || 0}</span>
             <span className="text-sm ml-2">entrées au total</span>
@@ -283,6 +294,22 @@ const DashboardCategoryDetail = () => {
             <span className="text-2xl font-bold">{filteredSubCategories.length}</span>
             <span className="text-sm ml-2">sous-catégories</span>
           </div>
+          {isInterpellations && data?.interpellationStats && (
+            <>
+              <div className="bg-amber-50 text-amber-800 px-4 py-2 rounded-lg border border-amber-100">
+                <span className="text-2xl font-bold">{data.interpellationStats.totalNombre}</span>
+                <span className="text-sm ml-2">personnes</span>
+              </div>
+              <div className="bg-blue-50 text-blue-800 px-4 py-2 rounded-lg border border-blue-100">
+                <span className="text-2xl font-bold">{data.interpellationStats.totalPoursuites}</span>
+                <span className="text-sm ml-2">poursuites judiciaires</span>
+              </div>
+              <div className="bg-emerald-50 text-emerald-800 px-4 py-2 rounded-lg border border-emerald-100">
+                <span className="text-2xl font-bold">{formatKdh(data.interpellationStats.totalValeurKdh)}</span>
+                <span className="text-sm ml-2">KDH récupérés</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -340,6 +367,21 @@ const DashboardCategoryDetail = () => {
             </select>
           </div>
         )}
+        {isInterpellations && (
+          <div className="mt-3">
+            <label className="block text-xs font-medium text-gray-500 mb-1">Type de personne</label>
+            <select
+              value={filterPersonType}
+              onChange={(e) => setFilterPersonType(e.target.value)}
+              className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none"
+            >
+              <option value="">Tous les types</option>
+              {INTERPELLATION_TYPES.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+        )}
         {hasFilters && (
           <button
             onClick={resetFilters}
@@ -349,6 +391,34 @@ const DashboardCategoryDetail = () => {
           </button>
         )}
       </div>
+
+      {isInterpellations && data?.interpellationStats?.byTypePersonne?.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">Répartition par type de personne</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {data.interpellationStats.byTypePersonne.map((typeStat) => (
+              <button
+                key={typeStat.name}
+                type="button"
+                onClick={() => setFilterPersonType(filterPersonType === typeStat.name ? '' : typeStat.name)}
+                className={`text-left rounded-lg border p-4 transition-colors ${
+                  filterPersonType === typeStat.name
+                    ? 'border-amber-500 bg-amber-50'
+                    : 'border-gray-100 hover:border-amber-200 hover:bg-amber-50/50'
+                }`}
+              >
+                <div className="font-semibold text-gray-800 mb-2">{typeStat.name}</div>
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                  <span>{typeStat.entries} entrée{typeStat.entries > 1 ? 's' : ''}</span>
+                  <span>{typeStat.nombre} personne{typeStat.nombre > 1 ? 's' : ''}</span>
+                  <span>{typeStat.poursuites} poursuite{typeStat.poursuites > 1 ? 's' : ''}</span>
+                  <span>{formatKdh(typeStat.valeurKdh)} KDH</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Sub-categories list */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -395,6 +465,13 @@ const DashboardCategoryDetail = () => {
                         <span className="text-xs text-gray-500">
                           {sub.supermarketCount} magasin{sub.supermarketCount > 1 ? 's' : ''}
                         </span>
+                        {isInterpellations && (
+                          <>
+                            <span className="text-xs text-gray-500">{sub.nombre || 0} pers.</span>
+                            <span className="text-xs text-blue-600">{sub.poursuites || 0} pours.</span>
+                            <span className="text-xs text-emerald-600">{formatKdh(sub.valeurKdh || 0)} KDH</span>
+                          </>
+                        )}
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-2">
                         <div

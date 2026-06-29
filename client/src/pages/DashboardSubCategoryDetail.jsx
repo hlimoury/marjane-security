@@ -10,6 +10,12 @@ import {
 
 const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION CENTRE NORD', 'REGION SUD', 'REGION NORD', 'REGION ORIENT'];
+const INTERPELLATION_TYPES = ['Client', 'Personnel', 'Prestataire'];
+
+const formatKdh = (value) => {
+  const num = Number(value) || 0;
+  return num.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
+};
 
 const REGION_COLORS = {
   'REGION CENTRE 1': 'bg-orange-100 text-orange-700',
@@ -88,6 +94,9 @@ const DashboardSubCategoryDetail = () => {
   const [filterRegion, setFilterRegion] = useState(searchParams.get('region') || '');
   const [filterYear, setFilterYear] = useState(searchParams.get('year') || '');
   const [filterMonth, setFilterMonth] = useState(searchParams.get('month') || '');
+  const [filterPersonType, setFilterPersonType] = useState(searchParams.get('personType') || '');
+
+  const isInterpellations = category === 'interpellations';
 
   const [sortKey, setSortKey] = useState('count');
   const [sortDir, setSortDir] = useState('desc');
@@ -102,13 +111,14 @@ const DashboardSubCategoryDetail = () => {
 
   useEffect(() => {
     loadData();
-  }, [category, subcategory, detailParam, filterRegion, filterYear, filterMonth]);
+  }, [category, subcategory, detailParam, filterRegion, filterYear, filterMonth, filterPersonType]);
 
   const loadData = async () => {
     setLoading(true);
     try {
       const params = { region: filterRegion, year: filterYear, month: filterMonth };
       if (detailParam) params.detail = detailParam;
+      if (filterPersonType) params.personType = filterPersonType;
       const res = await getDashboardSubCategoryDetail(category, decodedSubcategory, params);
       setData(res.data);
     } catch (err) {
@@ -153,6 +163,7 @@ const DashboardSubCategoryDetail = () => {
         return (e.sous_categories || []).includes(decodedSubcategory);
       }
       if (category === 'interpellations') {
+        if (filterPersonType && e.type !== filterPersonType) return false;
         return (e.rayons || (e.rayon ? [e.rayon] : [])).includes(decodedSubcategory);
       }
       if (category === 'accidents') return e.cause === decodedSubcategory;
@@ -181,15 +192,16 @@ const DashboardSubCategoryDetail = () => {
         const shortMonth = MONTHS[parseInt(m)]?.slice(0, 3) || m;
         return { period, label: `${shortMonth} ${y}`, count };
       });
-  }, [selectedForChart, data?.entries, category, decodedSubcategory, detailParam]);
+  }, [selectedForChart, data?.entries, category, decodedSubcategory, detailParam, filterPersonType]);
 
-  const hasFilters = filterRegion || filterYear || filterMonth || search;
+  const hasFilters = filterRegion || filterYear || filterMonth || search || filterPersonType;
 
   const resetFilters = () => {
     setFilterRegion('');
     setFilterYear('');
     setFilterMonth('');
     setSearch('');
+    setFilterPersonType('');
   };
 
   const handleSort = (key) => {
@@ -206,6 +218,7 @@ const DashboardSubCategoryDetail = () => {
     if (filterRegion) params.set('region', filterRegion);
     if (filterYear) params.set('year', filterYear);
     if (filterMonth) params.set('month', filterMonth);
+    if (filterPersonType) params.set('personType', filterPersonType);
     const qs = params.toString();
     navigate(`/dashboard/${category}${qs ? '?' + qs : ''}`);
   };
@@ -257,7 +270,7 @@ const DashboardSubCategoryDetail = () => {
           )}
         </div>
         <h1 className="text-2xl font-bold text-gray-800">{detailParam || decodedSubcategory}</h1>
-        <div className="flex items-center gap-4 mt-3">
+        <div className="flex items-center gap-4 mt-3 flex-wrap">
           <div className={`${config.bgCls} ${config.textCls} px-4 py-2 rounded-lg`}>
             <span className="text-2xl font-bold">{data?.totalEntries || 0}</span>
             <span className="text-sm ml-2">entrées</span>
@@ -266,6 +279,22 @@ const DashboardSubCategoryDetail = () => {
             <span className="text-2xl font-bold">{filteredSupermarkets.length}</span>
             <span className="text-sm ml-2">magasins</span>
           </div>
+          {isInterpellations && data?.interpellationTotals && (
+            <>
+              <div className="bg-amber-50 text-amber-800 px-4 py-2 rounded-lg border border-amber-100">
+                <span className="text-2xl font-bold">{data.interpellationTotals.nombre}</span>
+                <span className="text-sm ml-2">personnes</span>
+              </div>
+              <div className="bg-blue-50 text-blue-800 px-4 py-2 rounded-lg border border-blue-100">
+                <span className="text-2xl font-bold">{data.interpellationTotals.poursuites}</span>
+                <span className="text-sm ml-2">poursuites</span>
+              </div>
+              <div className="bg-emerald-50 text-emerald-800 px-4 py-2 rounded-lg border border-emerald-100">
+                <span className="text-2xl font-bold">{formatKdh(data.interpellationTotals.valeurKdh)}</span>
+                <span className="text-sm ml-2">KDH</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -311,6 +340,21 @@ const DashboardSubCategoryDetail = () => {
             {MONTHS.slice(1).map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
           </select>
         </div>
+        {isInterpellations && (
+          <div className="mt-3">
+            <label className="block text-xs font-medium text-gray-500 mb-1">Type de personne</label>
+            <select
+              value={filterPersonType}
+              onChange={(e) => setFilterPersonType(e.target.value)}
+              className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none"
+            >
+              <option value="">Tous les types</option>
+              {INTERPELLATION_TYPES.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+        )}
         {hasFilters && (
           <button
             onClick={resetFilters}
@@ -341,6 +385,13 @@ const DashboardSubCategoryDetail = () => {
                   <SortHeader label="Magasin" col="name" className="text-left" />
                   <SortHeader label="Région" col="region" className="text-left" />
                   <SortHeader label="Nb d'entrées" col="count" className="text-center" />
+                  {isInterpellations && (
+                    <>
+                      <SortHeader label="Personnes" col="nombre" className="text-center" />
+                      <SortHeader label="Poursuites" col="poursuites" className="text-center" />
+                      <SortHeader label="Valeur KDH" col="valeurKdh" className="text-center" />
+                    </>
+                  )}
                   <th className="py-3 px-4 font-semibold text-gray-600 text-left">Périodes</th>
                   <th className="py-3 px-4 font-semibold text-gray-600 text-center">Proportion</th>
                   <th className="py-3 px-4 font-semibold text-gray-600 text-center">Actions</th>
@@ -364,6 +415,13 @@ const DashboardSubCategoryDetail = () => {
                         <td className="py-3 px-4 text-center">
                           <span className={`font-bold ${config.textCls}`}>{sm.count}</span>
                         </td>
+                        {isInterpellations && (
+                          <>
+                            <td className="py-3 px-4 text-center text-gray-800">{sm.nombre || 0}</td>
+                            <td className="py-3 px-4 text-center text-blue-700">{sm.poursuites || 0}</td>
+                            <td className="py-3 px-4 text-center text-emerald-700">{formatKdh(sm.valeurKdh || 0)}</td>
+                          </>
+                        )}
                         <td className="py-3 px-4">
                           <button
                             onClick={() => setSelectedForChart(isSelected ? null : { id: sm.id, name: sm.name })}
@@ -406,7 +464,7 @@ const DashboardSubCategoryDetail = () => {
                       </tr>
                       {isSelected && (
                         <tr>
-                          <td colSpan={6} className="p-0 align-top bg-gray-50">
+                          <td colSpan={isInterpellations ? 9 : 6} className="p-0 align-top bg-gray-50">
                             <div className="p-6">
                               {trendData.length > 0 ? (
                                 <>
@@ -471,6 +529,14 @@ const DashboardSubCategoryDetail = () => {
                         {MONTHS[entry.month]} {entry.year}
                         {entry.date && ` — ${entry.date}`}
                       </p>
+                      {isInterpellations && (
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                          <span className="bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full">{entry.type || '—'}</span>
+                          <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{entry.nombre || 0} pers.</span>
+                          <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{entry.poursuites || 0} poursuites</span>
+                          <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">{formatKdh(entry.valeur_kdh || 0)} KDH</span>
+                        </div>
+                      )}
                       {category === 'anomalies' && entry.criticite && (
                         <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${
                           entry.criticite === 'Critique' ? 'bg-red-100 text-red-700' :

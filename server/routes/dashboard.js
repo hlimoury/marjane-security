@@ -78,6 +78,45 @@ const normalizeSubCategory = (name) => {
   return CANONICAL_LOOKUP[key] || name;
 };
 
+const INTERPELLATION_TYPES = ['Client', 'Personnel', 'Prestataire'];
+
+const matchesInterpellationPersonType = (entry, personType) => {
+  if (!personType) return true;
+  return entry.type === personType;
+};
+
+const getInterpellationMetrics = (entry) => ({
+  nombre: Number(entry.nombre) || 0,
+  poursuites: Number(entry.poursuites) || 0,
+  valeurKdh: Number(entry.valeur_kdh) || 0,
+});
+
+const initInterpellationStats = () => ({
+  totalEntries: 0,
+  totalNombre: 0,
+  totalPoursuites: 0,
+  totalValeurKdh: 0,
+  byTypePersonne: INTERPELLATION_TYPES.reduce((acc, type) => {
+    acc[type] = { entries: 0, nombre: 0, poursuites: 0, valeurKdh: 0 };
+    return acc;
+  }, {}),
+});
+
+const addInterpellationEntryToStats = (stats, entry) => {
+  const metrics = getInterpellationMetrics(entry);
+  stats.totalEntries += 1;
+  stats.totalNombre += metrics.nombre;
+  stats.totalPoursuites += metrics.poursuites;
+  stats.totalValeurKdh += metrics.valeurKdh;
+
+  if (stats.byTypePersonne[entry.type]) {
+    stats.byTypePersonne[entry.type].entries += 1;
+    stats.byTypePersonne[entry.type].nombre += metrics.nombre;
+    stats.byTypePersonne[entry.type].poursuites += metrics.poursuites;
+    stats.byTypePersonne[entry.type].valeurKdh += metrics.valeurKdh;
+  }
+};
+
 router.get('/stats', authMiddleware, adminOnly, async (req, res) => {
   try {
     // 1) All instance-level data with category entry counts in one query
@@ -188,7 +227,7 @@ router.get('/stats', authMiddleware, adminOnly, async (req, res) => {
 router.get('/category/:type/subcategories', authMiddleware, adminOnly, async (req, res) => {
   try {
     const { type } = req.params;
-    const { region, year, month } = req.query;
+    const { region, year, month, personType } = req.query;
     const validTypes = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies', 'controle_rm'];
     if (!validTypes.includes(type)) {
       return res.status(400).json({ message: 'Type invalide' });
@@ -221,12 +260,22 @@ router.get('/category/:type/subcategories', authMiddleware, adminOnly, async (re
     const result = await pool.query(query, params);
 
     const subCategoryStats = {};
+    const subCategoryMetrics = {};
     const supermarketsBySubCategory = {};
     const detailsByMotif = {};
+    const interpellationStats = type === 'interpellations' ? initInterpellationStats() : null;
 
     result.rows.forEach(row => {
       const entries = row.data?.entries || [];
       entries.forEach(entry => {
+        if (type === 'interpellations' && !matchesInterpellationPersonType(entry, personType)) {
+          return;
+        }
+
+        if (interpellationStats) {
+          addInterpellationEntryToStats(interpellationStats, entry);
+        }
+
         let subCategories = [];
 
         if (type === 'anomalies') {
@@ -250,6 +299,16 @@ router.get('/category/:type/subcategories', authMiddleware, adminOnly, async (re
           if (!rawSub) return;
           const sub = normalizeSubCategory(rawSub);
           subCategoryStats[sub] = (subCategoryStats[sub] || 0) + 1;
+
+          if (type === 'interpellations') {
+            if (!subCategoryMetrics[sub]) {
+              subCategoryMetrics[sub] = { nombre: 0, poursuites: 0, valeurKdh: 0 };
+            }
+            const metrics = getInterpellationMetrics(entry);
+            subCategoryMetrics[sub].nombre += metrics.nombre;
+            subCategoryMetrics[sub].poursuites += metrics.poursuites;
+            subCategoryMetrics[sub].valeurKdh += metrics.valeurKdh;
+          }
 
           if (!supermarketsBySubCategory[sub]) {
             supermarketsBySubCategory[sub] = new Set();
@@ -278,14 +337,28 @@ router.get('/category/:type/subcategories', authMiddleware, adminOnly, async (re
             .map(([detail, cnt]) => ({ name: detail, count: cnt }))
             .sort((a, b) => b.count - a.count);
         }
+        if (type === 'interpellations' && subCategoryMetrics[name]) {
+          item.nombre = subCategoryMetrics[name].nombre;
+          item.poursuites = subCategoryMetrics[name].poursuites;
+          item.valeurKdh = subCategoryMetrics[name].valeurKdh;
+        }
         return item;
       })
       .sort((a, b) => b.count - a.count);
 
     res.json({
       type,
-      total: subCategoriesArray.reduce((sum, s) => sum + s.count, 0),
-      subCategories: subCategoriesArray
+      total: interpellationStats ? interpellationStats.totalEntries : subCategoriesArray.reduce((sum, s) => sum + s.count, 0),
+      subCategories: subCategoriesArray,
+      ...(interpellationStats && {
+        interpellationStats: {
+          ...interpellationStats,
+          byTypePersonne: INTERPELLATION_TYPES.map((name) => ({
+            name,
+            ...interpellationStats.byTypePersonne[name],
+          })),
+        },
+      }),
     });
   } catch (err) {
     console.error('Erreur dashboard subcategories:', err);
@@ -297,7 +370,7 @@ router.get('/category/:type/subcategories', authMiddleware, adminOnly, async (re
 router.get('/category/:type/subcategory/:subcat', authMiddleware, adminOnly, async (req, res) => {
   try {
     const { type, subcat } = req.params;
-    const { region, year, month, detail } = req.query;
+    const { region, year, month, detail, personType } = req.query;
     const decodedSubcat = decodeURIComponent(subcat);
     const decodedDetail = detail ? decodeURIComponent(detail) : null;
     const validTypes = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies', 'controle_rm'];
@@ -335,10 +408,17 @@ router.get('/category/:type/subcategory/:subcat', authMiddleware, adminOnly, asy
 
     const supermarketMap = {};
     const entries = [];
+    const interpellationTotals = type === 'interpellations'
+      ? { nombre: 0, poursuites: 0, valeurKdh: 0 }
+      : null;
 
     result.rows.forEach(row => {
       const rowEntries = row.data?.entries || [];
       rowEntries.forEach(entry => {
+        if (type === 'interpellations' && !matchesInterpellationPersonType(entry, personType)) {
+          return;
+        }
+
         let subCategories = [];
 
         if (type === 'anomalies') {
@@ -379,11 +459,22 @@ router.get('/category/:type/subcategory/:subcat', authMiddleware, adminOnly, asy
               name: row.supermarket_name,
               region: row.region,
               count: 0,
-              instances: new Set()
+              instances: new Set(),
+              ...(type === 'interpellations' && { nombre: 0, poursuites: 0, valeurKdh: 0 }),
             };
           }
           supermarketMap[row.supermarket_id].count++;
           supermarketMap[row.supermarket_id].instances.add(`${row.month}/${row.year}`);
+
+          if (type === 'interpellations') {
+            const metrics = getInterpellationMetrics(entry);
+            supermarketMap[row.supermarket_id].nombre += metrics.nombre;
+            supermarketMap[row.supermarket_id].poursuites += metrics.poursuites;
+            supermarketMap[row.supermarket_id].valeurKdh += metrics.valeurKdh;
+            interpellationTotals.nombre += metrics.nombre;
+            interpellationTotals.poursuites += metrics.poursuites;
+            interpellationTotals.valeurKdh += metrics.valeurKdh;
+          }
         }
       });
     });
@@ -399,7 +490,8 @@ router.get('/category/:type/subcategory/:subcat', authMiddleware, adminOnly, asy
       subDetail: decodedDetail || null,
       totalEntries: entries.length,
       supermarkets,
-      entries
+      entries,
+      ...(interpellationTotals && { interpellationTotals }),
     });
   } catch (err) {
     console.error('Erreur dashboard subcategory detail:', err);
