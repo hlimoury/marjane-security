@@ -290,25 +290,41 @@ router.get('/category/:type/subcategories', authMiddleware, adminOnly, async (re
           subCategories = entry.type ? [entry.type] : [];
         } else if (type === 'reclamations') {
           subCategories = entry.motif ? [entry.motif] : [];
-        } else if (type === 'controle_rm') {
+        } else         if (type === 'controle_rm') {
           const typeLabel = entry.type === 'entrepot' ? 'Contrôle entrepôt' : 'Contrôle fournisseurs direct';
           subCategories = entry.sous_type ? [`${typeLabel} — ${entry.sous_type}`] : [];
         }
 
-        subCategories.forEach(rawSub => {
-          if (!rawSub) return;
-          const sub = normalizeSubCategory(rawSub);
-          subCategoryStats[sub] = (subCategoryStats[sub] || 0) + 1;
+        const normalizedSubs = subCategories
+          .map((rawSub) => (rawSub ? normalizeSubCategory(rawSub) : null))
+          .filter(Boolean);
 
-          if (type === 'interpellations') {
+        if (type === 'interpellations') {
+          if (normalizedSubs.length === 0) return;
+
+          const share = 1 / normalizedSubs.length;
+          const metrics = getInterpellationMetrics(entry);
+
+          normalizedSubs.forEach((sub) => {
+            subCategoryStats[sub] = (subCategoryStats[sub] || 0) + share;
+
             if (!subCategoryMetrics[sub]) {
               subCategoryMetrics[sub] = { nombre: 0, poursuites: 0, valeurKdh: 0 };
             }
-            const metrics = getInterpellationMetrics(entry);
-            subCategoryMetrics[sub].nombre += metrics.nombre;
-            subCategoryMetrics[sub].poursuites += metrics.poursuites;
-            subCategoryMetrics[sub].valeurKdh += metrics.valeurKdh;
-          }
+            subCategoryMetrics[sub].nombre += metrics.nombre * share;
+            subCategoryMetrics[sub].poursuites += metrics.poursuites * share;
+            subCategoryMetrics[sub].valeurKdh += metrics.valeurKdh * share;
+
+            if (!supermarketsBySubCategory[sub]) {
+              supermarketsBySubCategory[sub] = new Set();
+            }
+            supermarketsBySubCategory[sub].add(row.supermarket_id);
+          });
+          return;
+        }
+
+        normalizedSubs.forEach((sub) => {
+          subCategoryStats[sub] = (subCategoryStats[sub] || 0) + 1;
 
           if (!supermarketsBySubCategory[sub]) {
             supermarketsBySubCategory[sub] = new Set();
@@ -338,9 +354,10 @@ router.get('/category/:type/subcategories', authMiddleware, adminOnly, async (re
             .sort((a, b) => b.count - a.count);
         }
         if (type === 'interpellations' && subCategoryMetrics[name]) {
-          item.nombre = subCategoryMetrics[name].nombre;
-          item.poursuites = subCategoryMetrics[name].poursuites;
-          item.valeurKdh = subCategoryMetrics[name].valeurKdh;
+          item.nombre = Math.round(subCategoryMetrics[name].nombre * 1000) / 1000;
+          item.poursuites = Math.round(subCategoryMetrics[name].poursuites * 1000) / 1000;
+          item.valeurKdh = Math.round(subCategoryMetrics[name].valeurKdh * 1000) / 1000;
+          item.count = Math.round(count * 1000) / 1000;
         }
         return item;
       })

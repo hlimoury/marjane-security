@@ -16,6 +16,11 @@ const formatKdh = (value) => {
   return num.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
 };
 
+const formatMetric = (value) => {
+  const num = Number(value) || 0;
+  return Number.isInteger(num) ? num : num.toLocaleString('fr-FR', { maximumFractionDigits: 1 });
+};
+
 const AXES = [
   {
     key: 'axe1',
@@ -460,15 +465,15 @@ const DashboardCategoryDetail = () => {
                           {sub.name}
                         </span>
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.bgCls} ${config.textCls}`}>
-                          {sub.count} entrée{sub.count > 1 ? 's' : ''}
+                          {formatMetric(sub.count)} entrée{sub.count > 1 ? 's' : ''}
                         </span>
                         <span className="text-xs text-gray-500">
                           {sub.supermarketCount} magasin{sub.supermarketCount > 1 ? 's' : ''}
                         </span>
                         {isInterpellations && (
                           <>
-                            <span className="text-xs text-gray-500">{sub.nombre || 0} pers.</span>
-                            <span className="text-xs text-blue-600">{sub.poursuites || 0} pours.</span>
+                            <span className="text-xs text-gray-500">{formatMetric(sub.nombre || 0)} pers.</span>
+                            <span className="text-xs text-blue-600">{formatMetric(sub.poursuites || 0)} pours.</span>
                             <span className="text-xs text-emerald-600">{formatKdh(sub.valeurKdh || 0)} KDH</span>
                           </>
                         )}
