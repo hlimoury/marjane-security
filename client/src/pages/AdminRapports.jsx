@@ -9,6 +9,7 @@ import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, Headi
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { InterpellationsRayonReport, formatReportMetric, appendInterpellationsByRayonDocx, appendInterpellationsByRayonPdf } from '../components/InterpellationsRayonReport';
 
 const CAT_LABELS = {
   anomalies: 'Anomalies', interpellations: 'Interpellations', accidents: 'Accidents',
@@ -28,8 +29,8 @@ function topDetails(details, limit = 4) {
   const sorted = Object.entries(details).sort((a, b) => b[1] - a[1]);
   const top = sorted.slice(0, limit);
   const rest = sorted.slice(limit).reduce((s, [, c]) => s + c, 0);
-  let text = top.map(([n, c]) => `${n} (${c})`).join(', ');
-  if (rest > 0) text += `, +${rest} autres`;
+  let text = top.map(([n, c]) => `${n} (${formatReportMetric(c)})`).join(', ');
+  if (rest > 0) text += `, +${formatReportMetric(rest)} autres`;
   return text;
 }
 
@@ -65,8 +66,16 @@ function buildAdminDocx(report) {
     if (subTotals.length > 0) {
       children.push(new Paragraph({ spacing: { after: 150 }, children: [
         new TextRun({ text: 'Résumé : ', bold: true, size: 18 }),
-        new TextRun({ text: subTotals.slice(0, 8).map(([n, c]) => `${n} (${c})`).join('  •  '), size: 18, color: '555555' }),
+        new TextRun({ text: subTotals.slice(0, 8).map(([n, c]) => `${n} (${formatReportMetric(c)})`).join('  •  '), size: 18, color: '555555' }),
       ]}));
+    }
+
+    if (catKey === 'interpellations' && cat.detailMode === 'byRayon' && cat.perRayon) {
+      appendInterpellationsByRayonDocx(children, cat, {
+        Paragraph, Table, TableRow, TableCell, TextRun, AlignmentType, WidthType, ShadingType,
+      }, ORANGE);
+      children.push(new Paragraph({ spacing: { after: 100 }, children: [] }));
+      return;
     }
 
     const headerCells = ['Magasin', 'Total', 'Principales sous-catégories'].map(t =>
@@ -141,8 +150,15 @@ function buildAdminPdf(report) {
 
     if (subTotals.length > 0) {
       doc.setFontSize(8); doc.setTextColor(100);
-      const lines = doc.splitTextToSize(subTotals.slice(0, 6).map(([n, c]) => `${n} (${c})`).join('  |  '), 180);
+      const lines = doc.splitTextToSize(subTotals.slice(0, 6).map(([n, c]) => `${n} (${formatReportMetric(c)})`).join('  |  '), 180);
       doc.text(lines, 14, y); y += lines.length * 4 + 3;
+    }
+
+    if (catKey === 'interpellations' && cat.detailMode === 'byRayon' && cat.perRayon) {
+      const yRef = { y };
+      appendInterpellationsByRayonPdf(doc, cat, yRef, autoTable);
+      y = yRef.y;
+      return;
     }
 
     const tableRows = [];
@@ -370,6 +386,9 @@ const AdminRapports = () => {
                                     <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">{catData.total}</span>
                                   </div>
                                   {smRows.length > 0 ? (
+                                    catKey === 'interpellations' && catData.detailMode === 'byRayon' && catData.perRayon ? (
+                                      <InterpellationsRayonReport perRayon={catData.perRayon} compact />
+                                    ) : (
                                     <table className="w-full text-sm border rounded-lg overflow-hidden">
                                       <thead>
                                         <tr className="bg-gray-50">
@@ -388,8 +407,9 @@ const AdminRapports = () => {
                                         ))}
                                       </tbody>
                                     </table>
+                                    )
                                   ) : <p className="text-sm text-gray-400 italic">Aucune donnée</p>}
-                                  {allComments.length > 0 && (
+                                  {catKey === 'interpellations' && catData.detailMode !== 'byRayon' && allComments.length > 0 && (
                                     <div className="mt-3 border-t pt-3">
                                       <p className="text-xs font-semibold text-gray-600 mb-2">Commentaires ({allComments.length})</p>
                                       <div className="space-y-1.5">

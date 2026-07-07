@@ -798,7 +798,7 @@ router.post('/report', authMiddleware, async (req, res) => {
 
     for (const cat of selectedCats) {
       const query = `
-        SELECT s.id as supermarket_id, s.name as supermarket_name, t.data
+        SELECT s.id as supermarket_id, s.name as supermarket_name, i.month, i.year, t.data
         FROM ${cat} t
         JOIN instances i ON t.instance_id = i.id
         JOIN supermarkets s ON i.supermarket_id = s.id
@@ -809,6 +809,8 @@ router.post('/report', authMiddleware, async (req, res) => {
       const perSupermarket = {};
       let grandTotal = 0;
       const subCategoryTotals = {};
+      const useRayonDetail = cat === 'interpellations' && smResult.rows.length > 2;
+      const perRayon = useRayonDetail ? {} : null;
 
       result.rows.forEach(row => {
         const smId = row.supermarket_id;
@@ -837,16 +839,93 @@ router.post('/report', authMiddleware, async (req, res) => {
             subs = entry.sous_type ? [`${lbl} — ${entry.sous_type}`] : [];
           }
 
-          subs.forEach(rawSub => {
-            if (!rawSub) return;
-            const sub = normalizeSubCategory(rawSub);
+          const normalizedSubs = subs
+            .map((rawSub) => (rawSub ? normalizeSubCategory(rawSub) : null))
+            .filter(Boolean);
+
+          if (cat === 'interpellations') {
+            const rayonCount = normalizedSubs.length || 1;
+            const share = 1 / rayonCount;
+            const metrics = getInterpellationMetrics(entry);
+
+            if (normalizedSubs.length === 0) return;
+
+            normalizedSubs.forEach((sub) => {
+              perSupermarket[smId].details[sub] = (perSupermarket[smId].details[sub] || 0) + share;
+              subCategoryTotals[sub] = (subCategoryTotals[sub] || 0) + share;
+
+              if (perRayon) {
+                if (!perRayon[sub]) {
+                  perRayon[sub] = {
+                    total: 0,
+                    nombre: 0,
+                    poursuites: 0,
+                    valeurKdh: 0,
+                    byType: {},
+                    entries: [],
+                  };
+                }
+
+                const rayon = perRayon[sub];
+                rayon.total += share;
+                rayon.nombre += metrics.nombre * share;
+                rayon.poursuites += metrics.poursuites * share;
+                rayon.valeurKdh += metrics.valeurKdh * share;
+
+                const typeKey = entry.type || 'Autre';
+                if (!rayon.byType[typeKey]) {
+                  rayon.byType[typeKey] = { total: 0, nombre: 0, poursuites: 0, valeurKdh: 0 };
+                }
+                rayon.byType[typeKey].total += share;
+                rayon.byType[typeKey].nombre += metrics.nombre * share;
+                rayon.byType[typeKey].poursuites += metrics.poursuites * share;
+                rayon.byType[typeKey].valeurKdh += metrics.valeurKdh * share;
+
+                rayon.entries.push({
+                  supermarket_name: row.supermarket_name,
+                  supermarket_id: smId,
+                  month: row.month,
+                  year: row.year,
+                  type: entry.type || '—',
+                  nombre: Math.round(metrics.nombre * share * 1000) / 1000,
+                  poursuites: Math.round(metrics.poursuites * share * 1000) / 1000,
+                  valeurKdh: Math.round(metrics.valeurKdh * share * 1000) / 1000,
+                  date: entry.date || '',
+                  commentaire: entry.commentaire || '',
+                });
+              }
+            });
+            return;
+          }
+
+          normalizedSubs.forEach((sub) => {
             perSupermarket[smId].details[sub] = (perSupermarket[smId].details[sub] || 0) + 1;
             subCategoryTotals[sub] = (subCategoryTotals[sub] || 0) + 1;
           });
         });
       });
 
-      categoryData[cat] = { total: grandTotal, subCategoryTotals, perSupermarket };
+      if (perRayon) {
+        Object.values(perRayon).forEach((rayon) => {
+          rayon.total = Math.round(rayon.total * 1000) / 1000;
+          rayon.nombre = Math.round(rayon.nombre * 1000) / 1000;
+          rayon.poursuites = Math.round(rayon.poursuites * 1000) / 1000;
+          rayon.valeurKdh = Math.round(rayon.valeurKdh * 1000) / 1000;
+          rayon.entries.sort((a, b) => {
+            const periodA = a.year * 100 + a.month;
+            const periodB = b.year * 100 + b.month;
+            if (periodA !== periodB) return periodB - periodA;
+            return a.supermarket_name.localeCompare(b.supermarket_name);
+          });
+        });
+      }
+
+      categoryData[cat] = {
+        total: grandTotal,
+        subCategoryTotals,
+        perSupermarket,
+        ...(perRayon && { perRayon, detailMode: 'byRayon' }),
+      };
     }
 
     res.json({
