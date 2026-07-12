@@ -3,3 +3,6 @@ node_modules/
 dist/
 .DS_Store
 *.log
+chatbot/venv/
+__pycache__/
+*.pyc

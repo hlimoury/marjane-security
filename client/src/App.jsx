@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import WhatsAppButton from './components/WhatsAppButton';
+import ChatbotWidget from './components/ChatbotWidget';
 import Login from './pages/Login';
 import Supermarkets from './pages/Supermarkets';
 import SupermarketDetail from './pages/SupermarketDetail';
@@ -32,6 +33,7 @@ const AppRoutes = () => {
     <>
       <Navbar />
       <WhatsAppButton />
+      <ChatbotWidget />
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/supermarkets" replace /> : <Login />} />
 

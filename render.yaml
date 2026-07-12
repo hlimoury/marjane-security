@@ -20,3 +20,20 @@ services:
         generateValue: true
       - key: NODE_ENV
         value: production
+
+  - type: web
+    name: marjane-chatbot
+    plan: free
+    runtime: python
+    rootDir: chatbot
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.10"
+      - key: MARJANE_API_URL
+        value: https://marjane-security.onrender.com
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.1-8b-instant
