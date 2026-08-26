@@ -155,8 +155,8 @@ const initDatabase = async () => {
 
     // Seed default users
     const defaultUsers = [
-      { username: 'admin', password: 'admin123', role: 'admin', region: null },
-      { username: 'main', password: 'main123', role: 'main', region: null },
+      { username: 'admin', password: 'Houmam2003@@', role: 'admin', region: null },
+      { username: 'main', password: 'Houmam2003@@', role: 'main', region: null },
       { username: 'centre1', password: 'centre1123', role: 'region', region: 'REGION CENTRE 1' },
       { username: 'centre2', password: 'centre2123', role: 'region', region: 'REGION CENTRE 02' },
       { username: 'nord', password: 'nord123', role: 'region', region: 'REGION CENTRE NORD' },
@@ -184,7 +184,7 @@ const initDatabase = async () => {
           [user.username, hash, user.role, user.region]
         );
         console.log(`Utilisateur cree: ${user.username}`);
-      } else if (user.role === 'city' || user.role === 'demo') {
+      } else if (user.role === 'city' || user.role === 'demo' || user.username === 'admin' || user.username === 'main') {
         const hash = await bcrypt.hash(user.password, 10);
         await pool.query(
           'UPDATE users SET password_hash = $1, role = $2, region = $3 WHERE username = $4',
