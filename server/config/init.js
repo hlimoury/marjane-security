@@ -137,10 +137,10 @@ const initDatabase = async () => {
       );
     `);
 
-    // Allow 'city' role in users table (safe to run on existing DB)
+    // Allow 'city' and 'demo' roles in users table (safe to run on existing DB)
     await pool.query(`
       ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
-      ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'main', 'region', 'city'));
+      ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'main', 'region', 'city', 'demo'));
     `);
 
     console.log('Tables creees avec succes');
@@ -169,6 +169,7 @@ const initDatabase = async () => {
       { username: 'anosud', password: 'anosud123', role: 'city', region: 'REGION SUD' },
       { username: 'anonord', password: 'anonord123', role: 'city', region: 'REGION NORD' },
       { username: 'anoorient', password: 'anoorient123', role: 'city', region: 'REGION ORIENT' },
+      { username: 'demo', password: 'demo2026', role: 'demo', region: 'REGION DEMO' },
     ];
 
     // Clean up old city* accounts
@@ -183,11 +184,17 @@ const initDatabase = async () => {
           [user.username, hash, user.role, user.region]
         );
         console.log(`Utilisateur cree: ${user.username}`);
-      } else if (user.role === 'city') {
+      } else if (user.role === 'city' || user.role === 'demo') {
         const hash = await bcrypt.hash(user.password, 10);
-        await pool.query('UPDATE users SET password_hash = $1 WHERE username = $2', [hash, user.username]);
+        await pool.query(
+          'UPDATE users SET password_hash = $1, role = $2, region = $3 WHERE username = $4',
+          [hash, user.role, user.region, user.username]
+        );
       }
     }
+
+    // Isolated demo supermarket + sample data (never mixed with real regions)
+    await seedDemoShowcase();
 
     console.log('Initialisation terminee');
   } catch (err) {
@@ -195,5 +202,122 @@ const initDatabase = async () => {
     throw err;
   }
 };
+
+async function seedDemoShowcase() {
+  const DEMO_REGION = 'REGION DEMO';
+  const DEMO_NAME = 'Marjane Demo PFE';
+
+  let sm = await pool.query(
+    'SELECT id FROM supermarkets WHERE region = $1 AND name = $2',
+    [DEMO_REGION, DEMO_NAME]
+  );
+
+  if (sm.rows.length === 0) {
+    sm = await pool.query(
+      'INSERT INTO supermarkets (name, region) VALUES ($1, $2) RETURNING id',
+      [DEMO_NAME, DEMO_REGION]
+    );
+    console.log('Magasin demo PFE cree');
+  }
+
+  const supermarketId = sm.rows[0].id;
+  const month = 3;
+  const year = 2026;
+
+  let inst = await pool.query(
+    'SELECT id FROM instances WHERE supermarket_id = $1 AND month = $2 AND year = $3',
+    [supermarketId, month, year]
+  );
+
+  if (inst.rows.length === 0) {
+    inst = await pool.query(
+      'INSERT INTO instances (supermarket_id, month, year) VALUES ($1, $2, $3) RETURNING id',
+      [supermarketId, month, year]
+    );
+  }
+
+  const instanceId = inst.rows[0].id;
+
+  const upsertJson = async (table, data) => {
+    const existing = await pool.query(`SELECT id FROM ${table} WHERE instance_id = $1`, [instanceId]);
+    const payload = JSON.stringify(data);
+    if (existing.rows.length === 0) {
+      await pool.query(
+        `INSERT INTO ${table} (instance_id, data) VALUES ($1, $2)`,
+        [instanceId, payload]
+      );
+    }
+  };
+
+  await upsertJson('interpellations', {
+    entries: [
+      {
+        type: 'Client',
+        date: '2026-03-05',
+        rayons: ['Épicerie'],
+        valeur_kdh: 250,
+        poursuites: 0,
+        commentaire: 'Exemple fictif pour présentation PFE',
+      },
+      {
+        type: 'Personnel',
+        date: '2026-03-12',
+        rayons: ['Textile'],
+        valeur_kdh: 180,
+        poursuites: 1,
+        commentaire: 'Donnée de démonstration uniquement',
+      },
+    ],
+  });
+
+  await upsertJson('accidents', {
+    entries: [
+      { date: '2026-03-08', cause: 'Chute', description: 'Exemple fictif — aucune donnée réelle' },
+    ],
+  });
+
+  await upsertJson('anomalies', {
+    entries: [
+      {
+        axe: 'Sécurité',
+        sous_categories: ['Caméra'],
+        date: '2026-03-10',
+        commentaire: 'Exemple pour la démo PFE',
+      },
+    ],
+  });
+
+  await upsertJson('formations', {
+    entries: [
+      { type: 'Incendie', date: '2026-03-01', participants: 12 },
+    ],
+  });
+
+  await upsertJson('reclamations', {
+    entries: [
+      { motif: 'Service', date: '2026-03-15', description: 'Exemple fictif' },
+    ],
+  });
+
+  await upsertJson('autres_incidents', {
+    entries: [
+      { type: 'Alerte', date: '2026-03-18', description: 'Exemple fictif' },
+    ],
+  });
+
+  await upsertJson('controle_rm', {
+    entries: [
+      { type: 'entrepot', sous_type: 'Contrôle routine', date: '2026-03-20' },
+    ],
+  });
+
+  const disp = await pool.query('SELECT id FROM dispositifs WHERE instance_id = $1', [instanceId]);
+  if (disp.rows.length === 0) {
+    await pool.query(
+      `INSERT INTO dispositifs (instance_id, data) VALUES ($1, $2)`,
+      [instanceId, JSON.stringify({ cameras: 24, agents: 6, alarmes: 4 })]
+    );
+  }
+}
 
 module.exports = initDatabase;

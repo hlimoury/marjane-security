@@ -1,6 +1,6 @@
 # Marjane Admin Dashboard — iOS App
 
-Native iPhone app that loads your existing web admin dashboard in a full-screen browser view. Your dad logs in with the **admin** account and sees the same dashboard as on the website.
+Native iPhone app that loads the existing web admin dashboard in a full-screen browser view. Log in with an authorized account to use the same dashboard as on the website.
 
 ## Current URLs
 

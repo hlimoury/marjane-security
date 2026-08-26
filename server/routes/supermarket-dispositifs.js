@@ -1,13 +1,14 @@
 const express = require('express');
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
+const { isScopedRole, rejectIfDemo } = require('../utils/access');
 
 const router = express.Router();
 
 const checkSupermarketAccess = async (supermarketId, user) => {
   const result = await pool.query('SELECT * FROM supermarkets WHERE id = $1', [supermarketId]);
   if (result.rows.length === 0) return { error: 'Supermarche non trouve', status: 404 };
-  if ((user.role === 'region' || user.role === 'city') && result.rows[0].region !== user.region) {
+  if (isScopedRole(user.role) && result.rows[0].region !== user.region) {
     return { error: 'Acces refuse', status: 403 };
   }
   return { supermarket: result.rows[0] };
@@ -42,6 +43,7 @@ router.get('/:supermarketId', authMiddleware, async (req, res) => {
 
 // POST /api/supermarket-dispositifs/:supermarketId
 router.post('/:supermarketId', authMiddleware, async (req, res) => {
+  if (rejectIfDemo(req, res)) return;
   if (req.user.role === 'city') {
     return res.status(403).json({ message: 'Acces refuse' });
   }

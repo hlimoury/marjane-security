@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
+const { isScopedRole, rejectIfDemo } = require('../utils/access');
 
 const router = express.Router();
 
@@ -24,7 +25,7 @@ const checkInstanceAccess = async (instanceId, user) => {
   `, [instanceId]);
 
   if (result.rows.length === 0) return { error: 'Instance non trouvee', status: 404 };
-  if ((user.role === 'region' || user.role === 'city') && result.rows[0].region !== user.region) {
+  if (isScopedRole(user.role) && result.rows[0].region !== user.region) {
     return { error: 'Acces refuse', status: 403 };
   }
   return { instance: result.rows[0] };
@@ -91,6 +92,7 @@ router.get('/:type/:instanceId', authMiddleware, validateTable, async (req, res)
 // POST /api/caracteristiques/:type/:instanceId - Create or update data
 router.post('/:type/:instanceId', authMiddleware, validateTable, async (req, res) => {
   try {
+    if (rejectIfDemo(req, res)) return;
     const { type, instanceId } = req.params;
     const { data } = req.body;
 

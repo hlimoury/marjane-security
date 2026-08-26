@@ -5,7 +5,7 @@ import { getUnreadReportCount } from '../services/api';
 import { FiLogOut, FiHome, FiShoppingCart, FiBarChart2, FiList, FiFileText, FiInbox } from 'react-icons/fi';
 
 const Navbar = () => {
-  const { user, logout, isAdmin, isCity } = useAuth();
+  const { user, logout, isAdmin, isCity, isDemo } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -28,6 +28,7 @@ const Navbar = () => {
   const roleLabel = () => {
     if (user.role === 'admin') return 'Administrateur';
     if (user.role === 'main') return 'MAIN';
+    if (user.role === 'demo') return 'Démo PFE — consultation';
     if (user.role === 'city') return `City — ${user.region}`;
     return user.region;
   };
@@ -68,7 +69,7 @@ const Navbar = () => {
                 <span>Totaux</span>
               </Link>
 
-              {!isCity() && (
+              {!isCity() && !isDemo() && (
                 <Link
                   to="/rapport"
                   className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -80,6 +81,12 @@ const Navbar = () => {
                   <FiFileText size={16} />
                   <span>Rapport</span>
                 </Link>
+              )}
+
+              {isDemo() && (
+                <span className="px-3 py-1 rounded-md text-xs font-medium bg-orange-700/50 text-orange-100">
+                  Données fictives
+                </span>
               )}
 
               {isAdmin() && (
@@ -157,7 +164,7 @@ const Navbar = () => {
         >
           Totaux
         </Link>
-        {!isCity() && (
+        {!isCity() && !isDemo() && (
           <Link
             to="/rapport"
             className={`flex-1 text-center py-2 rounded-md text-sm font-medium ${

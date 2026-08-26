@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../config/db');
 const { authMiddleware, adminOnly } = require('../middleware/auth');
+const { DEMO_REGION, isScopedRole, rejectIfDemo } = require('../utils/access');
 
 const router = express.Router();
 
@@ -149,8 +150,9 @@ router.get('/stats', authMiddleware, adminOnly, async (req, res) => {
       LEFT JOIN anomalies ano ON i.id = ano.instance_id
       LEFT JOIN controle_rm crm ON i.id = crm.instance_id
       LEFT JOIN dispositifs disp ON i.id = disp.instance_id
+      WHERE s.region != $1
       ORDER BY i.year DESC, i.month DESC
-    `);
+    `, [DEMO_REGION]);
 
     // 2) Supermarket-level data (scoring)
     const supermarketData = await pool.query(`
@@ -159,15 +161,18 @@ router.get('/stats', authMiddleware, adminOnly, async (req, res) => {
         CASE WHEN ss.id IS NOT NULL THEN 1 ELSE 0 END as has_scoring
       FROM supermarkets s
       LEFT JOIN supermarket_scoring ss ON s.id = ss.supermarket_id
+      WHERE s.region != $1
       ORDER BY s.region, s.name
-    `);
+    `, [DEMO_REGION]);
 
     // 3) Interpellation details for rayon breakdown
     const interpDetails = await pool.query(`
       SELECT interp.data
       FROM interpellations interp
       JOIN instances i ON interp.instance_id = i.id
-    `);
+      JOIN supermarkets s ON i.supermarket_id = s.id
+      WHERE s.region != $1
+    `, [DEMO_REGION]);
 
     // Build rayon stats from interpellation entries
     const rayonStats = {};
@@ -239,10 +244,10 @@ router.get('/category/:type/subcategories', authMiddleware, adminOnly, async (re
       FROM ${type} t
       JOIN instances i ON t.instance_id = i.id
       JOIN supermarkets s ON i.supermarket_id = s.id
-      WHERE 1=1
+      WHERE s.region != $1
     `;
-    const params = [];
-    let paramIndex = 1;
+    const params = [DEMO_REGION];
+    let paramIndex = 2;
 
     if (region) {
       query += ` AND s.region = $${paramIndex++}`;
@@ -401,10 +406,10 @@ router.get('/category/:type/subcategory/:subcat', authMiddleware, adminOnly, asy
       FROM ${type} t
       JOIN instances i ON t.instance_id = i.id
       JOIN supermarkets s ON i.supermarket_id = s.id
-      WHERE 1=1
+      WHERE s.region != $1
     `;
-    const params = [];
-    let paramIndex = 1;
+    const params = [DEMO_REGION];
+    let paramIndex = 2;
 
     if (region) {
       query += ` AND s.region = $${paramIndex++}`;
@@ -531,8 +536,9 @@ router.get('/category/:type', authMiddleware, adminOnly, async (req, res) => {
       FROM ${type} t
       JOIN instances i ON t.instance_id = i.id
       JOIN supermarkets s ON i.supermarket_id = s.id
+      WHERE s.region != $1
       ORDER BY i.year DESC, i.month DESC, s.name
-    `);
+    `, [DEMO_REGION]);
 
     const entries = [];
     result.rows.forEach(row => {
@@ -655,9 +661,12 @@ router.get('/totals', authMiddleware, async (req, res) => {
     const params = [];
     let pi = 1;
 
-    if (userRole === 'region' || userRole === 'city') {
+    if (isScopedRole(userRole)) {
       where += ` AND s.region = $${pi++}`;
       params.push(userRegion);
+    } else {
+      where += ` AND s.region != $${pi++}`;
+      params.push(DEMO_REGION);
     }
     if (year) { where += ` AND i.year = $${pi++}`; params.push(parseInt(year)); }
     if (month) { where += ` AND i.month = $${pi++}`; params.push(parseInt(month)); }
@@ -666,16 +675,18 @@ router.get('/totals', authMiddleware, async (req, res) => {
       ? ['anomalies']
       : ['anomalies', 'interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'controle_rm'];
 
-    const regionParam = (userRole === 'region' || userRole === 'city') ? [userRegion] : [];
+    const regionParam = isScopedRole(userRole) ? [userRegion] : [];
     let smQuery = 'SELECT id, name, region FROM supermarkets';
     if (regionParam.length) smQuery += ' WHERE region = $1';
+    else smQuery += ' WHERE region != $1';
     smQuery += ' ORDER BY name';
-    const smResult = await pool.query(smQuery, regionParam);
+    const smResult = await pool.query(smQuery, regionParam.length ? regionParam : [DEMO_REGION]);
 
     let yearsQuery = 'SELECT DISTINCT i.year FROM instances i JOIN supermarkets s ON i.supermarket_id = s.id';
     if (regionParam.length) yearsQuery += ' WHERE s.region = $1';
+    else yearsQuery += ' WHERE s.region != $1';
     yearsQuery += ' ORDER BY year DESC';
-    const yearsResult = await pool.query(yearsQuery, regionParam);
+    const yearsResult = await pool.query(yearsQuery, regionParam.length ? regionParam : [DEMO_REGION]);
 
     const categoryData = {};
 
@@ -765,9 +776,12 @@ router.post('/report', authMiddleware, async (req, res) => {
     const params = [];
     let pi = 1;
 
-    if (userRole === 'region') {
+    if (userRole === 'region' || userRole === 'demo') {
       where += ` AND s.region = $${pi++}`;
       params.push(userRegion);
+    } else {
+      where += ` AND s.region != $${pi++}`;
+      params.push(DEMO_REGION);
     }
     if (supermarketIds.length > 0) {
       where += ` AND s.id = ANY($${pi++})`;
@@ -784,9 +798,12 @@ router.post('/report', authMiddleware, async (req, res) => {
     let smWhere = 'WHERE 1=1';
     const smParams = [];
     let spi = 1;
-    if (userRole === 'region') {
+    if (userRole === 'region' || userRole === 'demo') {
       smWhere += ` AND region = $${spi++}`;
       smParams.push(userRegion);
+    } else {
+      smWhere += ` AND region != $${spi++}`;
+      smParams.push(DEMO_REGION);
     }
     if (supermarketIds.length > 0) {
       smWhere += ` AND id = ANY($${spi++})`;

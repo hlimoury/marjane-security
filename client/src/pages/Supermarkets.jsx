@@ -10,7 +10,7 @@ const REGIONS = ['REGION CENTRE 1', 'REGION CENTRE 02', 'REGION CENTRE NORD', 'R
 const ITEMS_PER_PAGE = 10;
 
 const Supermarkets = () => {
-  const { user, isRegion, isCity, canManage } = useAuth();
+  const { user, isRegion, isCity, isDemo, canManage } = useAuth();
   const navigate = useNavigate();
   const [supermarkets, setSupermarkets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -139,7 +139,7 @@ const Supermarkets = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Magasins</h1>
           <p className="text-gray-500 text-sm mt-1">
-            {isRegion() ? user.region : 'Toutes les régions'} — {filteredSupermarkets.length} magasin(s)
+            {isRegion() || isDemo() ? user.region : 'Toutes les régions'} — {filteredSupermarkets.length} magasin(s)
           </p>
         </div>
 
@@ -168,7 +168,7 @@ const Supermarkets = () => {
             </select>
           )}
 
-          {!isCity() && (
+          {!isCity() && !isDemo() && (
             <button
               onClick={openAddForm}
               className="flex items-center space-x-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -179,6 +179,12 @@ const Supermarkets = () => {
           )}
         </div>
       </div>
+
+      {isDemo() && (
+        <div className="mb-4 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+          Compte démo PFE — magasin fictif uniquement. Aucune donnée réelle n’est visible.
+        </div>
+      )}
 
       {/* Add/Edit Form Modal */}
       {showForm && (
@@ -254,7 +260,7 @@ const Supermarkets = () => {
         <div className="text-center py-16 bg-white rounded-xl shadow-sm">
           <FiShoppingCart size={48} className="mx-auto text-gray-300 mb-4" />
           <p className="text-gray-500 text-lg">Aucun magasin trouvé</p>
-          {!isCity() && (
+          {!isCity() && !isDemo() && (
             <button
               onClick={openAddForm}
               className="mt-4 text-orange-600 hover:text-orange-700 font-medium"
@@ -290,7 +296,7 @@ const Supermarkets = () => {
                     <FiEye size={14} />
                     <span>Voir</span>
                   </button>
-                  {!isCity() && (
+                  {!isCity() && !isDemo() && (
                     <>
                       <button
                         onClick={() => handleEdit(supermarket)}

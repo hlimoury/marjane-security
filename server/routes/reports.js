@@ -6,7 +6,7 @@ const router = express.Router();
 
 // POST /api/reports/send - Send report to admin
 router.post('/send', authMiddleware, async (req, res) => {
-  if (req.user.role === 'city') {
+  if (req.user.role === 'city' || req.user.role === 'demo') {
     return res.status(403).json({ message: 'Accès refusé' });
   }
 

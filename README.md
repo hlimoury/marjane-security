@@ -58,17 +58,19 @@ npm run dev
 
 Ouvrir http://localhost:5173
 
-## Comptes par defaut
+## Comptes
 
-| Utilisateur | Mot de passe | Role | Region |
-|-------------|-------------|------|--------|
-| admin | admin123 | Administrateur | Toutes |
-| main | main123 | MAIN | Toutes |
-| centre1 | centre1123 | Region | REGION CENTRE 1 |
-| centre2 | centre2123 | Region | REGION CENTRE 02 |
-| sud | sud123 | Region | REGION SUD |
-| orient | orient123 | Region | REGION ORIENT |
-| nord | nord123 | Region | REGION NORD |
+### Compte démo PFE (à partager pour présentation)
+
+| Utilisateur | Mot de passe | Accès |
+|-------------|--------------|-------|
+| demo | demo2026 | Consultation seule — magasin fictif, **aucune donnée réelle** |
+
+Ce compte ne voit pas le dashboard admin, le chatbot, ni les magasins / stats opérationnels.
+
+### Comptes internes
+
+Les identifiants opérateurs (admin, régions, etc.) restent **privés** — ne pas les partager ni les publier.
 
 ## Deploiement sur Render
 

@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
+const { DEMO_REGION, isScopedRole, rejectIfDemo } = require('../utils/access');
 
 const router = express.Router();
 
@@ -14,7 +15,10 @@ router.get('/supermarket/:supermarketId', authMiddleware, async (req, res) => {
     if (supermarket.rows.length === 0) {
       return res.status(404).json({ message: 'Supermarche non trouve' });
     }
-    if ((req.user.role === 'region' || req.user.role === 'city') && supermarket.rows[0].region !== req.user.region) {
+    if (isScopedRole(req.user.role) && supermarket.rows[0].region !== req.user.region) {
+      return res.status(403).json({ message: 'Acces refuse' });
+    }
+    if (!isScopedRole(req.user.role) && supermarket.rows[0].region === DEMO_REGION) {
       return res.status(403).json({ message: 'Acces refuse' });
     }
 
@@ -48,7 +52,10 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
     const instance = result.rows[0];
 
-    if ((req.user.role === 'region' || req.user.role === 'city') && instance.supermarket_region !== req.user.region) {
+    if (isScopedRole(req.user.role) && instance.supermarket_region !== req.user.region) {
+      return res.status(403).json({ message: 'Acces refuse' });
+    }
+    if (!isScopedRole(req.user.role) && instance.supermarket_region === DEMO_REGION) {
       return res.status(403).json({ message: 'Acces refuse' });
     }
 
@@ -89,6 +96,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // POST /api/instances - Create instance
 router.post('/', authMiddleware, async (req, res) => {
   try {
+    if (rejectIfDemo(req, res)) return;
     if (req.user.role === 'city') {
       return res.status(403).json({ message: 'Acces refuse' });
     }
@@ -136,6 +144,7 @@ router.post('/', authMiddleware, async (req, res) => {
 // PUT /api/instances/:id - Update instance (month/year)
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
+    if (rejectIfDemo(req, res)) return;
     if (req.user.role === 'city') {
       return res.status(403).json({ message: 'Acces refuse' });
     }
@@ -189,6 +198,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 // DELETE /api/instances/:id - Delete instance
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
+    if (rejectIfDemo(req, res)) return;
     if (req.user.role === 'city') {
       return res.status(403).json({ message: 'Acces refuse' });
     }

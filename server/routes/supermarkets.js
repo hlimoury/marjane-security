@@ -1,21 +1,26 @@
 const express = require('express');
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
+const { DEMO_REGION, isScopedRole, rejectIfDemo } = require('../utils/access');
 
 const router = express.Router();
 
-// GET /api/supermarkets - List supermarkets (filtered by region for region users)
+// GET /api/supermarkets - List supermarkets (filtered by region for region/city/demo users)
 router.get('/', authMiddleware, async (req, res) => {
   try {
     let result;
 
-    if (req.user.role === 'region' || req.user.role === 'city') {
+    if (isScopedRole(req.user.role)) {
       result = await pool.query(
         'SELECT * FROM supermarkets WHERE region = $1 ORDER BY name',
         [req.user.region]
       );
     } else {
-      result = await pool.query('SELECT * FROM supermarkets ORDER BY region, name');
+      // Hide demo showcase store from real operators
+      result = await pool.query(
+        'SELECT * FROM supermarkets WHERE region != $1 ORDER BY region, name',
+        [DEMO_REGION]
+      );
     }
 
     res.json(result.rows);
@@ -37,7 +42,11 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
     const supermarket = result.rows[0];
 
-    if ((req.user.role === 'region' || req.user.role === 'city') && supermarket.region !== req.user.region) {
+    if (isScopedRole(req.user.role) && supermarket.region !== req.user.region) {
+      return res.status(403).json({ message: 'Acces refuse' });
+    }
+
+    if (!isScopedRole(req.user.role) && supermarket.region === DEMO_REGION) {
       return res.status(403).json({ message: 'Acces refuse' });
     }
 
@@ -51,6 +60,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // POST /api/supermarkets - Create supermarket
 router.post('/', authMiddleware, async (req, res) => {
   try {
+    if (rejectIfDemo(req, res)) return;
     if (req.user.role === 'city') {
       return res.status(403).json({ message: 'Acces refuse' });
     }
@@ -91,6 +101,7 @@ router.post('/', authMiddleware, async (req, res) => {
 // PUT /api/supermarkets/:id - Update supermarket
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
+    if (rejectIfDemo(req, res)) return;
     if (req.user.role === 'city') {
       return res.status(403).json({ message: 'Acces refuse' });
     }
@@ -107,6 +118,10 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const existing = await pool.query('SELECT * FROM supermarkets WHERE id = $1', [id]);
     if (existing.rows.length === 0) {
       return res.status(404).json({ message: 'Supermarche non trouve' });
+    }
+
+    if (existing.rows[0].region === DEMO_REGION) {
+      return res.status(403).json({ message: 'Magasin demo non modifiable' });
     }
 
     // Region users can only edit their own region's supermarkets and can't change region
@@ -141,6 +156,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 // DELETE /api/supermarkets/:id - Delete supermarket
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
+    if (rejectIfDemo(req, res)) return;
     if (req.user.role === 'city') {
       return res.status(403).json({ message: 'Acces refuse' });
     }
@@ -151,6 +167,10 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     const existing = await pool.query('SELECT * FROM supermarkets WHERE id = $1', [id]);
     if (existing.rows.length === 0) {
       return res.status(404).json({ message: 'Supermarche non trouve' });
+    }
+
+    if (existing.rows[0].region === DEMO_REGION) {
+      return res.status(403).json({ message: 'Magasin demo non supprimable' });
     }
 
     if (req.user.role === 'region' && existing.rows[0].region !== req.user.region) {
