@@ -826,22 +826,88 @@ router.post('/report', authMiddleware, async (req, res) => {
       const perSupermarket = {};
       let grandTotal = 0;
       const subCategoryTotals = {};
-      const useRayonDetail = cat === 'interpellations' && smResult.rows.length > 2;
-      const perRayon = useRayonDetail ? {} : null;
+      const interpellationTotals = cat === 'interpellations'
+        ? {
+            entries: 0,
+            nombre: 0,
+            poursuites: 0,
+            valeurKdh: 0,
+            byType: INTERPELLATION_TYPES.reduce((acc, type) => {
+              acc[type] = { entries: 0, nombre: 0, poursuites: 0, valeurKdh: 0 };
+              return acc;
+            }, {}),
+          }
+        : null;
 
       result.rows.forEach(row => {
         const smId = row.supermarket_id;
-        if (!perSupermarket[smId]) perSupermarket[smId] = { total: 0, details: {}, comments: [] };
+        if (!perSupermarket[smId]) {
+          perSupermarket[smId] = {
+            total: 0,
+            details: {},
+            comments: [],
+            ...(cat === 'interpellations' && {
+              nombre: 0,
+              poursuites: 0,
+              valeurKdh: 0,
+              byType: INTERPELLATION_TYPES.reduce((acc, type) => {
+                acc[type] = { entries: 0, nombre: 0, poursuites: 0, valeurKdh: 0 };
+                return acc;
+              }, {}),
+            }),
+          };
+        }
 
         const entries = row.data?.entries || [];
         entries.forEach(entry => {
           perSupermarket[smId].total++;
           grandTotal++;
 
-          if (cat === 'interpellations' && entry.commentaire) {
-            perSupermarket[smId].comments.push({
-              type: entry.type, date: entry.date, text: entry.commentaire,
-            });
+          if (cat === 'interpellations') {
+            const metrics = getInterpellationMetrics(entry);
+            const typeKey = entry.type || 'Autre';
+            const store = perSupermarket[smId];
+
+            store.nombre += Math.round(metrics.nombre);
+            store.poursuites += Math.round(metrics.poursuites);
+            store.valeurKdh += metrics.valeurKdh;
+
+            if (!store.byType[typeKey]) {
+              store.byType[typeKey] = {
+                entries: 0,
+                nombre: 0,
+                poursuites: 0,
+                valeurKdh: 0,
+              };
+            }
+            store.byType[typeKey].entries += 1;
+            store.byType[typeKey].nombre += Math.round(metrics.nombre);
+            store.byType[typeKey].poursuites += Math.round(metrics.poursuites);
+            store.byType[typeKey].valeurKdh += metrics.valeurKdh;
+
+            interpellationTotals.entries += 1;
+            interpellationTotals.nombre += Math.round(metrics.nombre);
+            interpellationTotals.poursuites += Math.round(metrics.poursuites);
+            interpellationTotals.valeurKdh += metrics.valeurKdh;
+
+            if (!interpellationTotals.byType[typeKey]) {
+              interpellationTotals.byType[typeKey] = {
+                entries: 0,
+                nombre: 0,
+                poursuites: 0,
+                valeurKdh: 0,
+              };
+            }
+            interpellationTotals.byType[typeKey].entries += 1;
+            interpellationTotals.byType[typeKey].nombre += Math.round(metrics.nombre);
+            interpellationTotals.byType[typeKey].poursuites += Math.round(metrics.poursuites);
+            interpellationTotals.byType[typeKey].valeurKdh += metrics.valeurKdh;
+
+            if (entry.commentaire) {
+              store.comments.push({
+                type: entry.type, date: entry.date, text: entry.commentaire,
+              });
+            }
           }
 
           let subs = [];
@@ -861,56 +927,9 @@ router.post('/report', authMiddleware, async (req, res) => {
             .filter(Boolean);
 
           if (cat === 'interpellations') {
-            const rayonCount = normalizedSubs.length || 1;
-            const share = 1 / rayonCount;
-            const metrics = getInterpellationMetrics(entry);
-
-            if (normalizedSubs.length === 0) return;
-
             normalizedSubs.forEach((sub) => {
-              perSupermarket[smId].details[sub] = (perSupermarket[smId].details[sub] || 0) + share;
-              subCategoryTotals[sub] = (subCategoryTotals[sub] || 0) + share;
-
-              if (perRayon) {
-                if (!perRayon[sub]) {
-                  perRayon[sub] = {
-                    total: 0,
-                    nombre: 0,
-                    poursuites: 0,
-                    valeurKdh: 0,
-                    byType: {},
-                    entries: [],
-                  };
-                }
-
-                const rayon = perRayon[sub];
-                rayon.total += share;
-                rayon.nombre += metrics.nombre * share;
-                rayon.poursuites += metrics.poursuites * share;
-                rayon.valeurKdh += metrics.valeurKdh * share;
-
-                const typeKey = entry.type || 'Autre';
-                if (!rayon.byType[typeKey]) {
-                  rayon.byType[typeKey] = { total: 0, nombre: 0, poursuites: 0, valeurKdh: 0 };
-                }
-                rayon.byType[typeKey].total += share;
-                rayon.byType[typeKey].nombre += metrics.nombre * share;
-                rayon.byType[typeKey].poursuites += metrics.poursuites * share;
-                rayon.byType[typeKey].valeurKdh += metrics.valeurKdh * share;
-
-                rayon.entries.push({
-                  supermarket_name: row.supermarket_name,
-                  supermarket_id: smId,
-                  month: row.month,
-                  year: row.year,
-                  type: entry.type || '—',
-                  nombre: Math.round(metrics.nombre * share * 1000) / 1000,
-                  poursuites: Math.round(metrics.poursuites * share * 1000) / 1000,
-                  valeurKdh: Math.round(metrics.valeurKdh * share * 1000) / 1000,
-                  date: entry.date || '',
-                  commentaire: entry.commentaire || '',
-                });
-              }
+              perSupermarket[smId].details[sub] = (perSupermarket[smId].details[sub] || 0) + 1;
+              subCategoryTotals[sub] = (subCategoryTotals[sub] || 0) + 1;
             });
             return;
           }
@@ -922,18 +941,17 @@ router.post('/report', authMiddleware, async (req, res) => {
         });
       });
 
-      if (perRayon) {
-        Object.values(perRayon).forEach((rayon) => {
-          rayon.total = Math.round(rayon.total * 1000) / 1000;
-          rayon.nombre = Math.round(rayon.nombre * 1000) / 1000;
-          rayon.poursuites = Math.round(rayon.poursuites * 1000) / 1000;
-          rayon.valeurKdh = Math.round(rayon.valeurKdh * 1000) / 1000;
-          rayon.entries.sort((a, b) => {
-            const periodA = a.year * 100 + a.month;
-            const periodB = b.year * 100 + b.month;
-            if (periodA !== periodB) return periodB - periodA;
-            return a.supermarket_name.localeCompare(b.supermarket_name);
+      if (interpellationTotals) {
+        interpellationTotals.valeurKdh =
+          Math.round(interpellationTotals.valeurKdh * 1000) / 1000;
+        Object.values(perSupermarket).forEach((store) => {
+          store.valeurKdh = Math.round(store.valeurKdh * 1000) / 1000;
+          Object.values(store.byType).forEach((typeStats) => {
+            typeStats.valeurKdh = Math.round(typeStats.valeurKdh * 1000) / 1000;
           });
+        });
+        Object.values(interpellationTotals.byType).forEach((typeStats) => {
+          typeStats.valeurKdh = Math.round(typeStats.valeurKdh * 1000) / 1000;
         });
       }
 
@@ -941,7 +959,10 @@ router.post('/report', authMiddleware, async (req, res) => {
         total: grandTotal,
         subCategoryTotals,
         perSupermarket,
-        ...(perRayon && { perRayon, detailMode: 'byRayon' }),
+        ...(interpellationTotals && {
+          interpellationTotals,
+          detailMode: 'bySupermarketType',
+        }),
       };
     }
 

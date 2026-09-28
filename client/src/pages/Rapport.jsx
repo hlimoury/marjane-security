@@ -10,7 +10,11 @@ import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, Headi
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { InterpellationsRayonReport, formatReportMetric, appendInterpellationsByRayonDocx, appendInterpellationsByRayonPdf } from '../components/InterpellationsRayonReport';
+import {
+  InterpellationsStoreReport,
+  appendInterpellationsByStoreDocx,
+  appendInterpellationsByStorePdf,
+} from '../components/InterpellationsStoreReport';
 
 const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
@@ -44,8 +48,8 @@ function topDetails(details, limit = 5) {
   const sorted = Object.entries(details).sort((a, b) => b[1] - a[1]);
   const top = sorted.slice(0, limit);
   const rest = sorted.slice(limit).reduce((s, [, c]) => s + c, 0);
-  let text = top.map(([n, c]) => `${n} (${formatReportMetric(c)})`).join(', ');
-  if (rest > 0) text += `, +${formatReportMetric(rest)} autres`;
+  let text = top.map(([n, c]) => `${n} (${c})`).join(', ');
+  if (rest > 0) text += `, +${rest} autres`;
   return text;
 }
 
@@ -83,20 +87,20 @@ function buildDocx(reportData) {
       ]}),
     );
 
-    if (subTotals.length > 0) {
-      const sumText = subTotals.slice(0, 8).map(([n, c]) => `${n} (${formatReportMetric(c)})`).join('  •  ');
-      children.push(new Paragraph({ spacing: { after: 150 }, children: [
-        new TextRun({ text: 'Résumé : ', bold: true, size: 18, color: '333333' }),
-        new TextRun({ text: sumText, size: 18, color: '555555' }),
-      ]}));
-    }
-
-    if (catKey === 'interpellations' && cat.detailMode === 'byRayon' && cat.perRayon) {
-      appendInterpellationsByRayonDocx(children, cat, {
+    if (catKey === 'interpellations' && cat.detailMode === 'bySupermarketType') {
+      appendInterpellationsByStoreDocx(children, supermarkets, cat, {
         Paragraph, Table, TableRow, TableCell, TextRun, AlignmentType, WidthType, ShadingType,
       }, ORANGE);
       children.push(new Paragraph({ spacing: { after: 100 }, children: [] }));
       return;
+    }
+
+    if (subTotals.length > 0) {
+      const sumText = subTotals.slice(0, 8).map(([n, c]) => `${n} (${c})`).join('  •  ');
+      children.push(new Paragraph({ spacing: { after: 150 }, children: [
+        new TextRun({ text: 'Résumé : ', bold: true, size: 18, color: '333333' }),
+        new TextRun({ text: sumText, size: 18, color: '555555' }),
+      ]}));
     }
 
     const headerCells = ['Magasin', 'Total', 'Principales sous-catégories'].map(t =>
@@ -207,20 +211,20 @@ function downloadPdf(reportData) {
     doc.text(`${label}  —  Total : ${cat.total}`, 14, y);
     y += 7;
 
+    if (catKey === 'interpellations' && cat.detailMode === 'bySupermarketType') {
+      const yRef = { y };
+      appendInterpellationsByStorePdf(doc, supermarkets, cat, yRef, autoTable);
+      y = yRef.y;
+      return;
+    }
+
     if (subTotals.length > 0) {
       doc.setFontSize(8);
       doc.setTextColor(100);
-      const sumLine = subTotals.slice(0, 6).map(([n, c]) => `${n} (${formatReportMetric(c)})`).join('  |  ');
+      const sumLine = subTotals.slice(0, 6).map(([n, c]) => `${n} (${c})`).join('  |  ');
       const lines = doc.splitTextToSize(sumLine, 180);
       doc.text(lines, 14, y);
       y += lines.length * 4 + 3;
-    }
-
-    if (catKey === 'interpellations' && cat.detailMode === 'byRayon' && cat.perRayon) {
-      const yRef = { y };
-      appendInterpellationsByRayonPdf(doc, cat, yRef, autoTable);
-      y = yRef.y;
-      return;
     }
 
     const tableRows = [];
@@ -364,7 +368,7 @@ const Rapport = () => {
       });
       setReportData(res.data);
       toast.success('Rapport généré avec succès');
-    } catch (err) {
+    } catch {
       toast.error('Erreur lors de la génération');
     } finally { setGenerating(false); }
   };
@@ -383,7 +387,7 @@ const Rapport = () => {
       });
       setLastSent({ created_at: res.data.sent_at, is_read: false, is_downloaded: false });
       toast.success('Rapport envoyé à l\'administrateur');
-    } catch (err) {
+    } catch {
       toast.error('Erreur lors de l\'envoi');
     } finally { setSending(false); }
   };
@@ -605,11 +609,11 @@ const Rapport = () => {
                             <span className="bg-orange-100 text-orange-700 text-sm font-bold px-3 py-0.5 rounded-full">{catData.total}</span>
                           </div>
 
-                          {subTotals.length > 0 && (
+                          {catKey !== 'interpellations' && subTotals.length > 0 && (
                             <div className="flex flex-wrap gap-1.5 mb-4">
                               {subTotals.slice(0, 8).map(([name, count]) => (
                                 <span key={name} className="bg-gray-100 text-xs px-2 py-1 rounded-md text-gray-600">
-                                  {name}: <strong>{formatReportMetric(count)}</strong>
+                                  {name}: <strong>{count}</strong>
                                 </span>
                               ))}
                               {subTotals.length > 8 && (
@@ -618,8 +622,11 @@ const Rapport = () => {
                             </div>
                           )}
 
-                          {catKey === 'interpellations' && catData.detailMode === 'byRayon' && catData.perRayon ? (
-                            <InterpellationsRayonReport perRayon={catData.perRayon} />
+                          {catKey === 'interpellations' && catData.detailMode === 'bySupermarketType' ? (
+                            <InterpellationsStoreReport
+                              supermarkets={reportData.supermarkets}
+                              categoryData={catData}
+                            />
                           ) : smRows.length > 0 ? (
                             <table className="w-full text-sm">
                               <thead>
@@ -643,7 +650,7 @@ const Rapport = () => {
                             <p className="text-sm text-gray-400 italic">Aucune donnée</p>
                           )}
 
-                          {catKey === 'interpellations' && catData.detailMode !== 'byRayon' && allComments.length > 0 && (
+                          {catKey === 'interpellations' && allComments.length > 0 && (
                             <div className="mt-3 border-t pt-3">
                               <p className="text-xs font-semibold text-gray-600 mb-2">Commentaires ({allComments.length})</p>
                               <div className="space-y-1.5">
