@@ -83,7 +83,13 @@ function buildDocx(reportData) {
     children.push(
       new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 100 }, children: [
         new TextRun({ text: `${label}`, bold: true, size: 28, color: ORANGE }),
-        new TextRun({ text: `  — Total : ${cat.total}`, size: 22, color: '555555' }),
+        new TextRun({
+          text: catKey === 'interpellations' && cat.detailMode === 'bySupermarketType'
+            ? `  — Personnes : ${cat.interpellationTotals?.nombre || 0}`
+            : `  — Total : ${cat.total}`,
+          size: 22,
+          color: '555555',
+        }),
       ]}),
     );
 
@@ -208,7 +214,10 @@ function downloadPdf(reportData) {
 
     doc.setFontSize(14);
     doc.setTextColor(249, 115, 22);
-    doc.text(`${label}  —  Total : ${cat.total}`, 14, y);
+    const categoryTotal = catKey === 'interpellations' && cat.detailMode === 'bySupermarketType'
+      ? `${label}  —  Personnes : ${cat.interpellationTotals?.nombre || 0}`
+      : `${label}  —  Total : ${cat.total}`;
+    doc.text(categoryTotal, 14, y);
     y += 7;
 
     if (catKey === 'interpellations' && cat.detailMode === 'bySupermarketType') {
@@ -606,7 +615,11 @@ const Rapport = () => {
                         <div key={catKey} className="p-5">
                           <div className="flex items-center gap-3 mb-3">
                             <h3 className="text-lg font-bold text-orange-600">{label}</h3>
-                            <span className="bg-orange-100 text-orange-700 text-sm font-bold px-3 py-0.5 rounded-full">{catData.total}</span>
+                            <span className="bg-orange-100 text-orange-700 text-sm font-bold px-3 py-0.5 rounded-full">
+                              {catKey === 'interpellations' && catData.detailMode === 'bySupermarketType'
+                                ? `${catData.interpellationTotals?.nombre || 0} personnes`
+                                : catData.total}
+                            </span>
                           </div>
 
                           {catKey !== 'interpellations' && subTotals.length > 0 && (

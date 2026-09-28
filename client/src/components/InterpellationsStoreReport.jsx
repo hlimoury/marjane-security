@@ -50,8 +50,7 @@ export function InterpellationsStoreReport({
       {totals && (
         <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
           <h4 className="mb-3 font-bold text-orange-800">Total général</h4>
-          <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-            <Metric label="Entrées" value={formatWholeNumber(totals.entries)} />
+          <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
             <Metric label="Personnes" value={formatWholeNumber(totals.nombre)} />
             <Metric label="Poursuites judiciaires" value={formatWholeNumber(totals.poursuites)} />
             <Metric label="Marchandise récupérée" value={`${formatKdh(totals.valeurKdh)} KDH`} />
@@ -67,8 +66,7 @@ export function InterpellationsStoreReport({
               <h4 className="font-bold text-gray-800">{store.name}</h4>
               <span className="text-xs text-gray-500">{store.region}</span>
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
-              <Metric label="Entrées" value={formatWholeNumber(store.total)} />
+            <div className="mt-3 grid grid-cols-1 gap-3 text-xs sm:grid-cols-3">
               <Metric label="Personnes" value={formatWholeNumber(store.nombre)} />
               <Metric label="Poursuites judiciaires" value={formatWholeNumber(store.poursuites)} />
               <Metric label="Marchandise récupérée" value={`${formatKdh(store.valeurKdh)} KDH`} />
@@ -80,7 +78,6 @@ export function InterpellationsStoreReport({
               <thead>
                 <tr className="bg-white text-left">
                   <th className="px-3 py-2 font-semibold text-gray-600">Type de personne</th>
-                  <th className="px-3 py-2 text-center font-semibold text-gray-600">Entrées</th>
                   <th className="px-3 py-2 text-center font-semibold text-gray-600">Personnes</th>
                   <th className="px-3 py-2 text-center font-semibold text-gray-600">Poursuites</th>
                   <th className="px-3 py-2 text-center font-semibold text-gray-600">Valeur KDH</th>
@@ -92,7 +89,6 @@ export function InterpellationsStoreReport({
                   return (
                     <tr key={type} className="hover:bg-gray-50">
                       <td className="px-3 py-2 font-medium text-gray-800">{type}</td>
-                      <td className="px-3 py-2 text-center">{formatWholeNumber(stats.entries)}</td>
                       <td className="px-3 py-2 text-center">{formatWholeNumber(stats.nombre)}</td>
                       <td className="px-3 py-2 text-center text-blue-700">
                         {formatWholeNumber(stats.poursuites)}
@@ -159,7 +155,7 @@ export function appendInterpellationsByStoreDocx(
       children: [
         new TextRun({ text: 'Total général : ', bold: true, size: 19, color: orange }),
         new TextRun({
-          text: `${formatWholeNumber(totals.entries)} entrées | ${formatWholeNumber(totals.nombre)} personnes | ${formatWholeNumber(totals.poursuites)} poursuites | ${formatKdh(totals.valeurKdh)} KDH`,
+          text: `${formatWholeNumber(totals.nombre)} personnes | ${formatWholeNumber(totals.poursuites)} poursuites | ${formatKdh(totals.valeurKdh)} KDH`,
           size: 18,
           color: '444444',
         }),
@@ -167,7 +163,7 @@ export function appendInterpellationsByStoreDocx(
     }));
   }
 
-  const headers = ['Magasin', 'Type', 'Entrées', 'Personnes', 'Poursuites', 'Valeur KDH'];
+  const headers = ['Magasin', 'Type', 'Personnes', 'Poursuites', 'Valeur KDH'];
   const headerCells = headers.map((text) =>
     new TableCell({
       shading: { type: ShadingType.SOLID, color: orange, fill: orange },
@@ -182,7 +178,6 @@ export function appendInterpellationsByStoreDocx(
     rows.push(makeDocxRow(
       store.name,
       'TOTAL',
-      store.total,
       store.nombre,
       store.poursuites,
       store.valeurKdh,
@@ -194,7 +189,6 @@ export function appendInterpellationsByStoreDocx(
       rows.push(makeDocxRow(
         '',
         type,
-        stats.entries,
         stats.nombre,
         stats.poursuites,
         stats.valeurKdh,
@@ -215,7 +209,6 @@ export function appendInterpellationsByStoreDocx(
 const makeDocxRow = (
   store,
   type,
-  entries,
   nombre,
   poursuites,
   valeurKdh,
@@ -226,7 +219,6 @@ const makeDocxRow = (
   const values = [
     store,
     type,
-    formatWholeNumber(entries),
     formatWholeNumber(nombre),
     formatWholeNumber(poursuites),
     formatKdh(valeurKdh),
@@ -258,8 +250,7 @@ export function appendInterpellationsByStorePdf(
     doc.setFontSize(8);
     doc.setTextColor(70);
     const summary = [
-      `Total: ${formatWholeNumber(totals.entries)} entrées`,
-      `${formatWholeNumber(totals.nombre)} personnes`,
+      `Total: ${formatWholeNumber(totals.nombre)} personnes`,
       `${formatWholeNumber(totals.poursuites)} poursuites`,
       `${formatKdh(totals.valeurKdh)} KDH`,
     ].join('  |  ');
@@ -272,7 +263,6 @@ export function appendInterpellationsByStorePdf(
     rows.push([
       store.name,
       'TOTAL',
-      formatWholeNumber(store.total),
       formatWholeNumber(store.nombre),
       formatWholeNumber(store.poursuites),
       formatKdh(store.valeurKdh),
@@ -282,7 +272,6 @@ export function appendInterpellationsByStorePdf(
       rows.push([
         '',
         type,
-        formatWholeNumber(stats.entries),
         formatWholeNumber(stats.nombre),
         formatWholeNumber(stats.poursuites),
         formatKdh(stats.valeurKdh),
@@ -293,17 +282,16 @@ export function appendInterpellationsByStorePdf(
   if (rows.length > 0) {
     autoTable(doc, {
       startY: yRef.y,
-      head: [['Magasin', 'Type', 'Entrées', 'Personnes', 'Poursuites', 'Valeur KDH']],
+      head: [['Magasin', 'Type', 'Personnes', 'Poursuites', 'Valeur KDH']],
       body: rows,
       headStyles: { fillColor: [249, 115, 22], fontSize: 7 },
       bodyStyles: { fontSize: 7 },
       columnStyles: {
         0: { cellWidth: 45 },
         1: { cellWidth: 27 },
-        2: { cellWidth: 20, halign: 'center' },
-        3: { cellWidth: 22, halign: 'center' },
-        4: { cellWidth: 22, halign: 'center' },
-        5: { cellWidth: 28, halign: 'center' },
+        2: { cellWidth: 28, halign: 'center' },
+        3: { cellWidth: 28, halign: 'center' },
+        4: { cellWidth: 34, halign: 'center' },
       },
       margin: { left: 14, right: 14 },
       theme: 'grid',

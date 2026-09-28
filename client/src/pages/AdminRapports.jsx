@@ -64,7 +64,13 @@ function buildAdminDocx(report) {
 
     children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 100 }, children: [
       new TextRun({ text: label, bold: true, size: 28, color: ORANGE }),
-      new TextRun({ text: `  — Total : ${cat.total}`, size: 22, color: '555555' }),
+      new TextRun({
+        text: catKey === 'interpellations' && cat.detailMode === 'bySupermarketType'
+          ? `  — Personnes : ${cat.interpellationTotals?.nombre || 0}`
+          : `  — Total : ${cat.total}`,
+        size: 22,
+        color: '555555',
+      }),
     ]}));
 
     if (catKey === 'interpellations' && cat.detailMode === 'bySupermarketType') {
@@ -150,7 +156,10 @@ function buildAdminPdf(report) {
 
     if (y > 250) { doc.addPage(); y = 20; }
     doc.setFontSize(14); doc.setTextColor(249, 115, 22);
-    doc.text(`${label}  —  Total : ${cat.total}`, 14, y); y += 7;
+    const categoryTotal = catKey === 'interpellations' && cat.detailMode === 'bySupermarketType'
+      ? `${label}  —  Personnes : ${cat.interpellationTotals?.nombre || 0}`
+      : `${label}  —  Total : ${cat.total}`;
+    doc.text(categoryTotal, 14, y); y += 7;
 
     if (catKey === 'interpellations' && cat.detailMode === 'bySupermarketType') {
       const yRef = { y };
@@ -387,7 +396,11 @@ const AdminRapports = () => {
                                 <div key={catKey} className="mb-4">
                                   <div className="flex items-center gap-2 mb-2">
                                     <h4 className="font-bold text-orange-600">{CAT_LABELS[catKey] || catKey}</h4>
-                                    <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">{catData.total}</span>
+                                    <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                                      {catKey === 'interpellations' && catData.detailMode === 'bySupermarketType'
+                                        ? `${catData.interpellationTotals?.nombre || 0} personnes`
+                                        : catData.total}
+                                    </span>
                                   </div>
                                   {smRows.length > 0 ? (
                                     catKey === 'interpellations' && catData.detailMode === 'bySupermarketType' ? (
