@@ -68,6 +68,14 @@ const agentCanWriteCategory = async (user, instance, category) => {
 };
 
 const notifyRegion = async ({ agent, instance, kind, category, title }) => {
+  await logAgentActivity({
+    agent,
+    action: kind === 'month' ? 'month_created' : 'data_saved',
+    category,
+    supermarketName: instance.supermarket_name || null,
+    details: title,
+  });
+
   const parent = await pool.query('SELECT parent_id FROM users WHERE id = $1', [agent.id]);
   const regionUserId = parent.rows[0]?.parent_id;
   if (!regionUserId) return;
@@ -86,14 +94,22 @@ const notifyRegion = async ({ agent, instance, kind, category, title }) => {
       'UPDATE agent_notifications SET title = $1, created_at = CURRENT_TIMESTAMP, is_seen = FALSE WHERE id = $2',
       [title, existing.rows[0].id]
     );
-    return;
+  } else {
+    await pool.query(`
+      INSERT INTO agent_notifications
+        (region_user_id, agent_id, kind, instance_id, supermarket_id, category, title)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `, [regionUserId, agent.id, kind, instance.id, instance.supermarket_id, category || null, title]);
   }
+};
 
+const logAgentActivity = async ({ agent, action, details, supermarketName = null, category = null }) => {
+  if (!agent || agent.role !== 'agent') return;
   await pool.query(`
-    INSERT INTO agent_notifications
-      (region_user_id, agent_id, kind, instance_id, supermarket_id, category, title)
+    INSERT INTO agent_activity
+      (agent_id, agent_username, region, action, supermarket_name, category, details)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
-  `, [regionUserId, agent.id, kind, instance.id, instance.supermarket_id, category || null, title]);
+  `, [agent.id, agent.username, agent.region || null, action, supermarketName, category, details]);
 };
 
 const monthLabel = (month, year) => `${MONTHS[month] || month} ${year}`;
@@ -107,5 +123,6 @@ module.exports = {
   agentCanEditMonth,
   agentCanWriteCategory,
   notifyRegion,
+  logAgentActivity,
   monthLabel,
 };

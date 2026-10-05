@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
+const { logAgentActivity } = require('../utils/agents');
 
 const router = express.Router();
 
@@ -33,6 +34,14 @@ router.post('/login', async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    if (user.role === 'agent') {
+      await logAgentActivity({
+        agent: user,
+        action: 'login',
+        details: `${user.username} s'est connecté`,
+      });
+    }
 
     res.json({
       token,

@@ -27,6 +27,7 @@ import AdminRapports from './pages/AdminRapports';
 import Agents from './pages/Agents';
 import Validations from './pages/Validations';
 import RegionAgentReports from './pages/RegionAgentReports';
+import AdminAgentLog from './pages/AdminAgentLog';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -99,6 +100,9 @@ const AppRoutes = () => {
 
         <Route path="/rapports-recus" element={
           <ProtectedRoute adminOnly><AdminRapports /></ProtectedRoute>
+        } />
+        <Route path="/journal-agents" element={
+          <ProtectedRoute adminOnly><AdminAgentLog /></ProtectedRoute>
         } />
 
         <Route path="/dashboard" element={

@@ -141,6 +141,20 @@ const initDatabase = async () => {
       ALTER TABLE sent_reports ADD COLUMN IF NOT EXISTS recipient_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS agent_activity (
+        id SERIAL PRIMARY KEY,
+        agent_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        agent_username VARCHAR(100) NOT NULL,
+        region VARCHAR(100),
+        action VARCHAR(40) NOT NULL,
+        supermarket_name VARCHAR(150),
+        category VARCHAR(50),
+        details TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // Allow 'city' and 'demo' roles in users table (safe to run on existing DB)
     await pool.query(`
       ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;

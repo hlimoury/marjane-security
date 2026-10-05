@@ -1,10 +1,33 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, adminOnly } = require('../middleware/auth');
 const { CATEGORY_LABELS, monthLabel } = require('../utils/agents');
 
 const router = express.Router();
+
+router.get('/activity', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const params = [];
+    let where = 'WHERE 1=1';
+    if (req.query.region) {
+      params.push(req.query.region);
+      where += ` AND region = $${params.length}`;
+    }
+    if (req.query.agent) {
+      params.push(`%${req.query.agent}%`);
+      where += ` AND agent_username ILIKE $${params.length}`;
+    }
+    const result = await pool.query(
+      `SELECT * FROM agent_activity ${where} ORDER BY created_at DESC LIMIT 300`,
+      params
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erreur journal agents:', err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
 
 const regionOnly = (req, res, next) => {
   if (req.user.role !== 'region') {

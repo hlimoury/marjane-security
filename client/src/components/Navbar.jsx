@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getUnreadReportCount, getAgentNotificationCount } from '../services/api';
-import { FiLogOut, FiShoppingCart, FiBarChart2, FiList, FiFileText, FiInbox, FiUsers, FiBell } from 'react-icons/fi';
+import { FiLogOut, FiShoppingCart, FiBarChart2, FiList, FiFileText, FiInbox, FiUsers, FiBell, FiClipboard } from 'react-icons/fi';
 
 const Navbar = () => {
   const { user, logout, isAdmin, isCity, isDemo, isRegion, isAgent } = useAuth();
@@ -160,6 +160,17 @@ const Navbar = () => {
 
               {isAdmin() && (
                 <Link
+                  to="/journal-agents"
+                  className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive('/journal-agents') ? 'bg-orange-600 text-white' : 'text-white hover:bg-orange-600'
+                  }`}
+                >
+                  <FiClipboard size={16} />
+                  <span>Journal</span>
+                </Link>
+              )}
+              {isAdmin() && (
+                <Link
                   to="/dashboard"
                   className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive('/dashboard')
@@ -241,6 +252,11 @@ const Navbar = () => {
                 {pendingAgents > 9 ? '9+' : pendingAgents}
               </span>
             )}
+          </Link>
+        )}
+        {isAdmin() && (
+          <Link to="/journal-agents" className="flex-1 text-center py-2 rounded-md text-sm font-medium text-white hover:bg-orange-600">
+            Journal
           </Link>
         )}
         {isAdmin() && (

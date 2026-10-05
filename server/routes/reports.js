@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../config/db');
-const { authMiddleware, adminOnly } = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
+const { logAgentActivity } = require('../utils/agents');
 
 const router = express.Router();
 
@@ -29,6 +30,14 @@ router.post('/send', authMiddleware, async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, created_at`,
       [req.user.id, req.user.username, req.user.region || null, periodLabel, categories, supermarketCount || 0, reportData, recipientId]
     );
+
+    if (req.user.role === 'agent') {
+      await logAgentActivity({
+        agent: req.user,
+        action: 'report_sent',
+        details: `${req.user.username} a envoyé un rapport (${periodLabel || 'période non précisée'}, ${supermarketCount || 0} magasin(s))`,
+      });
+    }
 
     res.status(201).json({
       message: 'Rapport envoyé avec succès',

@@ -7,6 +7,7 @@ const {
   agentCanEditMonth,
   sealedCategories,
   notifyRegion,
+  logAgentActivity,
   monthLabel,
 } = require('../utils/agents');
 
@@ -235,6 +236,16 @@ router.put('/:id', authMiddleware, async (req, res) => {
       [month, year, id]
     );
 
+    if (req.user.role === 'agent') {
+      const store = await pool.query('SELECT name FROM supermarkets WHERE id = $1', [instance.rows[0].supermarket_id]);
+      await logAgentActivity({
+        agent: req.user,
+        action: 'month_updated',
+        supermarketName: store.rows[0]?.name || null,
+        details: `${req.user.username} a modifié le mois ${monthLabel(instance.rows[0].month, instance.rows[0].year)} en ${monthLabel(month, year)} — ${store.rows[0]?.name || ''}`,
+      });
+    }
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error('Erreur modification instance:', err);
@@ -268,6 +279,18 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     if (req.user.role === 'agent' && !agentCanEditMonth(req.user, instance.rows[0])) {
       return res.status(403).json({ message: instance.rows[0].validated_at ? 'Ce mois a été validé et ne peut plus être supprimé' : 'Vous pouvez supprimer seulement les mois que vous avez créés' });
     }
+
+    if (req.user.role === 'agent') {
+      const store = await pool.query('SELECT name FROM supermarkets WHERE id = $1', [instance.rows[0].supermarket_id]);
+      await logAgentActivity({
+        agent: req.user,
+        action: 'month_deleted',
+        supermarketName: store.rows[0]?.name || null,
+        details: `${req.user.username} a supprimé ${monthLabel(instance.rows[0].month, instance.rows[0].year)} — ${store.rows[0]?.name || ''}`,
+      });
+    }
+
+    await pool.query('DELETE FROM instances WHERE id = $1', [id]);
     res.json({ message: 'Instance supprimee' });
   } catch (err) {
     console.error('Erreur suppression instance:', err);
