@@ -131,7 +131,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 router.post('/', authMiddleware, async (req, res) => {
   try {
     if (rejectIfDemo(req, res)) return;
-    if (req.user.role === 'city') {
+    if (req.user.role === 'city' || req.user.role === 'agent') {
       return res.status(403).json({ message: 'Acces refuse' });
     }
 

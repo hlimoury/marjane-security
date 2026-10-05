@@ -39,7 +39,7 @@ const InstanceDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isCity, isAgent, user } = useAuth();
+  const { isCity, isAgent } = useAuth();
   const [instance, setInstance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedCarac, setSelectedCarac] = useState(null);
@@ -133,16 +133,6 @@ const InstanceDetail = () => {
             {MONTHS[instance.month]} {instance.year} — {instance.supermarket_region}
           </p>
           <DataAccessBar access={{ locked: false, message: '' }} />
-          {isAgent() && Number(instance.created_by) !== Number(user?.id) && (
-            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              Ce mois ne vous appartient pas. Vous pouvez le consulter, mais pas le modifier.
-            </div>
-          )}
-          {isAgent() && instance.validated_at && (
-            <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-              Ce mois a été validé. Sa date ne peut plus être modifiée.
-            </div>
-          )}
           {(instance.sealed_categories || []).length > 0 && (
             <div className="mt-3 text-sm text-gray-600">
               Données scellées : {instance.sealed_categories.join(', ')}

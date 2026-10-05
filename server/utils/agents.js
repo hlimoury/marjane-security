@@ -46,19 +46,13 @@ const agentCanAccessStore = async (user, supermarketId, region) => {
   return ids.map(Number).includes(Number(supermarketId));
 };
 
-const agentCanEditMonth = (user, instance) => {
-  if (user.role !== 'agent') return true;
-  return Number(instance.created_by) === Number(user.id) && !instance.validated_at;
-};
+const agentCanEditMonth = (user) => user.role !== 'agent';
 
 const agentCanWriteCategory = async (user, instance, category) => {
   if (user.role !== 'agent') return { ok: true };
   if (!instance) return { ok: false, status: 404, message: 'Instance non trouvée' };
   if (!(await agentCanAccessStore(user, instance.supermarket_id, instance.region))) {
     return { ok: false, status: 403, message: 'Accès refusé' };
-  }
-  if (Number(instance.created_by) !== Number(user.id)) {
-    return { ok: false, status: 403, message: 'Vous pouvez modifier seulement les mois que vous avez créés' };
   }
   const seals = await sealedCategories(instance.id);
   if (seals.includes(category)) {

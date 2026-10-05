@@ -20,18 +20,13 @@ export function useDataAccess(instanceId, category) {
         if (ignore) return;
         const data = res.data;
         const sealed = (data.sealed_categories || []).includes(category);
-        const ownsMonth = Number(data.created_by) === Number(user?.id);
-        const locked = isAgent() && (!ownsMonth || sealed);
+        const locked = isAgent() && sealed;
         setAccess({
           loading: false,
           locked,
-          message: !isAgent()
-            ? ''
-            : sealed
-              ? 'Ces données ont été validées par la région. Vous ne pouvez plus les modifier.'
-              : ownsMonth
-                ? ''
-                : 'Ce mois a été créé par un autre compte. Vous pouvez seulement saisir les mois que vous créez.',
+          message: locked
+            ? 'Ces données ont été validées par la région. Vous ne pouvez plus les modifier.'
+            : '',
         });
       })
       .catch(() => {

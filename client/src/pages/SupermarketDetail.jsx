@@ -142,7 +142,7 @@ const SupermarketDetail = () => {
             <p className="text-gray-500 text-sm mt-1">{supermarket.region}</p>
           </div>
 
-          {!isCity() && !isDemo() && (
+          {!isCity() && !isDemo() && !isAgent() && (
             <button
               onClick={openAddForm}
               className="flex items-center space-x-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -217,7 +217,7 @@ const SupermarketDetail = () => {
         <div className="text-center py-16 bg-white rounded-xl shadow-sm">
           <FiCalendar size={48} className="mx-auto text-gray-300 mb-4" />
           <p className="text-gray-500 text-lg">Aucune instance pour ce magasin</p>
-          {!isCity() && !isDemo() && (
+          {!isCity() && !isDemo() && !isAgent() && (
             <button
               onClick={openAddForm}
               className="mt-4 text-orange-600 hover:text-orange-700 font-medium"
@@ -244,8 +244,7 @@ const SupermarketDetail = () => {
                   <p className="text-gray-400 text-xs">
                     Créé le {new Date(instance.created_at).toLocaleDateString('fr-FR')}
                     {instance.validated_at && ' · Validé'}
-                    {isAgent() && instance.can_edit && ' · Modifiable'}
-                    {isAgent() && !instance.can_edit && ' · Lecture seule'}
+                    {isAgent() && ' · Saisie des données uniquement'}
                   </p>
                 </div>
               </div>
