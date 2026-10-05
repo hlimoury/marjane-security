@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const pool = require('../config/db');
 
 const CATEGORY_LABELS = {
@@ -106,6 +107,40 @@ const logAgentActivity = async ({ agent, action, details, supermarketName = null
   `, [agent.id, agent.username, agent.region || null, action, supermarketName, category, details]);
 };
 
+const mergeAgentEntries = (existingEntries = [], incomingEntries = [], agentId) => {
+  const existing = existingEntries.map((entry) => ({
+    ...entry,
+    _id: entry._id || crypto.randomUUID(),
+    created_by: entry.created_by ?? null,
+  }));
+  const existingById = new Map(existing.map((entry) => [entry._id, entry]));
+  const keptOwnedIds = new Set();
+  const ownedUpdates = new Map();
+  const newcomers = [];
+
+  incomingEntries.forEach((entry) => {
+    const stored = entry._id ? existingById.get(entry._id) : null;
+    if (stored && Number(stored.created_by) === Number(agentId)) {
+      keptOwnedIds.add(stored._id);
+      ownedUpdates.set(stored._id, { ...entry, _id: stored._id, created_by: agentId });
+      return;
+    }
+    if (!stored) {
+      newcomers.push({ ...entry, _id: crypto.randomUUID(), created_by: agentId });
+    }
+  });
+
+  const merged = [];
+  existing.forEach((stored) => {
+    if (Number(stored.created_by) === Number(agentId)) {
+      if (keptOwnedIds.has(stored._id)) merged.push(ownedUpdates.get(stored._id));
+      return;
+    }
+    merged.push(stored);
+  });
+  return [...merged, ...newcomers];
+};
+
 const monthLabel = (month, year) => `${MONTHS[month] || month} ${year}`;
 
 module.exports = {
@@ -116,6 +151,7 @@ module.exports = {
   agentCanAccessStore,
   agentCanEditMonth,
   agentCanWriteCategory,
+  mergeAgentEntries,
   notifyRegion,
   logAgentActivity,
   monthLabel,

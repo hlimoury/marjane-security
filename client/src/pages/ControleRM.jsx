@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { getCaracteristique, saveCaracteristique, getInstance } from '../services/api';
 import { toast } from 'react-toastify';
 import { DataAccessBar, useDataAccess } from '../components/DataAccessBar';
+import { canChangeEntry, withOwner } from '../utils/entryOwner';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 
 const TYPE_OPTIONS = [
@@ -17,6 +19,7 @@ const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil
 
 const ControleRM = () => {
   const { instanceId } = useParams();
+  const { user, isAgent } = useAuth();
   const access = useDataAccess(instanceId, 'controle_rm');
   const navigate = useNavigate();
   const [instance, setInstance] = useState(null);
@@ -120,13 +123,13 @@ const ControleRM = () => {
         toast.error(`Date obligatoire pour ${st}`);
         return;
       }
-      newRows.push({
+      newRows.push(withOwner({
         type: formType,
         sous_type: st,
         valeur_ecart_negatif: v?.valeur_ecart_negatif ?? '',
         valeur_ecart_positif: v?.valeur_ecart_positif ?? '',
         date: v?.date ?? ''
-      });
+      }, editingIndex !== null && newRows.length === 0 ? entries[editingIndex] : null, user?.id));
     }
 
     if (editingIndex !== null) {
@@ -350,6 +353,7 @@ const ControleRM = () => {
                     <p className="font-medium text-gray-800">{entry.date ?? '-'}</p>
                   </div>
                 </div>
+                {canChangeEntry(entry, user?.id, isAgent()) ? (
                 <div className="flex gap-2 shrink-0">
                   <button
                     onClick={() => handleEdit(index)}
@@ -364,6 +368,7 @@ const ControleRM = () => {
                     Supprimer
                   </button>
                 </div>
+                ) : null}
               </div>
             ))}
           </div>

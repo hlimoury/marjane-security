@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { getCaracteristique, saveCaracteristique, getInstance } from '../services/api';
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 import { DataAccessBar, useDataAccess } from '../components/DataAccessBar';
+import { canChangeEntry, withOwner } from '../utils/entryOwner';
 
 const CAUSES = [
   'Chutes et glissades',
@@ -29,6 +31,7 @@ const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil
 
 const Accidents = () => {
   const { instanceId } = useParams();
+  const { user, isAgent } = useAuth();
   const access = useDataAccess(instanceId, 'accidents');
   const navigate = useNavigate();
   const [instance, setInstance] = useState(null);
@@ -80,11 +83,12 @@ const Accidents = () => {
       return;
     }
 
-    const newEntry = {
+    const previous = editingIndex !== null ? entries[editingIndex] : null;
+    const newEntry = withOwner({
       ...form,
       nombre: Number(form.nombre),
       jours_arret: Number(form.jours_arret) || 0,
-    };
+    }, previous, user?.id);
 
     if (editingIndex !== null) {
       const updated = [...entries];
@@ -269,6 +273,7 @@ const Accidents = () => {
                     <td className="py-3 px-4 text-gray-800">{entry.cause}</td>
                     <td className="py-3 px-4 text-gray-800">{entry.date}</td>
                     <td className="py-3 px-4">
+                      {canChangeEntry(entry, user?.id, isAgent()) ? (
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleEdit(index)}
@@ -283,6 +288,7 @@ const Accidents = () => {
                           Supprimer
                         </button>
                       </div>
+                      ) : <span className="text-xs text-gray-300">—</span>}
                     </td>
                   </tr>
                 ))}

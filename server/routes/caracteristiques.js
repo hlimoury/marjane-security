@@ -2,7 +2,7 @@ const express = require('express');
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
 const { isScopedRole, rejectIfDemo } = require('../utils/access');
-const { agentCanAccessStore, agentCanWriteCategory, notifyRegion, monthLabel, CATEGORY_LABELS } = require('../utils/agents');
+const { agentCanAccessStore, agentCanWriteCategory, mergeAgentEntries, notifyRegion, monthLabel, CATEGORY_LABELS } = require('../utils/agents');
 
 const router = express.Router();
 
@@ -98,7 +98,7 @@ router.post('/:type/:instanceId', authMiddleware, validateTable, async (req, res
   try {
     if (rejectIfDemo(req, res)) return;
     const { type, instanceId } = req.params;
-    const { data } = req.body;
+    let { data } = req.body;
 
     if (req.user.role === 'city' && type !== 'anomalies') {
       return res.status(403).json({ message: 'Acces refuse' });
@@ -108,6 +108,24 @@ router.post('/:type/:instanceId', authMiddleware, validateTable, async (req, res
     if (access.error) return res.status(access.status).json({ message: access.error });
     const writeAccess = await agentCanWriteCategory(req.user, access.instance, type);
     if (!writeAccess.ok) return res.status(writeAccess.status).json({ message: writeAccess.message });
+
+    if (req.user.role === 'agent' && type !== 'dispositifs' && Array.isArray(data?.entries)) {
+      const current = await pool.query(`SELECT data FROM ${type} WHERE instance_id = $1`, [instanceId]);
+      const existingEntries = current.rows[0]?.data?.entries || [];
+      data = { ...data, entries: mergeAgentEntries(existingEntries, data.entries, req.user.id) };
+    }
+
+    if (req.user.role === 'agent' && type === 'dispositifs') {
+      const current = await pool.query(`SELECT data FROM dispositifs WHERE instance_id = $1`, [instanceId]);
+      const existing = current.rows[0]?.data || {};
+      const owner = existing._created_by;
+      const hasContent = Object.entries(existing).some(([key, value]) => key !== '_created_by' && value !== 0 && value !== '' && value != null);
+      if (hasContent && Number(owner) !== Number(req.user.id)) {
+        return res.status(403).json({ message: 'Vous pouvez modifier seulement les dispositifs que vous avez saisis' });
+      }
+      data = { ...data, _created_by: req.user.id };
+    }
+
     if (type === 'dispositifs') {
       const inst = access.instance;
       const now = new Date();

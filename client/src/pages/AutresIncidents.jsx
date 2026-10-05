@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { getCaracteristique, saveCaracteristique, getInstance } from '../services/api';
 import { toast } from 'react-toastify';
 import { DataAccessBar, useDataAccess } from '../components/DataAccessBar';
+import { canChangeEntry, withOwner } from '../utils/entryOwner';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 
 const TYPES = [
@@ -36,6 +38,7 @@ const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil
 
 const AutresIncidents = () => {
   const { instanceId } = useParams();
+  const { user, isAgent } = useAuth();
   const access = useDataAccess(instanceId, 'autres_incidents');
   const navigate = useNavigate();
   const [instance, setInstance] = useState(null);
@@ -87,11 +90,12 @@ const AutresIncidents = () => {
       return;
     }
 
-    const newEntry = {
+    const previous = editingIndex !== null ? entries[editingIndex] : null;
+    const newEntry = withOwner({
       ...form,
       nombre: Number(form.nombre),
       sous_type: form.type === 'Départ de feu' ? form.sous_type : '',
-    };
+    }, previous, user?.id);
 
     if (editingIndex !== null) {
       const updated = [...entries];
@@ -283,6 +287,7 @@ const AutresIncidents = () => {
                     <td className="py-3 px-4 text-gray-800">{entry.date}</td>
                     <td className="py-3 px-4 text-gray-800">{entry.detail || '-'}</td>
                     <td className="py-3 px-4">
+                      {canChangeEntry(entry, user?.id, isAgent()) ? (
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleEdit(index)}
@@ -297,6 +302,7 @@ const AutresIncidents = () => {
                           Supprimer
                         </button>
                       </div>
+                      ) : <span className="text-xs text-gray-300">—</span>}
                     </td>
                   </tr>
                 ))}

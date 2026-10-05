@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { getCaracteristique, saveCaracteristique, getInstance } from '../services/api';
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 import { DataAccessBar, useDataAccess } from '../components/DataAccessBar';
+import { canChangeEntry, withOwner } from '../utils/entryOwner';
 
 const TYPES = ['Client', 'Personnel', 'Prestataire'];
 
@@ -23,6 +25,7 @@ const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil
 
 const Interpellations = () => {
   const { instanceId } = useParams();
+  const { user, isAgent } = useAuth();
   const access = useDataAccess(instanceId, 'interpellations');
   const navigate = useNavigate();
   const [instance, setInstance] = useState(null);
@@ -81,7 +84,8 @@ const Interpellations = () => {
       return;
     }
 
-    const newEntry = {
+    const previous = editingIndex !== null ? entries[editingIndex] : null;
+    const newEntry = withOwner({
       type: form.type,
       nombre: Number(form.nombre),
       poursuites: Number(form.poursuites) || 0,
@@ -89,7 +93,7 @@ const Interpellations = () => {
       rayons: form.rayons,
       date: form.date,
       commentaire: form.commentaire || '',
-    };
+    }, previous, user?.id);
 
     if (editingIndex !== null) {
       const updated = [...entries];
@@ -359,6 +363,7 @@ const Interpellations = () => {
                       ) : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="py-3 px-4">
+                      {canChangeEntry(entry, user?.id, isAgent()) ? (
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleEdit(index)}
@@ -373,6 +378,7 @@ const Interpellations = () => {
                           Supprimer
                         </button>
                       </div>
+                      ) : <span className="text-xs text-gray-300">—</span>}
                     </td>
                   </tr>
                 ))}

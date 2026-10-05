@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { getCaracteristique, saveCaracteristique, getInstance } from '../services/api';
 import { toast } from 'react-toastify';
 import { DataAccessBar, useDataAccess } from '../components/DataAccessBar';
+import { canChangeEntry, withOwner } from '../utils/entryOwner';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 
 const TYPES = ['Incendie', 'SST', 'Intégration'];
@@ -13,6 +15,7 @@ const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil
 
 const Formations = () => {
   const { instanceId } = useParams();
+  const { user, isAgent } = useAuth();
   const access = useDataAccess(instanceId, 'formations');
   const navigate = useNavigate();
   const [instance, setInstance] = useState(null);
@@ -59,7 +62,8 @@ const Formations = () => {
     e.preventDefault();
     if (!form.nombre) { toast.error('Veuillez remplir le nombre de personnes'); return; }
 
-    const newEntry = { ...form, nombre: Number(form.nombre) };
+    const previous = editingIndex !== null ? entries[editingIndex] : null;
+    const newEntry = withOwner({ ...form, nombre: Number(form.nombre) }, previous, user?.id);
 
     if (editingIndex !== null) {
       const updated = [...entries];
@@ -160,10 +164,12 @@ const Formations = () => {
                     <td className="py-3 px-4 text-gray-800">{entry.nombre}</td>
                     <td className="py-3 px-4 text-gray-800">{entry.type}</td>
                     <td className="py-3 px-4">
+                      {canChangeEntry(entry, user?.id, isAgent()) ? (
                       <div className="flex gap-2">
                         <button onClick={() => handleEdit(index)} className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">Modifier</button>
                         <button onClick={() => handleDelete(index)} className="bg-red-50 hover:bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">Supprimer</button>
                       </div>
+                      ) : <span className="text-xs text-gray-300">—</span>}
                     </td>
                   </tr>
                 ))}

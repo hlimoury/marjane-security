@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { getCaracteristique, saveCaracteristique, getInstance } from '../services/api';
 import { toast } from 'react-toastify';
 import { DataAccessBar, useDataAccess } from '../components/DataAccessBar';
+import { canChangeEntry, withOwner } from '../utils/entryOwner';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 
 const AXES = [
@@ -96,6 +98,7 @@ const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil
 
 const Anomalies = () => {
   const { instanceId } = useParams();
+  const { user, isAgent } = useAuth();
   const access = useDataAccess(instanceId, 'anomalies');
   const navigate = useNavigate();
   const [instance, setInstance] = useState(null);
@@ -149,7 +152,8 @@ const Anomalies = () => {
       return;
     }
 
-    const newEntry = { ...form };
+    const previous = editingIndex !== null ? entries[editingIndex] : null;
+    const newEntry = withOwner({ ...form }, previous, user?.id);
 
     if (editingIndex !== null) {
       const updated = [...entries];
@@ -459,6 +463,7 @@ const Anomalies = () => {
                   </div>
 
                   {/* Right: actions */}
+                  {canChangeEntry(entry, user?.id, isAgent()) ? (
                   <div className="flex gap-2 shrink-0">
                     <button
                       onClick={() => handleEdit(index)}
@@ -473,6 +478,7 @@ const Anomalies = () => {
                       Supprimer
                     </button>
                   </div>
+                  ) : null}
                 </div>
               </div>
             ))}
