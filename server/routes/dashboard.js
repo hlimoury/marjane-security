@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('../config/db');
 const { authMiddleware, adminOnly } = require('../middleware/auth');
 const { DEMO_REGION, isScopedRole, rejectIfDemo } = require('../utils/access');
+const { assignedStoreIds } = require('../utils/agents');
 
 const router = express.Router();
 
@@ -760,12 +761,13 @@ router.get('/totals', authMiddleware, async (req, res) => {
 
 // POST /api/dashboard/report - Generate report data (all users except city)
 router.post('/report', authMiddleware, async (req, res) => {
-  if (req.user.role === 'city' || req.user.role === 'agent') {
+  if (req.user.role === 'city') {
     return res.status(403).json({ message: 'Accès refusé' });
   }
 
   try {
-    const { categories = [], supermarketIds = [], startMonth, startYear, endMonth, endYear } = req.body;
+    const { categories = [], startMonth, startYear, endMonth, endYear } = req.body;
+    let { supermarketIds = [] } = req.body;
     const userRole = req.user.role;
     const userRegion = req.user.region;
 
@@ -775,11 +777,20 @@ router.post('/report', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Sélectionnez au moins une catégorie' });
     }
 
+    if (userRole === 'agent') {
+      const allowed = (await assignedStoreIds(req.user.id)).map(Number);
+      const requested = supermarketIds.length ? supermarketIds.map(Number) : allowed;
+      supermarketIds = requested.filter((id) => allowed.includes(id));
+      if (supermarketIds.length === 0) {
+        return res.status(400).json({ message: 'Aucun magasin autorisé pour ce rapport' });
+      }
+    }
+
     let where = 'WHERE 1=1';
     const params = [];
     let pi = 1;
 
-    if (userRole === 'region' || userRole === 'demo') {
+    if (userRole === 'region' || userRole === 'demo' || userRole === 'agent') {
       where += ` AND s.region = $${pi++}`;
       params.push(userRegion);
     } else {
@@ -801,7 +812,7 @@ router.post('/report', authMiddleware, async (req, res) => {
     let smWhere = 'WHERE 1=1';
     const smParams = [];
     let spi = 1;
-    if (userRole === 'region' || userRole === 'demo') {
+    if (userRole === 'region' || userRole === 'demo' || userRole === 'agent') {
       smWhere += ` AND region = $${spi++}`;
       smParams.push(userRegion);
     } else {

@@ -12,7 +12,7 @@ const Navbar = () => {
   const [pendingAgents, setPendingAgents] = useState(0);
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (user?.role === 'admin' || user?.role === 'region') {
       getUnreadReportCount().then(res => setUnreadCount(res.data.count || 0)).catch(() => {});
     }
     if (user?.role === 'region') {
@@ -76,7 +76,7 @@ const Navbar = () => {
                 </Link>
               )}
 
-              {!isCity() && !isDemo() && !isAgent() && (
+              {!isCity() && !isDemo() && (
                 <Link
                   to="/rapport"
                   className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -113,6 +113,22 @@ const Navbar = () => {
                   {pendingAgents > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
                       {pendingAgents > 9 ? '9+' : pendingAgents}
+                    </span>
+                  )}
+                </Link>
+              )}
+              {isRegion() && (
+                <Link
+                  to="/rapports-agents"
+                  className={`relative flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive('/rapports-agents') ? 'bg-orange-600 text-white' : 'text-white hover:bg-orange-600'
+                  }`}
+                >
+                  <FiInbox size={16} />
+                  <span>Rapports</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </Link>
@@ -200,7 +216,7 @@ const Navbar = () => {
             Totaux
           </Link>
         )}
-        {!isCity() && !isDemo() && !isAgent() && (
+        {!isCity() && !isDemo() && (
           <Link
             to="/rapport"
             className={`flex-1 text-center py-2 rounded-md text-sm font-medium ${

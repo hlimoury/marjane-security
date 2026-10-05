@@ -91,6 +91,7 @@ export const getReportById = (id) => api.get(`/reports/${id}`);
 export const markReportDownloaded = (id) => api.put(`/reports/${id}/downloaded`);
 export const getUnreadReportCount = () => api.get('/reports/unread-count');
 export const getLastSentReport = () => api.get('/reports/user/last-sent');
+export const deleteReport = (id) => api.delete(`/reports/${id}`);
 
 export const getAgents = () => api.get('/agents');
 export const createAgent = (data) => api.post('/agents', data);

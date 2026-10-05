@@ -26,6 +26,7 @@ import Rapport from './pages/Rapport';
 import AdminRapports from './pages/AdminRapports';
 import Agents from './pages/Agents';
 import Validations from './pages/Validations';
+import RegionAgentReports from './pages/RegionAgentReports';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -91,6 +92,9 @@ const AppRoutes = () => {
         } />
         <Route path="/validations" element={
           <ProtectedRoute><Validations /></ProtectedRoute>
+        } />
+        <Route path="/rapports-agents" element={
+          <ProtectedRoute><RegionAgentReports /></ProtectedRoute>
         } />
 
         <Route path="/rapports-recus" element={

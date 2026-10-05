@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState, useEffect } from 'react';
 import { getReportsList, getReportById, markReportDownloaded } from '../services/api';
 import { toast } from 'react-toastify';
@@ -38,7 +39,7 @@ function topDetails(details, limit = 4) {
   return text;
 }
 
-function buildAdminDocx(report) {
+export function buildAdminDocx(report) {
   const { supermarkets, categories, period, region } = report.report_data;
   const children = [];
   const ORANGE = 'F97316';
@@ -135,7 +136,7 @@ function buildAdminDocx(report) {
   });
 }
 
-function buildAdminPdf(report) {
+export function buildAdminPdf(report) {
   const { supermarkets, categories, period } = report.report_data;
   const doc = new jsPDF();
   let y = 20;

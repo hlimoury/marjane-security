@@ -6,7 +6,7 @@ const router = express.Router();
 
 // POST /api/reports/send - Send report to admin
 router.post('/send', authMiddleware, async (req, res) => {
-  if (req.user.role === 'city' || req.user.role === 'agent' || req.user.role === 'demo') {
+  if (req.user.role === 'city' || req.user.role === 'demo') {
     return res.status(403).json({ message: 'Accès refusé' });
   }
 
@@ -17,10 +17,17 @@ router.post('/send', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Données du rapport requises' });
     }
 
+    let recipientId = null;
+    if (req.user.role === 'agent') {
+      const parent = await pool.query('SELECT parent_id FROM users WHERE id = $1', [req.user.id]);
+      recipientId = parent.rows[0]?.parent_id || null;
+      if (!recipientId) return res.status(400).json({ message: 'Compte région lié introuvable' });
+    }
+
     const result = await pool.query(
-      `INSERT INTO sent_reports (sender_id, sender_username, sender_region, period_label, categories, supermarket_count, report_data)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, created_at`,
-      [req.user.id, req.user.username, req.user.region || null, periodLabel, categories, supermarketCount || 0, reportData]
+      `INSERT INTO sent_reports (sender_id, sender_username, sender_region, period_label, categories, supermarket_count, report_data, recipient_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, created_at`,
+      [req.user.id, req.user.username, req.user.region || null, periodLabel, categories, supermarketCount || 0, reportData, recipientId]
     );
 
     res.status(201).json({
@@ -42,8 +49,15 @@ router.get('/', authMiddleware, async (req, res) => {
     if (req.user.role === 'admin') {
       query = `SELECT id, sender_username, sender_region, period_label, categories,
                       supermarket_count, is_read, is_downloaded, read_at, downloaded_at, created_at
-               FROM sent_reports ORDER BY created_at DESC`;
+               FROM sent_reports WHERE recipient_id IS NULL ORDER BY created_at DESC`;
       params = [];
+    } else if (req.user.role === 'region') {
+      query = `SELECT id, sender_id, recipient_id, sender_username, sender_region, period_label, categories,
+                      supermarket_count, is_read, is_downloaded, read_at, downloaded_at, created_at
+               FROM sent_reports
+               WHERE sender_id = $1 OR recipient_id = $1
+               ORDER BY created_at DESC`;
+      params = [req.user.id];
     } else {
       query = `SELECT id, sender_username, sender_region, period_label, categories,
                       supermarket_count, is_read, is_downloaded, read_at, downloaded_at, created_at
@@ -62,8 +76,15 @@ router.get('/', authMiddleware, async (req, res) => {
 // GET /api/reports/unread-count - Unread count for admin badge
 router.get('/unread-count', authMiddleware, async (req, res) => {
   try {
+    if (req.user.role === 'region') {
+      const result = await pool.query(
+        'SELECT COUNT(*) as count FROM sent_reports WHERE recipient_id = $1 AND is_read = FALSE',
+        [req.user.id]
+      );
+      return res.json({ count: parseInt(result.rows[0].count) });
+    }
     if (req.user.role !== 'admin') return res.json({ count: 0 });
-    const result = await pool.query('SELECT COUNT(*) as count FROM sent_reports WHERE is_read = FALSE');
+    const result = await pool.query('SELECT COUNT(*) as count FROM sent_reports WHERE is_read = FALSE AND recipient_id IS NULL');
     res.json({ count: parseInt(result.rows[0].count) });
   } catch (err) {
     res.json({ count: 0 });
@@ -82,12 +103,21 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
     const report = result.rows[0];
 
-    if (req.user.role !== 'admin' && report.sender_id !== req.user.id) {
+    if (req.user.role === 'admin') {
+      if (report.recipient_id) return res.status(403).json({ message: 'Accès refusé' });
+    } else if (req.user.role === 'region') {
+      if (report.sender_id !== req.user.id && report.recipient_id !== req.user.id) {
+        return res.status(403).json({ message: 'Accès refusé' });
+      }
+    } else if (report.sender_id !== req.user.id) {
       return res.status(403).json({ message: 'Accès refusé' });
     }
 
-    // Mark as read if admin viewing
-    if (req.user.role === 'admin' && !report.is_read) {
+    if ((req.user.role === 'admin' || req.user.role === 'region') && report.recipient_id === req.user.id && !report.is_read) {
+      await pool.query('UPDATE sent_reports SET is_read = TRUE, read_at = NOW() WHERE id = $1', [id]);
+      report.is_read = true;
+      report.read_at = new Date();
+    } else if (req.user.role === 'admin' && !report.recipient_id && !report.is_read) {
       await pool.query('UPDATE sent_reports SET is_read = TRUE, read_at = NOW() WHERE id = $1', [id]);
       report.is_read = true;
       report.read_at = new Date();
@@ -101,9 +131,13 @@ router.get('/:id', authMiddleware, async (req, res) => {
 });
 
 // PUT /api/reports/:id/downloaded - Mark as downloaded
-router.put('/:id/downloaded', authMiddleware, adminOnly, async (req, res) => {
+router.put('/:id/downloaded', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
+    const report = await pool.query('SELECT recipient_id FROM sent_reports WHERE id = $1', [id]);
+    if (report.rows.length === 0) return res.status(404).json({ message: 'Rapport non trouvé' });
+    const canMark = req.user.role === 'admin' || report.rows[0].recipient_id === req.user.id;
+    if (!canMark) return res.status(403).json({ message: 'Accès refusé' });
     await pool.query(
       'UPDATE sent_reports SET is_downloaded = TRUE, downloaded_at = NOW() WHERE id = $1',
       [id]
@@ -111,6 +145,21 @@ router.put('/:id/downloaded', authMiddleware, adminOnly, async (req, res) => {
     res.json({ message: 'Marqué comme téléchargé' });
   } catch (err) {
     console.error('Erreur mise à jour rapport:', err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const report = await pool.query('SELECT * FROM sent_reports WHERE id = $1', [req.params.id]);
+    if (report.rows.length === 0) return res.status(404).json({ message: 'Rapport non trouvé' });
+    if (req.user.role !== 'region' || report.rows[0].recipient_id !== req.user.id) {
+      return res.status(403).json({ message: 'Accès refusé' });
+    }
+    await pool.query('DELETE FROM sent_reports WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Rapport supprimé' });
+  } catch (err) {
+    console.error('Erreur suppression rapport:', err);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });

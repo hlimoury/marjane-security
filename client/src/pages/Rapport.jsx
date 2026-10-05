@@ -295,7 +295,7 @@ function downloadPdf(reportData) {
 
 // --- Main Component ---
 const Rapport = () => {
-  const { user } = useAuth();
+  const { user, isAgent } = useAuth();
   const [supermarkets, setSupermarkets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -395,7 +395,7 @@ const Rapport = () => {
         supermarketCount: reportData.supermarkets.length,
       });
       setLastSent({ created_at: res.data.sent_at, is_read: false, is_downloaded: false });
-      toast.success('Rapport envoyé à l\'administrateur');
+      toast.success(isAgent() ? 'Rapport envoyé à votre région' : 'Rapport envoyé à l\'administrateur');
     } catch {
       toast.error('Erreur lors de l\'envoi');
     } finally { setSending(false); }
@@ -581,7 +581,7 @@ const Rapport = () => {
                     className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm ${
                       sending ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 text-white'
                     }`}>
-                    {sending ? <><FiLoader className="animate-spin" size={16} /> Envoi...</> : <><FiSend size={16} /> Envoyer à l'admin</>}
+                    {sending ? <><FiLoader className="animate-spin" size={16} /> Envoi...</> : <><FiSend size={16} /> {isAgent() ? 'Envoyer à la région' : 'Envoyer à l\'admin'}</>}
                   </button>
                 </div>
 

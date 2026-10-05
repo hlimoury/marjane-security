@@ -103,7 +103,7 @@ const Agents = () => {
         <div className="bg-orange-100 p-2.5 rounded-xl"><FiUsers className="text-orange-600" size={22} /></div>
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Comptes agents</h1>
-          <p className="text-sm text-gray-500">Comptes terrain limités aux magasins que vous choisissez</p>
+          <p className="text-sm text-gray-500">Créez un compte, changez son mot de passe, ses magasins, ou supprimez-le</p>
         </div>
       </div>
 
