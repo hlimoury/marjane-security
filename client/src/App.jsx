@@ -24,6 +24,8 @@ import DashboardSubCategoryDetail from './pages/DashboardSubCategoryDetail';
 import Totaux from './pages/Totaux';
 import Rapport from './pages/Rapport';
 import AdminRapports from './pages/AdminRapports';
+import Agents from './pages/Agents';
+import Validations from './pages/Validations';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -82,6 +84,13 @@ const AppRoutes = () => {
 
         <Route path="/rapport" element={
           <ProtectedRoute><Rapport /></ProtectedRoute>
+        } />
+
+        <Route path="/agents" element={
+          <ProtectedRoute><Agents /></ProtectedRoute>
+        } />
+        <Route path="/validations" element={
+          <ProtectedRoute><Validations /></ProtectedRoute>
         } />
 
         <Route path="/rapports-recus" element={

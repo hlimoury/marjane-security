@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { getInstance, getCaracteristique, saveCaracteristique } from '../services/api';
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiShield, FiAlertTriangle, FiAlertCircle, FiFileText, FiBook, FiMessageSquare, FiSearch, FiStar, FiCheck, FiX, FiClipboard } from 'react-icons/fi';
+import { DataAccessBar } from '../components/DataAccessBar';
 
 const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
@@ -38,7 +39,7 @@ const InstanceDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isCity } = useAuth();
+  const { isCity, isAgent, user } = useAuth();
   const [instance, setInstance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedCarac, setSelectedCarac] = useState(null);
@@ -131,13 +132,33 @@ const InstanceDetail = () => {
           <p className="text-gray-500 mt-1">
             {MONTHS[instance.month]} {instance.year} — {instance.supermarket_region}
           </p>
+          <DataAccessBar access={{ locked: false, message: '' }} />
+          {isAgent() && Number(instance.created_by) !== Number(user?.id) && (
+            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              Ce mois ne vous appartient pas. Vous pouvez le consulter, mais pas le modifier.
+            </div>
+          )}
+          {isAgent() && instance.validated_at && (
+            <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+              Ce mois a été validé. Sa date ne peut plus être modifiée.
+            </div>
+          )}
+          {(instance.sealed_categories || []).length > 0 && (
+            <div className="mt-3 text-sm text-gray-600">
+              Données scellées : {instance.sealed_categories.join(', ')}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Caracteristiques Grid */}
       <h2 className="text-lg font-semibold text-gray-800 mb-4">Caractéristiques</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {(isCity() ? CARACTERISTIQUES.filter(c => c.key === 'anomalies') : CARACTERISTIQUES).map((carac) => {
+        {(isCity()
+          ? CARACTERISTIQUES.filter(c => c.key === 'anomalies')
+          : isAgent()
+            ? CARACTERISTIQUES.filter(c => c.key !== 'scoring')
+            : CARACTERISTIQUES).map((carac) => {
           const colors = colorClasses[carac.color];
           const Icon = carac.icon;
           const filled = caracStatus[carac.key];

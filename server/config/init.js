@@ -140,7 +140,41 @@ const initDatabase = async () => {
     // Allow 'city' and 'demo' roles in users table (safe to run on existing DB)
     await pool.query(`
       ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
-      ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'main', 'region', 'city', 'demo'));
+      ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'main', 'region', 'city', 'demo', 'agent'));
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS parent_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+
+      CREATE TABLE IF NOT EXISTS agent_stores (
+        agent_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        supermarket_id INTEGER REFERENCES supermarkets(id) ON DELETE CASCADE,
+        PRIMARY KEY (agent_id, supermarket_id)
+      );
+
+      ALTER TABLE instances ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id);
+      ALTER TABLE instances ADD COLUMN IF NOT EXISTS validated_at TIMESTAMP;
+      ALTER TABLE instances ADD COLUMN IF NOT EXISTS validated_by INTEGER REFERENCES users(id);
+
+      CREATE TABLE IF NOT EXISTS data_seals (
+        id SERIAL PRIMARY KEY,
+        instance_id INTEGER REFERENCES instances(id) ON DELETE CASCADE,
+        category VARCHAR(50) NOT NULL,
+        validated_by INTEGER REFERENCES users(id),
+        validated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (instance_id, category)
+      );
+
+      CREATE TABLE IF NOT EXISTS agent_notifications (
+        id SERIAL PRIMARY KEY,
+        region_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        agent_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        kind VARCHAR(20) NOT NULL CHECK (kind IN ('month', 'data')),
+        instance_id INTEGER REFERENCES instances(id) ON DELETE CASCADE,
+        supermarket_id INTEGER REFERENCES supermarkets(id) ON DELETE CASCADE,
+        category VARCHAR(50),
+        title TEXT NOT NULL,
+        is_seen BOOLEAN DEFAULT FALSE,
+        validated_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
     console.log('Tables creees avec succes');
@@ -155,8 +189,8 @@ const initDatabase = async () => {
 
     // Seed default users
     const defaultUsers = [
-      { username: 'admin', password: 'Houmam2003@@', role: 'admin', region: null },
-      { username: 'main', password: 'Houmam2003@@', role: 'main', region: null },
+      { username: 'admin', password: 'admin123', role: 'admin', region: null },
+      { username: 'main', password: 'main123', role: 'main', region: null },
       { username: 'centre1', password: 'centre1123', role: 'region', region: 'REGION CENTRE 1' },
       { username: 'centre2', password: 'centre2123', role: 'region', region: 'REGION CENTRE 02' },
       { username: 'nord', password: 'nord123', role: 'region', region: 'REGION CENTRE NORD' },
@@ -184,7 +218,7 @@ const initDatabase = async () => {
           [user.username, hash, user.role, user.region]
         );
         console.log(`Utilisateur cree: ${user.username}`);
-      } else if (user.role === 'city' || user.role === 'demo' || user.username === 'admin' || user.username === 'main') {
+      } else if (user.role === 'city' || user.role === 'demo') {
         const hash = await bcrypt.hash(user.password, 10);
         await pool.query(
           'UPDATE users SET password_hash = $1, role = $2, region = $3 WHERE username = $4',

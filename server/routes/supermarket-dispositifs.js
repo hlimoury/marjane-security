@@ -16,7 +16,7 @@ const checkSupermarketAccess = async (supermarketId, user) => {
 
 // GET /api/supermarket-dispositifs/:supermarketId
 router.get('/:supermarketId', authMiddleware, async (req, res) => {
-  if (req.user.role === 'city') {
+  if (req.user.role === 'city' || req.user.role === 'agent') {
     return res.status(403).json({ message: 'Acces refuse' });
   }
   try {
@@ -44,7 +44,7 @@ router.get('/:supermarketId', authMiddleware, async (req, res) => {
 // POST /api/supermarket-dispositifs/:supermarketId
 router.post('/:supermarketId', authMiddleware, async (req, res) => {
   if (rejectIfDemo(req, res)) return;
-  if (req.user.role === 'city') {
+  if (req.user.role === 'city' || req.user.role === 'agent') {
     return res.status(403).json({ message: 'Acces refuse' });
   }
   try {

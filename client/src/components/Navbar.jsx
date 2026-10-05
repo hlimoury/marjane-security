@@ -1,18 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getUnreadReportCount } from '../services/api';
-import { FiLogOut, FiHome, FiShoppingCart, FiBarChart2, FiList, FiFileText, FiInbox } from 'react-icons/fi';
+import { getUnreadReportCount, getAgentNotificationCount } from '../services/api';
+import { FiLogOut, FiShoppingCart, FiBarChart2, FiList, FiFileText, FiInbox, FiUsers, FiBell } from 'react-icons/fi';
 
 const Navbar = () => {
-  const { user, logout, isAdmin, isCity, isDemo } = useAuth();
+  const { user, logout, isAdmin, isCity, isDemo, isRegion, isAgent } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pendingAgents, setPendingAgents] = useState(0);
 
   useEffect(() => {
     if (user?.role === 'admin') {
       getUnreadReportCount().then(res => setUnreadCount(res.data.count || 0)).catch(() => {});
+    }
+    if (user?.role === 'region') {
+      getAgentNotificationCount().then(res => setPendingAgents(res.data.count || 0)).catch(() => {});
     }
   }, [user, location.pathname]);
 
@@ -30,6 +34,7 @@ const Navbar = () => {
     if (user.role === 'main') return 'MAIN';
     if (user.role === 'demo') return 'Démo PFE — consultation';
     if (user.role === 'city') return `City — ${user.region}`;
+    if (user.role === 'agent') return 'Agent terrain';
     return user.region;
   };
 
@@ -57,19 +62,21 @@ const Navbar = () => {
                 <span>Magasins</span>
               </Link>
 
-              <Link
-                to="/totaux"
-                className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive('/totaux')
-                    ? 'bg-orange-600 text-white'
-                    : 'text-white hover:bg-orange-600 hover:text-white'
-                }`}
-              >
-                <FiList size={16} />
-                <span>Totaux</span>
-              </Link>
+              {!isCity() && !isDemo() && !isAgent() && (
+                <Link
+                  to="/totaux"
+                  className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive('/totaux')
+                      ? 'bg-orange-600 text-white'
+                      : 'text-white hover:bg-orange-600 hover:text-white'
+                  }`}
+                >
+                  <FiList size={16} />
+                  <span>Totaux</span>
+                </Link>
+              )}
 
-              {!isCity() && !isDemo() && (
+              {!isCity() && !isDemo() && !isAgent() && (
                 <Link
                   to="/rapport"
                   className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -83,6 +90,33 @@ const Navbar = () => {
                 </Link>
               )}
 
+              {isRegion() && (
+                <Link
+                  to="/agents"
+                  className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive('/agents') ? 'bg-orange-600 text-white' : 'text-white hover:bg-orange-600'
+                  }`}
+                >
+                  <FiUsers size={16} />
+                  <span>Agents</span>
+                </Link>
+              )}
+              {isRegion() && (
+                <Link
+                  to="/validations"
+                  className={`relative flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive('/validations') ? 'bg-orange-600 text-white' : 'text-white hover:bg-orange-600'
+                  }`}
+                >
+                  <FiBell size={16} />
+                  <span>Validations</span>
+                  {pendingAgents > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {pendingAgents > 9 ? '9+' : pendingAgents}
+                    </span>
+                  )}
+                </Link>
+              )}
               {isDemo() && (
                 <span className="px-3 py-1 rounded-md text-xs font-medium bg-orange-700/50 text-orange-100">
                   Données fictives
@@ -154,17 +188,19 @@ const Navbar = () => {
         >
           Magasins
         </Link>
-        <Link
-          to="/totaux"
-          className={`flex-1 text-center py-2 rounded-md text-sm font-medium ${
-            isActive('/totaux')
-              ? 'bg-orange-600 text-white'
-              : 'text-white hover:bg-orange-600'
-          }`}
-        >
-          Totaux
-        </Link>
-        {!isCity() && !isDemo() && (
+        {!isCity() && !isDemo() && !isAgent() && (
+          <Link
+            to="/totaux"
+            className={`flex-1 text-center py-2 rounded-md text-sm font-medium ${
+              isActive('/totaux')
+                ? 'bg-orange-600 text-white'
+                : 'text-white hover:bg-orange-600'
+            }`}
+          >
+            Totaux
+          </Link>
+        )}
+        {!isCity() && !isDemo() && !isAgent() && (
           <Link
             to="/rapport"
             className={`flex-1 text-center py-2 rounded-md text-sm font-medium ${
@@ -174,6 +210,21 @@ const Navbar = () => {
             }`}
           >
             Rapport
+          </Link>
+        )}
+        {isRegion() && (
+          <Link to="/agents" className="flex-1 text-center py-2 rounded-md text-sm font-medium text-white hover:bg-orange-600">
+            Agents
+          </Link>
+        )}
+        {isRegion() && (
+          <Link to="/validations" className="relative flex-1 text-center py-2 rounded-md text-sm font-medium text-white hover:bg-orange-600">
+            Validations
+            {pendingAgents > 0 && (
+              <span className="absolute -top-1 right-0 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {pendingAgents > 9 ? '9+' : pendingAgents}
+              </span>
+            )}
           </Link>
         )}
         {isAdmin() && (

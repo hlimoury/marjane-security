@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { getSupermarketScoring, saveSupermarketScoring, getInstance } from '../services/api';
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
@@ -27,6 +28,7 @@ const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil
 const Scoring = () => {
   const { instanceId } = useParams();
   const navigate = useNavigate();
+  const { isAgent } = useAuth();
   const [instance, setInstance] = useState(null);
   const [data, setData] = useState({
     securite_incendie: [],
@@ -170,6 +172,14 @@ const Scoring = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+      </div>
+    );
+  }
+
+  if (isAgent()) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-10 text-center text-gray-600">
+        Le scoring n'est pas accessible aux comptes agents.
       </div>
     );
   }

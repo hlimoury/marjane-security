@@ -11,6 +11,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const supermarketDispositifsRoutes = require('./routes/supermarket-dispositifs');
 const supermarketScoringRoutes = require('./routes/supermarket-scoring');
 const reportRoutes = require('./routes/reports');
+const agentRoutes = require('./routes/agents');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,6 +29,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/supermarket-dispositifs', supermarketDispositifsRoutes);
 app.use('/api/supermarket-scoring', supermarketScoringRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/agents', agentRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

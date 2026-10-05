@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
 const { DEMO_REGION, isScopedRole, rejectIfDemo } = require('../utils/access');
+const { assignedStoreIds } = require('../utils/agents');
 
 const router = express.Router();
 
@@ -10,7 +11,15 @@ router.get('/', authMiddleware, async (req, res) => {
   try {
     let result;
 
-    if (isScopedRole(req.user.role)) {
+    if (req.user.role === 'agent') {
+      const storeIds = await assignedStoreIds(req.user.id);
+      result = storeIds.length === 0
+        ? { rows: [] }
+        : await pool.query(
+          'SELECT * FROM supermarkets WHERE region = $1 AND id = ANY($2) ORDER BY name',
+          [req.user.region, storeIds]
+        );
+    } else if (isScopedRole(req.user.role)) {
       result = await pool.query(
         'SELECT * FROM supermarkets WHERE region = $1 ORDER BY name',
         [req.user.region]
@@ -45,6 +54,12 @@ router.get('/:id', authMiddleware, async (req, res) => {
     if (isScopedRole(req.user.role) && supermarket.region !== req.user.region) {
       return res.status(403).json({ message: 'Acces refuse' });
     }
+    if (req.user.role === 'agent') {
+      const storeIds = await assignedStoreIds(req.user.id);
+      if (!storeIds.map(Number).includes(Number(supermarket.id))) {
+        return res.status(403).json({ message: 'Acces refuse' });
+      }
+    }
 
     if (!isScopedRole(req.user.role) && supermarket.region === DEMO_REGION) {
       return res.status(403).json({ message: 'Acces refuse' });
@@ -61,7 +76,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 router.post('/', authMiddleware, async (req, res) => {
   try {
     if (rejectIfDemo(req, res)) return;
-    if (req.user.role === 'city') {
+    if (req.user.role === 'city' || req.user.role === 'agent') {
       return res.status(403).json({ message: 'Acces refuse' });
     }
 
@@ -102,7 +117,7 @@ router.post('/', authMiddleware, async (req, res) => {
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     if (rejectIfDemo(req, res)) return;
-    if (req.user.role === 'city') {
+    if (req.user.role === 'city' || req.user.role === 'agent') {
       return res.status(403).json({ message: 'Acces refuse' });
     }
 
@@ -157,7 +172,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     if (rejectIfDemo(req, res)) return;
-    if (req.user.role === 'city') {
+    if (req.user.role === 'city' || req.user.role === 'agent') {
       return res.status(403).json({ message: 'Acces refuse' });
     }
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCaracteristique, saveCaracteristique, getInstance } from '../services/api';
 import { toast } from 'react-toastify';
+import { DataAccessBar, useDataAccess } from '../components/DataAccessBar';
 import { FiArrowLeft, FiEdit2, FiRefreshCw, FiSave, FiX } from 'react-icons/fi';
 
 const FIELDS = [
@@ -24,6 +25,7 @@ const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil
 
 const Dispositifs = () => {
   const { instanceId } = useParams();
+  const access = useDataAccess(instanceId, 'dispositifs');
   const navigate = useNavigate();
   const [instance, setInstance] = useState(null);
   const [data, setData] = useState(DEFAULT_DATA);
@@ -63,7 +65,7 @@ const Dispositifs = () => {
       toast.success('Dispositifs sauvegardés avec succès');
       setEditing(false);
     } catch (err) {
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error(err.response?.data?.message || 'Erreur lors de la sauvegarde');
     } finally {
       setSaving(false);
     }
@@ -89,6 +91,7 @@ const Dispositifs = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
+      <DataAccessBar access={access} />
       {/* Back button */}
       <button
         onClick={() => navigate(`/instance/${instanceId}`)}
@@ -155,7 +158,7 @@ const Dispositifs = () => {
             <>
               <button
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || access.locked}
                 className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 <FiSave size={16} />

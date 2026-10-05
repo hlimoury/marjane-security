@@ -2,6 +2,13 @@ const express = require('express');
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
 const { DEMO_REGION, isScopedRole, rejectIfDemo } = require('../utils/access');
+const {
+  agentCanAccessStore,
+  agentCanEditMonth,
+  sealedCategories,
+  notifyRegion,
+  monthLabel,
+} = require('../utils/agents');
 
 const router = express.Router();
 
@@ -18,6 +25,9 @@ router.get('/supermarket/:supermarketId', authMiddleware, async (req, res) => {
     if (isScopedRole(req.user.role) && supermarket.rows[0].region !== req.user.region) {
       return res.status(403).json({ message: 'Acces refuse' });
     }
+    if (!(await agentCanAccessStore(req.user, supermarket.rows[0].id, supermarket.rows[0].region))) {
+      return res.status(403).json({ message: 'Acces refuse' });
+    }
     if (!isScopedRole(req.user.role) && supermarket.rows[0].region === DEMO_REGION) {
       return res.status(403).json({ message: 'Acces refuse' });
     }
@@ -26,8 +36,23 @@ router.get('/supermarket/:supermarketId', authMiddleware, async (req, res) => {
       'SELECT * FROM instances WHERE supermarket_id = $1 ORDER BY year DESC, month DESC',
       [supermarketId]
     );
+    const seals = {};
+    if (result.rows.length > 0) {
+      const sealed = await pool.query(
+        'SELECT instance_id, category FROM data_seals WHERE instance_id = ANY($1)',
+        [result.rows.map((row) => row.id)]
+      );
+      sealed.rows.forEach((row) => {
+        if (!seals[row.instance_id]) seals[row.instance_id] = [];
+        seals[row.instance_id].push(row.category);
+      });
+    }
 
-    res.json(result.rows);
+    res.json(result.rows.map((row) => ({
+      ...row,
+      sealed_categories: seals[row.id] || [],
+      can_edit: req.user.role === 'agent' ? agentCanEditMonth(req.user, row) : req.user.role !== 'city' && req.user.role !== 'demo',
+    })));
   } catch (err) {
     console.error('Erreur liste instances:', err);
     res.status(500).json({ message: 'Erreur serveur' });
@@ -53,6 +78,9 @@ router.get('/:id', authMiddleware, async (req, res) => {
     const instance = result.rows[0];
 
     if (isScopedRole(req.user.role) && instance.supermarket_region !== req.user.region) {
+      return res.status(403).json({ message: 'Acces refuse' });
+    }
+    if (!(await agentCanAccessStore(req.user, instance.supermarket_id, instance.supermarket_region))) {
       return res.status(403).json({ message: 'Acces refuse' });
     }
     if (!isScopedRole(req.user.role) && instance.supermarket_region === DEMO_REGION) {
@@ -86,7 +114,12 @@ router.get('/:id', authMiddleware, async (req, res) => {
     );
     status.scoring = scorCheck.rows.length > 0;
 
-    res.json({ ...instance, caracteristiques_status: status });
+    res.json({
+      ...instance,
+      caracteristiques_status: status,
+      sealed_categories: await sealedCategories(instance.id),
+      can_edit: req.user.role === 'agent' ? agentCanEditMonth(req.user, instance) : req.user.role !== 'city' && req.user.role !== 'demo',
+    });
   } catch (err) {
     console.error('Erreur detail instance:', err);
     res.status(500).json({ message: 'Erreur serveur' });
@@ -119,6 +152,9 @@ router.post('/', authMiddleware, async (req, res) => {
     if (req.user.role === 'region' && supermarket.rows[0].region !== req.user.region) {
       return res.status(403).json({ message: 'Acces refuse' });
     }
+    if (req.user.role === 'agent' && !(await agentCanAccessStore(req.user, supermarket.rows[0].id, supermarket.rows[0].region))) {
+      return res.status(403).json({ message: 'Acces refuse' });
+    }
 
     // Check for duplicate
     const existing = await pool.query(
@@ -130,9 +166,19 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     const result = await pool.query(
-      'INSERT INTO instances (supermarket_id, month, year) VALUES ($1, $2, $3) RETURNING *',
-      [supermarket_id, month, year]
+      'INSERT INTO instances (supermarket_id, month, year, created_by) VALUES ($1, $2, $3, $4) RETURNING *',
+      [supermarket_id, month, year, req.user.role === 'agent' ? req.user.id : null]
     );
+
+    if (req.user.role === 'agent') {
+      const created = { ...result.rows[0], supermarket_name: supermarket.rows[0].name, region: supermarket.rows[0].region };
+      await notifyRegion({
+        agent: req.user,
+        instance: created,
+        kind: 'month',
+        title: `${req.user.username} a créé ${monthLabel(month, year)} — ${supermarket.rows[0].name}`,
+      });
+    }
 
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -173,8 +219,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
     if (req.user.role === 'region' && instance.rows[0].region !== req.user.region) {
       return res.status(403).json({ message: 'Acces refuse' });
     }
-
-    // Check for duplicate (excluding current instance)
+    if (req.user.role === 'agent' && !agentCanEditMonth(req.user, instance.rows[0])) {
+      return res.status(403).json({ message: instance.rows[0].validated_at ? 'Ce mois a été validé et ne peut plus être modifié' : 'Vous pouvez modifier seulement les mois que vous avez créés' });
+    }
     const duplicate = await pool.query(
       'SELECT id FROM instances WHERE supermarket_id = $1 AND month = $2 AND year = $3 AND id != $4',
       [instance.rows[0].supermarket_id, month, year, id]
@@ -218,8 +265,9 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     if (req.user.role === 'region' && instance.rows[0].region !== req.user.region) {
       return res.status(403).json({ message: 'Acces refuse' });
     }
-
-    await pool.query('DELETE FROM instances WHERE id = $1', [id]);
+    if (req.user.role === 'agent' && !agentCanEditMonth(req.user, instance.rows[0])) {
+      return res.status(403).json({ message: instance.rows[0].validated_at ? 'Ce mois a été validé et ne peut plus être supprimé' : 'Vous pouvez supprimer seulement les mois que vous avez créés' });
+    }
     res.json({ message: 'Instance supprimee' });
   } catch (err) {
     console.error('Erreur suppression instance:', err);

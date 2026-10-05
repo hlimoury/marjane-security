@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCaracteristique, saveCaracteristique, getInstance } from '../services/api';
 import { toast } from 'react-toastify';
+import { DataAccessBar, useDataAccess } from '../components/DataAccessBar';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 
 const TYPES = [
@@ -35,6 +36,7 @@ const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil
 
 const AutresIncidents = () => {
   const { instanceId } = useParams();
+  const access = useDataAccess(instanceId, 'autres_incidents');
   const navigate = useNavigate();
   const [instance, setInstance] = useState(null);
   const [entries, setEntries] = useState([]);
@@ -72,7 +74,7 @@ const AutresIncidents = () => {
       setEntries(newEntries);
       toast.success('Sauvegardé avec succès');
     } catch (err) {
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error(err.response?.data?.message || 'Erreur lors de la sauvegarde');
     } finally {
       setSaving(false);
     }
@@ -139,6 +141,7 @@ const AutresIncidents = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
+      <DataAccessBar access={access} />
       <button
         onClick={() => navigate(`/instance/${instanceId}`)}
         className="flex items-center space-x-1 text-gray-500 hover:text-gray-700 text-sm mb-4 transition-colors"
@@ -230,7 +233,7 @@ const AutresIncidents = () => {
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || access.locked}
               className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
             >
               {editingIndex !== null ? <FiEdit2 size={16} /> : <FiPlus size={16} />}

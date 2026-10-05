@@ -92,6 +92,15 @@ export const markReportDownloaded = (id) => api.put(`/reports/${id}/downloaded`)
 export const getUnreadReportCount = () => api.get('/reports/unread-count');
 export const getLastSentReport = () => api.get('/reports/user/last-sent');
 
+export const getAgents = () => api.get('/agents');
+export const createAgent = (data) => api.post('/agents', data);
+export const updateAgent = (id, data) => api.put(`/agents/${id}`, data);
+export const deleteAgent = (id) => api.delete(`/agents/${id}`);
+export const getAgentNotifications = () => api.get('/agents/notifications');
+export const getAgentNotificationCount = () => api.get('/agents/notifications/count');
+export const markAgentNotificationSeen = (id) => api.put(`/agents/notifications/${id}/seen`);
+export const validateAgentNotification = (id) => api.post(`/agents/notifications/${id}/validate`);
+
 // Totals (all users)
 export const getTotals = (params = {}) => {
   const searchParams = new URLSearchParams();

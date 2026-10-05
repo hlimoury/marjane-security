@@ -23,7 +23,7 @@ const MONTHS = [
 const SupermarketDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isCity, isDemo } = useAuth();
+  const { isCity, isDemo, isAgent } = useAuth();
   const [supermarket, setSupermarket] = useState(null);
   const [instances, setInstances] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -243,6 +243,9 @@ const SupermarketDetail = () => {
                   </h3>
                   <p className="text-gray-400 text-xs">
                     Créé le {new Date(instance.created_at).toLocaleDateString('fr-FR')}
+                    {instance.validated_at && ' · Validé'}
+                    {isAgent() && instance.can_edit && ' · Modifiable'}
+                    {isAgent() && !instance.can_edit && ' · Lecture seule'}
                   </p>
                 </div>
               </div>
@@ -255,7 +258,7 @@ const SupermarketDetail = () => {
                   <span>Voir</span>
                   <FiChevronRight size={14} />
                 </button>
-                {!isCity() && !isDemo() && (
+                {!isCity() && !isDemo() && instance.can_edit !== false && (
                   <>
                     <button
                       onClick={() => openEditForm(instance)}

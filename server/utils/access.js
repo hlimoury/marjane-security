@@ -1,6 +1,6 @@
 const DEMO_REGION = 'REGION DEMO';
 
-const isScopedRole = (role) => role === 'region' || role === 'city' || role === 'demo';
+const isScopedRole = (role) => role === 'region' || role === 'city' || role === 'demo' || role === 'agent';
 
 const rejectIfDemo = (req, res) => {
   if (req.user?.role === 'demo') {

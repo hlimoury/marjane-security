@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
 const { isScopedRole, rejectIfDemo } = require('../utils/access');
+const { agentCanAccessStore, agentCanWriteCategory, notifyRegion, monthLabel, CATEGORY_LABELS } = require('../utils/agents');
 
 const router = express.Router();
 
@@ -26,6 +27,9 @@ const checkInstanceAccess = async (instanceId, user) => {
 
   if (result.rows.length === 0) return { error: 'Instance non trouvee', status: 404 };
   if (isScopedRole(user.role) && result.rows[0].region !== user.region) {
+    return { error: 'Acces refuse', status: 403 };
+  }
+  if (!(await agentCanAccessStore(user, result.rows[0].supermarket_id, result.rows[0].region))) {
     return { error: 'Acces refuse', status: 403 };
   }
   return { instance: result.rows[0] };
@@ -102,8 +106,8 @@ router.post('/:type/:instanceId', authMiddleware, validateTable, async (req, res
 
     const access = await checkInstanceAccess(instanceId, req.user);
     if (access.error) return res.status(access.status).json({ message: access.error });
-
-    // Dispositifs: never use entries array logic, and propagate to future months only
+    const writeAccess = await agentCanWriteCategory(req.user, access.instance, type);
+    if (!writeAccess.ok) return res.status(writeAccess.status).json({ message: writeAccess.message });
     if (type === 'dispositifs') {
       const inst = access.instance;
       const now = new Date();
@@ -123,7 +127,7 @@ router.post('/:type/:instanceId', authMiddleware, validateTable, async (req, res
         await pool.query(`INSERT INTO dispositifs (instance_id, data) VALUES ($1, $2)`, [instanceId, dataStr]);
       }
 
-      const futureInstances = await pool.query(`
+      const futureInstances = req.user.role === 'agent' ? { rows: [] } : await pool.query(`
         SELECT id FROM instances
         WHERE supermarket_id = $1
           AND (year > $2 OR (year = $2 AND month > $3))
@@ -139,6 +143,15 @@ router.post('/:type/:instanceId', authMiddleware, validateTable, async (req, res
       }
 
       const result = await pool.query(`SELECT * FROM dispositifs WHERE instance_id = $1`, [instanceId]);
+      if (req.user.role === 'agent') {
+        await notifyRegion({
+          agent: req.user,
+          instance: access.instance,
+          kind: 'data',
+          category: type,
+          title: `${req.user.username} a modifié ${CATEGORY_LABELS[type] || type} — ${access.instance.supermarket_name} (${monthLabel(access.instance.month, access.instance.year)})`,
+        });
+      }
       return res.json(result.rows[0]);
     }
 
@@ -147,6 +160,15 @@ router.post('/:type/:instanceId', authMiddleware, validateTable, async (req, res
 
     if (isEmpty) {
       await pool.query(`DELETE FROM ${type} WHERE instance_id = $1`, [instanceId]);
+      if (req.user.role === 'agent') {
+        await notifyRegion({
+          agent: req.user,
+          instance: access.instance,
+          kind: 'data',
+          category: type,
+          title: `${req.user.username} a modifié ${CATEGORY_LABELS[type] || type} — ${access.instance.supermarket_name} (${monthLabel(access.instance.month, access.instance.year)})`,
+        });
+      }
       return res.json({ instance_id: parseInt(instanceId), data: { entries: [] }, deleted: true });
     }
 
@@ -167,6 +189,15 @@ router.post('/:type/:instanceId', authMiddleware, validateTable, async (req, res
     }
 
     res.json(result.rows[0]);
+    if (req.user.role === 'agent') {
+      await notifyRegion({
+        agent: req.user,
+        instance: access.instance,
+        kind: 'data',
+        category: type,
+        title: `${req.user.username} a modifié ${CATEGORY_LABELS[type] || type} — ${access.instance.supermarket_name} (${monthLabel(access.instance.month, access.instance.year)})`,
+      });
+    }
   } catch (err) {
     console.error('Erreur save caracteristique:', err);
     res.status(500).json({ message: 'Erreur serveur' });

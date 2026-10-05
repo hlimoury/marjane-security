@@ -52,10 +52,11 @@ export const AuthProvider = ({ children }) => {
   const isRegion = () => user?.role === 'region';
   const isCity = () => user?.role === 'city';
   const isDemo = () => user?.role === 'demo';
+  const isAgent = () => user?.role === 'agent';
   const canManage = () => user?.role === 'admin' || user?.role === 'main';
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin, isMain, isRegion, isCity, isDemo, canManage }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin, isMain, isRegion, isCity, isDemo, isAgent, canManage }}>
       {children}
     </AuthContext.Provider>
   );

@@ -655,6 +655,9 @@ router.get('/totals', authMiddleware, async (req, res) => {
     const { year, month } = req.query;
     const userRole = req.user.role;
     const userRegion = req.user.region;
+    if (userRole === 'agent') {
+      return res.status(403).json({ message: 'Acces refuse' });
+    }
     const isCity = userRole === 'city';
 
     let where = 'WHERE 1=1';
@@ -757,7 +760,7 @@ router.get('/totals', authMiddleware, async (req, res) => {
 
 // POST /api/dashboard/report - Generate report data (all users except city)
 router.post('/report', authMiddleware, async (req, res) => {
-  if (req.user.role === 'city') {
+  if (req.user.role === 'city' || req.user.role === 'agent') {
     return res.status(403).json({ message: 'Accès refusé' });
   }
 

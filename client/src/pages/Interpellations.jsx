@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getCaracteristique, saveCaracteristique, getInstance } from '../services/api';
 import { toast } from 'react-toastify';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
+import { DataAccessBar, useDataAccess } from '../components/DataAccessBar';
 
 const TYPES = ['Client', 'Personnel', 'Prestataire'];
 
@@ -22,6 +23,7 @@ const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil
 
 const Interpellations = () => {
   const { instanceId } = useParams();
+  const access = useDataAccess(instanceId, 'interpellations');
   const navigate = useNavigate();
   const [instance, setInstance] = useState(null);
   const [entries, setEntries] = useState([]);
@@ -55,13 +57,17 @@ const Interpellations = () => {
   };
 
   const saveEntries = async (newEntries) => {
+    if (access.locked) {
+      toast.error(access.message || 'Modification impossible');
+      return;
+    }
     setSaving(true);
     try {
       await saveCaracteristique('interpellations', instanceId, { entries: newEntries });
       setEntries(newEntries);
       toast.success('Sauvegardé avec succès');
     } catch (err) {
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error(err.response?.data?.message || 'Erreur lors de la sauvegarde');
     } finally {
       setSaving(false);
     }
@@ -136,6 +142,7 @@ const Interpellations = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
+      <DataAccessBar access={access} />
       {/* Back button */}
       <button
         onClick={() => navigate(`/instance/${instanceId}`)}
@@ -286,7 +293,7 @@ const Interpellations = () => {
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || access.locked}
               className="flex items-center space-x-2 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
             >
               {editingIndex !== null ? <FiEdit2 size={16} /> : <FiPlus size={16} />}
