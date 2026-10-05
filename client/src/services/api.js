@@ -101,6 +101,7 @@ export const getAgentNotifications = () => api.get('/agents/notifications');
 export const getAgentNotificationCount = () => api.get('/agents/notifications/count');
 export const markAgentNotificationSeen = (id) => api.put(`/agents/notifications/${id}/seen`);
 export const validateAgentNotification = (id) => api.post(`/agents/notifications/${id}/validate`);
+export const cancelAgentValidation = (id) => api.delete(`/agents/notifications/${id}/validate`);
 export const getAgentActivity = (params = {}) => {
   const search = new URLSearchParams();
   if (params.region) search.set('region', params.region);

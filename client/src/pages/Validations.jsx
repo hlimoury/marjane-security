@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FiBell, FiCheck, FiEye } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
-import { getAgentNotifications, markAgentNotificationSeen, validateAgentNotification } from '../services/api';
+import { getAgentNotifications, markAgentNotificationSeen, validateAgentNotification, cancelAgentValidation } from '../services/api';
 
 const Validations = () => {
   const { isRegion } = useAuth();
@@ -56,6 +56,20 @@ const Validations = () => {
     }
   };
 
+  const cancel = async (item) => {
+    if (!window.confirm('Annuler cette validation ? L\'agent pourra à nouveau modifier ces données.')) return;
+    try {
+      setBusyId(item.id);
+      await cancelAgentValidation(item.id);
+      toast.success('Validation annulée');
+      await load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Erreur d\'annulation');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   if (loading) {
     return <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500" /></div>;
   }
@@ -96,13 +110,21 @@ const Validations = () => {
                   <button onClick={() => openItem(item)} className="flex items-center gap-1 px-3 py-2 rounded-lg bg-orange-50 text-orange-700 text-sm font-medium">
                     <FiEye size={14} /> Voir
                   </button>
-                  {!item.validated_at && (
+                  {!item.validated_at ? (
                     <button
                       onClick={() => validate(item)}
                       disabled={busyId === item.id}
                       className="flex items-center gap-1 px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-medium disabled:bg-green-300"
                     >
                       <FiCheck size={14} /> {busyId === item.id ? '...' : 'Valider'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => cancel(item)}
+                      disabled={busyId === item.id}
+                      className="px-3 py-2 rounded-lg bg-gray-100 text-red-600 text-sm font-medium disabled:text-gray-400"
+                    >
+                      {busyId === item.id ? '...' : 'Annuler la validation'}
                     </button>
                   )}
                 </div>

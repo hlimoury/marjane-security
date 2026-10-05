@@ -281,4 +281,54 @@ router.post('/notifications/:id/validate', authMiddleware, regionOnly, async (re
   }
 });
 
+router.delete('/notifications/:id/validate', authMiddleware, regionOnly, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const notice = await client.query(
+      `SELECT * FROM agent_notifications
+       WHERE id = $1 AND region_user_id = $2
+       FOR UPDATE`,
+      [req.params.id, req.user.id]
+    );
+    if (notice.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ message: 'Notification introuvable' });
+    }
+    const item = notice.rows[0];
+    if (!item.validated_at) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ message: 'Cette validation n\'existe pas' });
+    }
+
+    if (item.kind === 'month') {
+      await client.query(
+        'UPDATE instances SET validated_at = NULL, validated_by = NULL WHERE id = $1',
+        [item.instance_id]
+      );
+    } else {
+      await client.query(
+        'DELETE FROM data_seals WHERE instance_id = $1 AND category = $2',
+        [item.instance_id, item.category]
+      );
+    }
+
+    const updated = await client.query(
+      `UPDATE agent_notifications
+       SET validated_at = NULL
+       WHERE id = $1
+       RETURNING *`,
+      [item.id]
+    );
+    await client.query('COMMIT');
+    res.json(updated.rows[0]);
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Erreur annulation validation:', err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  } finally {
+    client.release();
+  }
+});
+
 module.exports = router;
