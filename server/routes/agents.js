@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
 const { authMiddleware, adminOnly } = require('../middleware/auth');
-const { CATEGORY_LABELS, monthLabel } = require('../utils/agents');
+const { CATEGORY_LABELS, monthLabel, setEntriesValidation } = require('../utils/agents');
 
 const router = express.Router();
 
@@ -255,12 +255,7 @@ router.post('/notifications/:id/validate', authMiddleware, regionOnly, async (re
         [req.user.id, item.instance_id]
       );
     } else {
-      await client.query(
-        `INSERT INTO data_seals (instance_id, category, validated_by)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (instance_id, category) DO NOTHING`,
-        [item.instance_id, item.category, req.user.id]
-      );
+      await setEntriesValidation(client, item.instance_id, item.category, item.entry_id, true, req.user.id);
     }
 
     const updated = await client.query(
@@ -307,10 +302,7 @@ router.delete('/notifications/:id/validate', authMiddleware, regionOnly, async (
         [item.instance_id]
       );
     } else {
-      await client.query(
-        'DELETE FROM data_seals WHERE instance_id = $1 AND category = $2',
-        [item.instance_id, item.category]
-      );
+      await setEntriesValidation(client, item.instance_id, item.category, item.entry_id, false, req.user.id);
     }
 
     const updated = await client.query(

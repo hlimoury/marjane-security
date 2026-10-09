@@ -139,6 +139,7 @@ const initDatabase = async () => {
 
     await pool.query(`
       ALTER TABLE sent_reports ADD COLUMN IF NOT EXISTS recipient_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+      ALTER TABLE agent_notifications ADD COLUMN IF NOT EXISTS entry_id VARCHAR(80);
     `);
 
     await pool.query(`
@@ -191,6 +192,7 @@ const initDatabase = async () => {
         title TEXT NOT NULL,
         is_seen BOOLEAN DEFAULT FALSE,
         validated_at TIMESTAMP,
+        entry_id VARCHAR(80),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);

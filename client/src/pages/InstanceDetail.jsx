@@ -135,7 +135,7 @@ const InstanceDetail = () => {
           <DataAccessBar access={{ locked: false, message: '' }} />
           {(instance.sealed_categories || []).length > 0 && (
             <div className="mt-3 text-sm text-gray-600">
-              Données scellées : {instance.sealed_categories.join(', ')}
+              Certaines entrées ont été validées. L'agent peut encore en ajouter de nouvelles.
             </div>
           )}
         </div>

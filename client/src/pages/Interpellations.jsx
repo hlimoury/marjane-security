@@ -378,7 +378,7 @@ const Interpellations = () => {
                           Supprimer
                         </button>
                       </div>
-                      ) : <span className="text-xs text-gray-300">—</span>}
+                      ) : <span className="text-xs text-gray-400">{entry.validated ? 'Validé' : '—'}</span>}
                     </td>
                   </tr>
                 ))}

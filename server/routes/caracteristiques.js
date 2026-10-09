@@ -2,7 +2,7 @@ const express = require('express');
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
 const { isScopedRole, rejectIfDemo } = require('../utils/access');
-const { agentCanAccessStore, agentCanWriteCategory, mergeAgentEntries, notifyRegion, monthLabel, CATEGORY_LABELS } = require('../utils/agents');
+const { agentCanAccessStore, agentCanWriteCategory, mergeAgentEntries, notifyChangedEntries, notifyRegion, monthLabel, CATEGORY_LABELS, sealedCategories } = require('../utils/agents');
 
 const router = express.Router();
 
@@ -109,21 +109,26 @@ router.post('/:type/:instanceId', authMiddleware, validateTable, async (req, res
     const writeAccess = await agentCanWriteCategory(req.user, access.instance, type);
     if (!writeAccess.ok) return res.status(writeAccess.status).json({ message: writeAccess.message });
 
+    let beforeEntries = [];
     if (req.user.role === 'agent' && type !== 'dispositifs' && Array.isArray(data?.entries)) {
       const current = await pool.query(`SELECT data FROM ${type} WHERE instance_id = $1`, [instanceId]);
-      const existingEntries = current.rows[0]?.data?.entries || [];
-      data = { ...data, entries: mergeAgentEntries(existingEntries, data.entries, req.user.id) };
+      beforeEntries = current.rows[0]?.data?.entries || [];
+      const categoryLocked = (await sealedCategories(instanceId)).includes(type);
+      data = { ...data, entries: mergeAgentEntries(beforeEntries, data.entries, req.user.id, categoryLocked) };
+      if (categoryLocked) {
+        await pool.query('DELETE FROM data_seals WHERE instance_id = $1 AND category = $2', [instanceId, type]);
+      }
     }
 
     if (req.user.role === 'agent' && type === 'dispositifs') {
       const current = await pool.query(`SELECT data FROM dispositifs WHERE instance_id = $1`, [instanceId]);
       const existing = current.rows[0]?.data || {};
       const owner = existing._created_by;
-      const hasContent = Object.entries(existing).some(([key, value]) => key !== '_created_by' && value !== 0 && value !== '' && value != null);
-      if (hasContent && Number(owner) !== Number(req.user.id)) {
-        return res.status(403).json({ message: 'Vous pouvez modifier seulement les dispositifs que vous avez saisis' });
+      const hasContent = Object.entries(existing).some(([key, value]) => !key.startsWith('_') && value !== 0 && value !== '' && value != null);
+      if (existing._validated || (hasContent && Number(owner) !== Number(req.user.id))) {
+        return res.status(403).json({ message: 'Vous pouvez modifier seulement les dispositifs que vous avez saisis et qui ne sont pas validés' });
       }
-      data = { ...data, _created_by: req.user.id };
+      data = { ...data, _created_by: req.user.id, _validated: false };
     }
 
     if (type === 'dispositifs') {
@@ -208,12 +213,12 @@ router.post('/:type/:instanceId', authMiddleware, validateTable, async (req, res
 
     res.json(result.rows[0]);
     if (req.user.role === 'agent') {
-      await notifyRegion({
+      await notifyChangedEntries({
         agent: req.user,
         instance: access.instance,
-        kind: 'data',
         category: type,
-        title: `${req.user.username} a modifié ${CATEGORY_LABELS[type] || type} — ${access.instance.supermarket_name} (${monthLabel(access.instance.month, access.instance.year)})`,
+        beforeEntries,
+        afterEntries: data.entries || [],
       });
     }
   } catch (err) {

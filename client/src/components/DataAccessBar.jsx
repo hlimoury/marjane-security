@@ -6,11 +6,11 @@ import { useAuth } from '../context/AuthContext';
 import { getInstance, validateAgentNotification } from '../services/api';
 
 export function useDataAccess(instanceId, category) {
-  const { user, isAgent } = useAuth();
+  const { user } = useAuth();
   const [access, setAccess] = useState({
     loading: true,
-    locked: isAgent(),
-    message: isAgent() ? 'Vérification des droits...' : '',
+    locked: false,
+    message: '',
   });
 
   useEffect(() => {
@@ -18,19 +18,10 @@ export function useDataAccess(instanceId, category) {
     getInstance(instanceId)
       .then((res) => {
         if (ignore) return;
-        const data = res.data;
-        const sealed = (data.sealed_categories || []).includes(category);
-        const locked = isAgent() && sealed;
-        setAccess({
-          loading: false,
-          locked,
-          message: locked
-            ? 'Ces données ont été validées par la région. Vous ne pouvez plus les modifier.'
-            : '',
-        });
+        setAccess({ loading: false, locked: false, message: '' });
       })
       .catch(() => {
-        if (!ignore) setAccess({ loading: false, locked: isAgent(), message: 'Impossible de vérifier les droits.' });
+        if (!ignore) setAccess({ loading: false, locked: false, message: '' });
       });
     return () => { ignore = true; };
   }, [instanceId, category, user?.id]);

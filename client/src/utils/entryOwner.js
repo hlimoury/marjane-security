@@ -11,5 +11,6 @@ export function withOwner(fields, previous, userId) {
 
 export function canChangeEntry(entry, userId, agent) {
   if (!agent) return true;
+  if (entry?.validated) return false;
   return Number(entry?.created_by) === Number(userId);
 }
