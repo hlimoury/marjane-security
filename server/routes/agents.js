@@ -196,9 +196,10 @@ router.get('/notifications', authMiddleware, regionOnly, async (req, res) => {
       JOIN supermarkets s ON s.id = n.supermarket_id
       JOIN instances i ON i.id = n.instance_id
       WHERE n.region_user_id = $1
-      ORDER BY (n.validated_at IS NULL) DESC, n.created_at DESC
-      LIMIT 150
-    `, [req.user.id]);
+        AND (($2::boolean IS TRUE AND n.validated_at IS NOT NULL) OR ($2::boolean IS FALSE AND n.validated_at IS NULL))
+      ORDER BY n.created_at DESC
+      LIMIT 500
+    `, [req.user.id, req.query.archived === '1']);
     res.json(result.rows.map((row) => ({
       ...row,
       period: monthLabel(row.month, row.year),
@@ -224,6 +225,52 @@ router.put('/notifications/:id/seen', authMiddleware, regionOnly, async (req, re
   } catch (err) {
     console.error('Erreur notification vue:', err);
     res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+router.post('/notifications/validate-all', authMiddleware, regionOnly, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(Number).filter(Number.isInteger) : [];
+    await client.query('BEGIN');
+    const params = [req.user.id];
+    let idFilter = '';
+    if (ids.length) {
+      params.push(ids);
+      idFilter = ` AND id = ANY($${params.length})`;
+    }
+    const notices = await client.query(
+      `SELECT * FROM agent_notifications
+       WHERE region_user_id = $1
+         AND validated_at IS NULL
+         ${idFilter}
+       FOR UPDATE`,
+      params
+    );
+
+    for (const item of notices.rows) {
+      if (item.kind === 'month') {
+        await client.query(
+          `UPDATE instances SET validated_at = CURRENT_TIMESTAMP, validated_by = $1 WHERE id = $2`,
+          [req.user.id, item.instance_id]
+        );
+      } else {
+        await setEntriesValidation(client, item.instance_id, item.category, item.entry_id, true, req.user.id);
+      }
+      await client.query(
+        `UPDATE agent_notifications SET validated_at = CURRENT_TIMESTAMP, is_seen = TRUE WHERE id = $1`,
+        [item.id]
+      );
+    }
+
+    await client.query('COMMIT');
+    res.json({ validated: notices.rows.length });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Erreur validation groupee:', err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  } finally {
+    client.release();
   }
 });
 

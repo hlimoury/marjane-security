@@ -94,6 +94,9 @@ const AppRoutes = () => {
         <Route path="/validations" element={
           <ProtectedRoute><Validations /></ProtectedRoute>
         } />
+        <Route path="/validations/archives" element={
+          <ProtectedRoute><Validations archived /></ProtectedRoute>
+        } />
         <Route path="/rapports-agents" element={
           <ProtectedRoute><RegionAgentReports /></ProtectedRoute>
         } />
