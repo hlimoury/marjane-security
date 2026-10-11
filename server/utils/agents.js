@@ -133,14 +133,16 @@ const setEntriesValidation = async (db, instanceId, category, entryId, validated
 
   const tables = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies', 'controle_rm'];
   if (!tables.includes(category)) return;
+  await db.query('DELETE FROM data_seals WHERE instance_id = $1 AND category = $2', [instanceId, category]);
+  if (!entryId) return;
+
   const row = await db.query(`SELECT data FROM ${category} WHERE instance_id = $1`, [instanceId]);
   if (!row.rows.length) return;
   const data = row.rows[0].data || {};
   const entries = (data.entries || []).map((entry) => {
-    if (entryId && entry._id !== entryId) return entry;
+    if (entry._id !== entryId) return entry;
     return {
       ...entry,
-      _id: entry._id || crypto.randomUUID(),
       validated,
       validated_by: validated ? userId : null,
     };
@@ -149,7 +151,6 @@ const setEntriesValidation = async (db, instanceId, category, entryId, validated
     `UPDATE ${category} SET data = $1, updated_at = CURRENT_TIMESTAMP WHERE instance_id = $2`,
     [JSON.stringify({ ...data, entries }), instanceId]
   );
-  await db.query('DELETE FROM data_seals WHERE instance_id = $1 AND category = $2', [instanceId, category]);
 };
 
 const logAgentActivity = async ({ agent, action, details, supermarketName = null, category = null }) => {

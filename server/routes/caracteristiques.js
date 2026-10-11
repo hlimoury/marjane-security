@@ -2,7 +2,7 @@ const express = require('express');
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
 const { isScopedRole, rejectIfDemo } = require('../utils/access');
-const { agentCanAccessStore, agentCanWriteCategory, mergeAgentEntries, notifyChangedEntries, notifyRegion, monthLabel, CATEGORY_LABELS, sealedCategories } = require('../utils/agents');
+const { agentCanAccessStore, agentCanWriteCategory, mergeAgentEntries, notifyChangedEntries, notifyRegion, monthLabel, CATEGORY_LABELS } = require('../utils/agents');
 
 const router = express.Router();
 
@@ -113,11 +113,8 @@ router.post('/:type/:instanceId', authMiddleware, validateTable, async (req, res
     if (req.user.role === 'agent' && type !== 'dispositifs' && Array.isArray(data?.entries)) {
       const current = await pool.query(`SELECT data FROM ${type} WHERE instance_id = $1`, [instanceId]);
       beforeEntries = current.rows[0]?.data?.entries || [];
-      const categoryLocked = (await sealedCategories(instanceId)).includes(type);
-      data = { ...data, entries: mergeAgentEntries(beforeEntries, data.entries, req.user.id, categoryLocked) };
-      if (categoryLocked) {
-        await pool.query('DELETE FROM data_seals WHERE instance_id = $1 AND category = $2', [instanceId, type]);
-      }
+      data = { ...data, entries: mergeAgentEntries(beforeEntries, data.entries, req.user.id, false) };
+      await pool.query('DELETE FROM data_seals WHERE instance_id = $1 AND category = $2', [instanceId, type]);
     }
 
     if (req.user.role === 'agent' && type === 'dispositifs') {
