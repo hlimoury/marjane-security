@@ -1,9 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
-import { getInstance, validateAgentNotification } from '../services/api';
+import { getInstance } from '../services/api';
 
 export function useDataAccess(instanceId, category) {
   const { user } = useAuth();
@@ -30,49 +28,11 @@ export function useDataAccess(instanceId, category) {
 }
 
 export function DataAccessBar({ access }) {
-  const { isRegion } = useAuth();
-  const [params] = useSearchParams();
-  const noticeId = params.get('valider');
-  const [done, setDone] = useState(false);
-  const [validating, setValidating] = useState(false);
-
-  const validate = async () => {
-    try {
-      setValidating(true);
-      await validateAgentNotification(noticeId);
-      setDone(true);
-      toast.success('Validé. Le compte agent ne peut plus modifier cet élément.');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Erreur de validation');
-    } finally {
-      setValidating(false);
-    }
-  };
-
-  if (!access.locked && !(isRegion() && noticeId)) return null;
+  if (!access?.locked) return null;
 
   return (
-    <div className="mb-4 space-y-3">
-      {access.locked && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {access.message}
-        </div>
-      )}
-      {isRegion() && noticeId && !done && (
-        <button
-          type="button"
-          onClick={validate}
-          disabled={validating}
-          className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white px-4 py-2 rounded-lg text-sm font-medium"
-        >
-          {validating ? 'Validation...' : 'Valider et sceller'}
-        </button>
-      )}
-      {done && (
-        <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          Élément validé et scellé pour le compte agent.
-        </div>
-      )}
+    <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      {access.message}
     </div>
   );
 }

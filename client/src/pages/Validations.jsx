@@ -73,8 +73,8 @@ const Validations = ({ archived = false }) => {
       // The destination remains usable even if marking it seen fails.
     }
     const target = item.kind === 'data' && item.category
-      ? `/instance/${item.instance_id}/${item.category}?valider=${item.id}`
-      : `/instance/${item.instance_id}?valider=${item.id}`;
+      ? `/instance/${item.instance_id}/${item.category}`
+      : `/instance/${item.instance_id}`;
     navigate(target);
   };
 
