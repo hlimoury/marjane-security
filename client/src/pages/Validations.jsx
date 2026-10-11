@@ -20,6 +20,7 @@ const Validations = ({ archived = false }) => {
   const [validatingAll, setValidatingAll] = useState(false);
   const [search, setSearch] = useState('');
   const [supermarketId, setSupermarketId] = useState('');
+  const [category, setCategory] = useState('');
 
   useEffect(() => {
     if (!isRegion()) {
@@ -46,14 +47,23 @@ const Validations = ({ archived = false }) => {
     items.forEach((item) => {
       if (!map.has(item.supermarket_id)) map.set(item.supermarket_id, item.supermarket_name);
     });
-    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], 'fr'));
+  }, [items]);
+
+  const categories = useMemo(() => {
+    const map = new Map();
+    items.forEach((item) => {
+      if (item.category) map.set(item.category, item.category_label || item.category);
+    });
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], 'fr'));
   }, [items]);
 
   const filtered = items.filter((item) => {
     const matchesStore = !supermarketId || String(item.supermarket_id) === supermarketId;
+    const matchesCategory = !category || item.category === category;
     const query = search.trim().toLowerCase();
     const matchesSearch = !query || (item.supermarket_name || '').toLowerCase().includes(query);
-    return matchesStore && matchesSearch;
+    return matchesStore && matchesCategory && matchesSearch;
   });
 
   const openItem = async (item) => {
@@ -154,6 +164,16 @@ const Validations = ({ archived = false }) => {
         >
           <option value="">Tous les magasins</option>
           {supermarkets.map(([id, name]) => (
+            <option key={id} value={id}>{name}</option>
+          ))}
+        </select>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-500"
+        >
+          <option value="">Toutes les catégories</option>
+          {categories.map(([id, name]) => (
             <option key={id} value={id}>{name}</option>
           ))}
         </select>
