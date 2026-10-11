@@ -99,6 +99,7 @@ export const updateAgent = (id, data) => api.put(`/agents/${id}`, data);
 export const deleteAgent = (id) => api.delete(`/agents/${id}`);
 export const getAgentNotifications = (archived = false) => api.get(`/agents/notifications${archived ? '?archived=1' : ''}`);
 export const validateAllAgentNotifications = (ids) => api.post('/agents/notifications/validate-all', { ids });
+export const setEntryValidation = (data) => api.post('/agents/entries/validation', data);
 export const getAgentNotificationCount = () => api.get('/agents/notifications/count');
 export const markAgentNotificationSeen = (id) => api.put(`/agents/notifications/${id}/seen`);
 export const validateAgentNotification = (id) => api.post(`/agents/notifications/${id}/validate`);

@@ -5,6 +5,7 @@ import { getCaracteristique, saveCaracteristique, getInstance } from '../service
 import { toast } from 'react-toastify';
 import { DataAccessBar, useDataAccess } from '../components/DataAccessBar';
 import { canChangeEntry, withOwner } from '../utils/entryOwner';
+import { EntryValidationButton } from '../components/EntryValidationButton';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 
 const MOTIFS = [
@@ -275,6 +276,7 @@ const Reclamations = () => {
                     <td className="py-3 px-3 text-gray-800">{entry.action || '-'}</td>
                     <td className="py-3 px-3 text-gray-800">{entry.statut}</td>
                     <td className="py-3 px-3">
+                      <EntryValidationButton instanceId={instanceId} category="reclamations" entry={entry} onChanged={loadData} />
                       {canChangeEntry(entry, user?.id, isAgent()) ? (
                       <div className="flex gap-2">
                         <button onClick={() => handleEdit(index)} className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">Modifier</button>

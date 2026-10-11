@@ -5,6 +5,7 @@ import { getCaracteristique, saveCaracteristique, getInstance } from '../service
 import { toast } from 'react-toastify';
 import { DataAccessBar, useDataAccess } from '../components/DataAccessBar';
 import { canChangeEntry, withOwner } from '../utils/entryOwner';
+import { EntryValidationButton } from '../components/EntryValidationButton';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 
 const TYPES = [
@@ -287,6 +288,7 @@ const AutresIncidents = () => {
                     <td className="py-3 px-4 text-gray-800">{entry.date}</td>
                     <td className="py-3 px-4 text-gray-800">{entry.detail || '-'}</td>
                     <td className="py-3 px-4">
+                      <EntryValidationButton instanceId={instanceId} category="autres_incidents" entry={entry} onChanged={loadData} />
                       {canChangeEntry(entry, user?.id, isAgent()) ? (
                       <div className="flex gap-2">
                         <button

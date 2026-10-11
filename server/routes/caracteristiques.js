@@ -3,6 +3,7 @@ const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
 const { isScopedRole, rejectIfDemo } = require('../utils/access');
 const { agentCanAccessStore, agentCanWriteCategory, mergeAgentEntries, notifyChangedEntries, notifyRegion, monthLabel, CATEGORY_LABELS } = require('../utils/agents');
+const crypto = require('crypto');
 
 const router = express.Router();
 
@@ -86,7 +87,16 @@ router.get('/:type/:instanceId', authMiddleware, validateTable, async (req, res)
       return res.json({ instance_id: parseInt(instanceId), data: {}, exists: false });
     }
 
-    res.json({ ...result.rows[0], exists: true });
+    const stored = result.rows[0];
+    const entries = stored.data?.entries;
+    if (Array.isArray(entries) && entries.some((entry) => !entry._id)) {
+      const withIds = entries.map((entry) => (entry._id ? entry : { ...entry, _id: crypto.randomUUID() }));
+      const data = { ...stored.data, entries: withIds };
+      await pool.query(`UPDATE ${type} SET data = $1 WHERE id = $2`, [JSON.stringify(data), stored.id]);
+      stored.data = data;
+    }
+
+    res.json({ ...stored, exists: true });
   } catch (err) {
     console.error('Erreur get caracteristique:', err);
     res.status(500).json({ message: 'Erreur serveur' });

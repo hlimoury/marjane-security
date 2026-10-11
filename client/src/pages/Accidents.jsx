@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 import { DataAccessBar, useDataAccess } from '../components/DataAccessBar';
 import { canChangeEntry, withOwner } from '../utils/entryOwner';
+import { EntryValidationButton } from '../components/EntryValidationButton';
 
 const CAUSES = [
   'Chutes et glissades',
@@ -273,6 +274,7 @@ const Accidents = () => {
                     <td className="py-3 px-4 text-gray-800">{entry.cause}</td>
                     <td className="py-3 px-4 text-gray-800">{entry.date}</td>
                     <td className="py-3 px-4">
+                      <EntryValidationButton instanceId={instanceId} category="accidents" entry={entry} onChanged={loadData} />
                       {canChangeEntry(entry, user?.id, isAgent()) ? (
                       <div className="flex gap-2">
                         <button

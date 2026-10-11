@@ -174,6 +174,56 @@ router.delete('/:id', authMiddleware, regionOnly, async (req, res) => {
   }
 });
 
+router.post('/entries/validation', authMiddleware, regionOnly, async (req, res) => {
+  try {
+    const { instanceId, category, entryId, validated } = req.body || {};
+    const tables = ['interpellations', 'accidents', 'autres_incidents', 'formations', 'reclamations', 'anomalies', 'controle_rm'];
+    if (!instanceId || !entryId || !tables.includes(category)) {
+      return res.status(400).json({ message: 'Entrée invalide' });
+    }
+
+    const access = await pool.query(`
+      SELECT s.region FROM instances i
+      JOIN supermarkets s ON s.id = i.supermarket_id
+      WHERE i.id = $1
+    `, [instanceId]);
+    if (!access.rows.length) return res.status(404).json({ message: 'Instance non trouvée' });
+    if (access.rows[0].region !== req.user.region) return res.status(403).json({ message: 'Accès refusé' });
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await setEntriesValidation(client, instanceId, category, entryId, Boolean(validated), req.user.id);
+      if (validated) {
+        await client.query(
+          `UPDATE agent_notifications
+           SET validated_at = CURRENT_TIMESTAMP, is_seen = TRUE
+           WHERE region_user_id = $1 AND entry_id = $2 AND validated_at IS NULL`,
+          [req.user.id, entryId]
+        );
+      } else {
+        await client.query(
+          `UPDATE agent_notifications
+           SET validated_at = NULL
+           WHERE region_user_id = $1 AND entry_id = $2`,
+          [req.user.id, entryId]
+        );
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    res.json({ message: validated ? 'Entrée validée' : 'Validation annulée' });
+  } catch (err) {
+    console.error('Erreur validation entrée:', err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 router.get('/notifications/count', authMiddleware, regionOnly, async (req, res) => {
   try {
     const result = await pool.query(

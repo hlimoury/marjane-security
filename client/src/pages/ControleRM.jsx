@@ -5,6 +5,7 @@ import { getCaracteristique, saveCaracteristique, getInstance } from '../service
 import { toast } from 'react-toastify';
 import { DataAccessBar, useDataAccess } from '../components/DataAccessBar';
 import { canChangeEntry, withOwner } from '../utils/entryOwner';
+import { EntryValidationButton } from '../components/EntryValidationButton';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 
 const TYPE_OPTIONS = [
@@ -353,6 +354,7 @@ const ControleRM = () => {
                     <p className="font-medium text-gray-800">{entry.date ?? '-'}</p>
                   </div>
                 </div>
+                <EntryValidationButton instanceId={instanceId} category="controle_rm" entry={entry} onChanged={loadData} />
                 {canChangeEntry(entry, user?.id, isAgent()) ? (
                 <div className="flex gap-2 shrink-0">
                   <button

@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 import { DataAccessBar, useDataAccess } from '../components/DataAccessBar';
 import { canChangeEntry, withOwner } from '../utils/entryOwner';
+import { EntryValidationButton } from '../components/EntryValidationButton';
 
 const TYPES = ['Client', 'Personnel', 'Prestataire'];
 
@@ -363,6 +364,7 @@ const Interpellations = () => {
                       ) : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="py-3 px-4">
+                      <EntryValidationButton instanceId={instanceId} category="interpellations" entry={entry} onChanged={loadData} />
                       {canChangeEntry(entry, user?.id, isAgent()) ? (
                       <div className="flex gap-2">
                         <button
