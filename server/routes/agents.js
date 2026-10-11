@@ -252,6 +252,9 @@ router.get('/notifications', authMiddleware, regionOnly, async (req, res) => {
     `, [req.user.id, req.query.archived === '1']);
     res.json(result.rows.map((row) => ({
       ...row,
+      title: row.supermarket_name
+        ? String(row.title || '').replace(' — undefined (', ` — ${row.supermarket_name} (`)
+        : row.title,
       period: monthLabel(row.month, row.year),
       category_label: row.category ? (CATEGORY_LABELS[row.category] || row.category) : null,
     })));

@@ -117,7 +117,7 @@ const notifyChangedEntries = async ({ agent, instance, category, beforeEntries =
       kind: 'data',
       category,
       entryId: entry._id,
-      title: `${agent.username} a ${verb} une entrée ${CATEGORY_LABELS[category] || category} — ${instance.supermarket_name} (${monthLabel(instance.month, instance.year)})`,
+      title: `${agent.username} a ${verb} une entrée ${CATEGORY_LABELS[category] || category} — ${instance.supermarket_name || 'magasin'} (${monthLabel(instance.month, instance.year)})`,
     });
   }
 };

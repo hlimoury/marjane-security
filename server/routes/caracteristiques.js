@@ -21,7 +21,7 @@ const validateTable = (req, res, next) => {
 // Helper: check instance access
 const checkInstanceAccess = async (instanceId, user) => {
   const result = await pool.query(`
-    SELECT i.*, s.region FROM instances i
+    SELECT i.*, s.region, s.name AS supermarket_name FROM instances i
     JOIN supermarkets s ON i.supermarket_id = s.id
     WHERE i.id = $1
   `, [instanceId]);
